@@ -153,5 +153,30 @@ nexus fleet update
 *   **TLS/HTTPS:** All API communication encrypted with TLS certificates.
 *   **VPN Optional:** For remote access, use encrypted VPN solutions like ZeroTier or Tailscale.
 
+## ⚙️ Configuration
+
+### Log Retention
+
+Nexus automatically manages log retention to prevent disk space issues. Configure log retention in your `.env` file:
+
+```bash
+# Number of days to keep logs (0 = keep forever)
+NEXUS_LOG_RETENTION_DAYS=7  # Default: 7 days
+
+# How often to run cleanup (in hours)
+NEXUS_LOG_CLEANUP_INTERVAL_HOURS=24  # Default: 24 hours
+```
+
+**How it works:**
+- The Core server runs a background cleanup task that deletes logs older than the retention period
+- Cleanup runs automatically on startup (after 1 minute) and then on the specified interval
+- Set `NEXUS_LOG_RETENTION_DAYS=0` to keep logs forever (not recommended for production)
+- Logs are deleted permanently from the database - ensure you have external backups if needed
+
+**Recommendations:**
+- **Development:** 7 days (default)
+- **Production:** 30-90 days depending on fleet size and disk space
+- **High-volume fleets:** 7-14 days with external log aggregation
+
 ---
 *Built with ❤️ for the Raspberry Pi Community.*

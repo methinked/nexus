@@ -54,6 +54,16 @@ class CoreConfig(BaseConfig):
         description="Database connection URL",
     )
 
+    # Log Retention
+    log_retention_days: int = Field(
+        default=7,
+        description="Number of days to retain logs (0 = keep forever)",
+    )
+    log_cleanup_interval_hours: int = Field(
+        default=24,
+        description="How often to run log cleanup (in hours)",
+    )
+
     # Paths
     data_dir: Path = Field(default=Path("data"), description="Data directory")
     logs_dir: Path = Field(default=Path("logs"), description="Logs directory")

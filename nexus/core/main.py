@@ -46,15 +46,21 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("Database initialized successfully")
 
-    # TODO: Run database migrations (requires alembic command)
-    # TODO: Start background tasks (cleanup, monitoring, etc.)
+    # Start background services
+    from nexus.core.services.log_cleanup import LogCleanupService
+
+    log_cleanup_service = LogCleanupService(config)
+    await log_cleanup_service.start()
 
     yield
 
     # Shutdown
     logger.info("Shutting down Nexus Core...")
+
+    # Stop background services
+    await log_cleanup_service.stop()
+
     # Database connections are closed automatically per-request
-    # TODO: Stop background tasks
 
 
 # Create FastAPI application
