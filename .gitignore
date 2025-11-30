@@ -149,3 +149,9 @@ docker-compose.override.yml
 # Temporary files
 *.tmp
 *.bak
+
+# SSH and sensitive info
+SSH-Temp-Info.txt
+*-Temp-Info.txt
+*.credentials
+*.secrets
