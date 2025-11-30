@@ -589,6 +589,37 @@ rg "TODO:" nexus/
   - OCR (Scriptor) and Sync (Arbiter) deferred to future
   - Infrastructure ready for additional job types
 
+**Session 2025-11-30 (Evening - Documentation & Planning):**
+- Documentation cleanup and synchronization:
+  - Reviewed Phase 5 completion status across all docs
+  - Updated README.md to check off Phase 5 in roadmap
+  - Added Phase 5 session notes to CONTEXT.md
+  - Fixed contradictory status sections in CONTEXT.md
+  - Updated PROGRESS.md with Phase 5 details
+- Priority refocus discussion:
+  - Confirmed OCR (Scriptor) and Sync (Arbiter) as optional/parked
+  - Established dashboard/monitoring as primary next focus
+  - Restructured docs to de-emphasize Vigil legacy features
+  - Clarified core purpose: fleet management and monitoring
+- Remote terminal feature assessment:
+  - Server infrastructure 100% complete (Agent + Core WebSocket)
+  - CLI client not implemented (complex WebSocket + TTY handling)
+  - Decision: Leave for now, SSH is sufficient for remote access
+  - Alternative: Browser-based terminal in dashboard (future)
+- Phase 6 Dashboard Planning:
+  - Created comprehensive UI/UX plan (docs/dashboard-ui-plan.md)
+  - Design philosophy: UniFi-style with purple theme
+  - Defined 5 main pages: Dashboard, Nodes, Jobs, Logs, Settings
+  - Documented color palette (purple primary, dark mode)
+  - Planned user flows and success metrics
+  - Technology stack options: htmx vs React
+  - Implementation phases with time estimates
+  - Total plan: 581 lines of detailed specifications
+- **Documentation now fully synchronized and up-to-date!**
+  - All docs reflect Phase 5 complete, Phase 6 in planning
+  - Clear roadmap for dashboard implementation
+  - Production-ready CLI system with web UI next
+
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)
 - Local network first (lower barrier)
