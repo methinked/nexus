@@ -31,6 +31,7 @@ from nexus.shared.models import (
     Node,
     NodeCreate,
     NodeList,
+    NodeMetadata,
     NodeStatus,
     NodeUpdate,
     NodeWithMetrics,
@@ -61,6 +62,7 @@ __all__ = [
     "NodeCreate",
     "NodeUpdate",
     "NodeList",
+    "NodeMetadata",
     "NodeStatus",
     "NodeWithMetrics",
     # Models - Job

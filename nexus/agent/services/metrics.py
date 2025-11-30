@@ -6,8 +6,15 @@ Collects system metrics and sends them to Core.
 
 import asyncio
 import logging
+import platform
+import shutil
+import subprocess
 from datetime import datetime
+from pathlib import Path
 from uuid import UUID
+
+import httpx
+import psutil
 
 from nexus.shared import AgentConfig, MetricCreate
 
@@ -82,36 +89,106 @@ class MetricsCollector:
 
     def _collect_metrics(self) -> MetricCreate:
         """
-        Collect current system metrics.
+        Collect current system metrics using psutil.
 
         Returns:
             Metrics data
-
-        TODO: Implement with psutil
-        TODO: Add temperature reading for Raspberry Pi
         """
-        # Placeholder - would use psutil in real implementation
+        # Collect CPU usage (averaged over 1 second for accuracy)
+        cpu_percent = psutil.cpu_percent(interval=1.0)
+
+        # Collect memory usage
+        memory = psutil.virtual_memory()
+        memory_percent = memory.percent
+
+        # Collect disk usage (root partition)
+        disk = psutil.disk_usage('/')
+        disk_percent = disk.percent
+
+        # Try to get temperature (Raspberry Pi specific)
+        temperature = self._get_temperature()
+
         return MetricCreate(
             node_id=self.node_id,
             timestamp=datetime.utcnow(),
-            cpu_percent=0.0,
-            memory_percent=0.0,
-            disk_percent=0.0,
-            temperature=None,
+            cpu_percent=cpu_percent,
+            memory_percent=memory_percent,
+            disk_percent=disk_percent,
+            temperature=temperature,
         )
+
+    def _get_temperature(self) -> float | None:
+        """
+        Get CPU temperature.
+
+        For Raspberry Pi, uses vcgencmd. For other systems, tries psutil sensors.
+        Falls back to None if temperature cannot be read.
+
+        Returns:
+            Temperature in Celsius, or None if unavailable
+        """
+        # Try vcgencmd for Raspberry Pi
+        if shutil.which('vcgencmd'):
+            try:
+                result = subprocess.run(
+                    ['vcgencmd', 'measure_temp'],
+                    capture_output=True,
+                    text=True,
+                    timeout=2,
+                )
+                if result.returncode == 0:
+                    # Output format: "temp=42.8'C"
+                    temp_str = result.stdout.strip()
+                    if 'temp=' in temp_str:
+                        temp = float(temp_str.split('=')[1].split("'")[0])
+                        return temp
+            except Exception as e:
+                logger.debug(f"Failed to read vcgencmd temperature: {e}")
+
+        # Try psutil sensors (Linux)
+        if hasattr(psutil, 'sensors_temperatures'):
+            try:
+                temps = psutil.sensors_temperatures()
+                # Try common sensor names
+                for sensor_name in ['coretemp', 'cpu_thermal', 'k10temp']:
+                    if sensor_name in temps:
+                        sensor_data = temps[sensor_name]
+                        if sensor_data:
+                            return sensor_data[0].current
+            except Exception as e:
+                logger.debug(f"Failed to read psutil temperature: {e}")
+
+        return None
 
     async def _send_metrics(self, metrics: MetricCreate):
         """
-        Send metrics to Core.
+        Send metrics to Core via HTTP POST.
 
         Args:
             metrics: Metrics to send
-
-        TODO: Implement HTTP POST to Core
-        TODO: Handle authentication with api_token
-        TODO: Handle network errors gracefully
         """
-        # TODO: Use httpx to POST to {core_url}/api/metrics
-        # TODO: Include Authorization header with bearer token
-        # TODO: Retry on failure
-        logger.debug(f"Would send metrics: {metrics}")
+        url = f"{self.config.core_url}/api/metrics"
+        headers = {
+            "Authorization": f"Bearer {self.api_token}",
+            "Content-Type": "application/json",
+        }
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    url,
+                    json=metrics.model_dump(mode='json'),
+                    headers=headers,
+                    timeout=10.0,
+                )
+                response.raise_for_status()
+                logger.debug(f"Metrics sent successfully: CPU={metrics.cpu_percent:.1f}% "
+                           f"MEM={metrics.memory_percent:.1f}% "
+                           f"DISK={metrics.disk_percent:.1f}%")
+
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Failed to send metrics: HTTP {e.response.status_code}")
+        except httpx.ConnectError:
+            logger.error(f"Failed to connect to Core at {self.config.core_url}")
+        except Exception as e:
+            logger.error(f"Unexpected error sending metrics: {e}")
