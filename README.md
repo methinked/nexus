@@ -148,6 +148,7 @@ nexus fleet update
 - [x] **Phase 3: The Pulse** - Metrics collection & health monitoring. ✅
 - [x] **Phase 4: The Brain** - Centralized logging & remote control. ✅
 - [x] **Phase 5: The Hands** - Workload orchestration (Job execution system). ✅
+- [x] **Phase 6.1: The Dashboard** - Live metrics visualization (Charts with Chart.js). ✅
 
 ## 🔒 Security
 

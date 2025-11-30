@@ -691,11 +691,40 @@ rg "TODO:" nexus/
   - ✅ Fetch interception working
   - ✅ Purple theme rendering correctly
 - **Phase 6.1 Core Dashboard (MVP) COMPLETE!** ✓
-  - Foundation ready for next features:
-    - Live metrics charts
-    - Node detail pages
-    - Job submission UI
-    - Real-time updates with WebSocket
+
+**Session 2025-11-30 (Night - Live Metrics Charts):**
+- **User Experience Enhancement:**
+  - Made CLI view state persistent across page navigation
+  - Uses localStorage to remember open/closed state
+  - Verbosity setting persists
+  - CLI action history (last 50) carries over between pages
+- **Live Metrics Charts Implementation:**
+  - Added Chart.js 4.4.0 via CDN
+  - Created 4 real-time charts:
+    - CPU Usage (purple theme, 0-100%)
+    - Memory Usage (blue theme, 0-100%)
+    - Disk Usage (green theme, 0-100%)
+    - Temperature (orange/red theme, 30-80°C)
+  - Chart features:
+    - Line charts with smooth curves (tension: 0.4)
+    - Time-based x-axis (HH:mm format)
+    - Dark theme styling matching dashboard
+    - Custom tooltips with units (%, °C)
+    - Multi-node support with color-coded datasets
+    - Filled areas with transparency
+    - No point markers for cleaner look
+  - Data handling:
+    - Fetches last 50 metrics per node (~25 minutes at 30s intervals)
+    - Auto-refresh every 30 seconds
+    - Handles multiple nodes with different colors
+    - Gracefully handles missing temperature data
+  - Performance:
+    - Uses Chart.js update('none') for smooth transitions
+    - Efficient data fetching with Promise.all
+    - No animation on updates to reduce CPU usage
+- **Phase 6.1 Metrics Visualization COMPLETE!** ✓
+  - Dashboard now production-ready for monitoring
+  - Ready for Phase 6.2: Node detail pages and job submission UI
 
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)

@@ -320,14 +320,19 @@ The core CLI-based fleet management is complete. The next logical step is a web-
 - ✅ Web dashboard foundation created and tested
 - ✅ Base template with navigation and responsive layout
 - ✅ Unique CLI view feature (shows equivalent CLI commands for all API calls)
+- ✅ CLI view state persistent across page navigation
 - ✅ Purple dark theme implemented (#7C3AED)
 - ✅ Dashboard overview page with stat cards and fleet topology
+- ✅ **Live metrics charts with Chart.js** (CPU, Memory, Disk, Temperature)
+- ✅ Real-time chart updates every 30 seconds
+- ✅ Multi-node support with color-coded datasets
+- ✅ Professional dark theme styling on charts
 - ✅ Integrated into Core server at root path (/)
 - ✅ API integration verified with live agent data
 - ✅ Static assets (CSS, JavaScript) serving correctly
 - ✅ Fetch interception for automatic CLI logging
 - 🚧 Placeholder pages for Nodes, Jobs, Logs, Settings
-- 🚧 Charts and live updates (next priority)
+- 🚧 WebSocket for real-time updates (next priority)
 
 #### Phase 6.2: Job Management UI
 - Jobs page (active + history)
