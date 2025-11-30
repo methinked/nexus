@@ -31,7 +31,7 @@ The Nexus dashboard draws inspiration from Ubiquiti's UniFi Controller:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  [LOGO]  NEXUS           Dashboard  Nodes  Jobs  Logs  ⚙️   │  ← Header (60px)
+│  [LOGO]  NEXUS     Dashboard  Nodes  Jobs  Logs  ⚙️  [>_]   │  ← Header (60px)
 ├──────────────┬──────────────────────────────────────────────┤
 │              │                                              │
 │   Sidebar    │           Main Content Area                 │
@@ -48,6 +48,26 @@ The Nexus dashboard draws inspiration from Ubiquiti's UniFi Controller:
 │   3/3 Online │                                              │
 │              │                                              │
 └──────────────┴──────────────────────────────────────────────┘
+
+When CLI View is toggled (click [>_] in header):
+
+┌─────────────────────────────────────────────────────────────┐
+│  [LOGO]  NEXUS     Dashboard  Nodes  Jobs  Logs  ⚙️  [>_]   │
+├──────────────┬────────────────────────┬─────────────────────┤
+│              │                        │ CLI View            │
+│   Sidebar    │   Main Content Area    │ ┌─────────────────┐ │
+│   (240px)    │   (Responsive)         │ │ $ nexus node... │ │
+│              │                        │ │ GET /api/nodes  │ │
+│              │                        │ │ 200 OK (45ms)   │ │
+│              │                        │ │                 │ │
+│              │                        │ │ $ nexus node... │ │
+│              │                        │ │ GET /api/nodes  │ │
+│              │                        │ │ /abc-123        │ │
+│              │                        │ │ 200 OK (32ms)   │ │
+│              │                        │ │                 │ │
+│              │                        │ │ [Auto-scroll ☑] │ │
+│              │                        │ └─────────────────┘ │
+└──────────────┴────────────────────────┴─────────────────────┘
 ```
 
 **Rationale:**
@@ -55,6 +75,122 @@ The Nexus dashboard draws inspiration from Ubiquiti's UniFi Controller:
 - Collapsible sidebar for navigation (mobile-friendly)
 - Fleet status summary always visible in sidebar
 - Main content area responsive and scrollable
+- **NEW:** CLI View panel (toggle via [>_] button)
+  - Shows equivalent CLI command for each UI action
+  - Displays actual API calls being made
+  - Educational and transparent
+  - Collapsible to save screen space
+
+---
+
+## 🖥️ CLI View Feature (Unique!)
+
+### Concept
+A collapsible panel that shows the "behind-the-scenes" of every UI action:
+- **CLI Command Equivalent** - What would you type in terminal?
+- **API Call Details** - HTTP method, endpoint, timing
+- **Response Status** - Success/error, response time
+- **Optional Verbosity** - Show request/response bodies
+
+### Example Scenarios
+
+**Scenario 1: User clicks "Nodes" in sidebar**
+```
+CLI View shows:
+┌─────────────────────────────────────────┐
+│ $ nexus node list                       │
+│ ↓ GET /api/nodes                        │
+│ ← 200 OK (45ms)                         │
+│ Found 3 nodes                           │
+│                                         │
+│ [Show Request] [Show Response]          │
+└─────────────────────────────────────────┘
+```
+
+**Scenario 2: User clicks on "pi-kitchen" node**
+```
+CLI View shows:
+┌─────────────────────────────────────────┐
+│ $ nexus node get f6b858e2-...           │
+│ ↓ GET /api/nodes/f6b858e2-...           │
+│ ← 200 OK (32ms)                         │
+│ Node: pi-kitchen (online)               │
+│                                         │
+│ [Show Request] [Show Response]          │
+└─────────────────────────────────────────┘
+```
+
+**Scenario 3: User submits a job**
+```
+CLI View shows:
+┌─────────────────────────────────────────┐
+│ $ nexus job submit \                    │
+│     --node f6b858e2-... \               │
+│     --type shell \                      │
+│     --command "df -h"                   │
+│ ↓ POST /api/jobs                        │
+│   Body: {"node_id": "f6b...", ...}      │
+│ ← 201 Created (156ms)                   │
+│ Job #45 created and dispatched          │
+│                                         │
+│ [Show Request] [Show Response]          │
+└─────────────────────────────────────────┘
+```
+
+### Implementation Details
+
+**Data Structure:**
+```javascript
+{
+  id: "action-123",
+  timestamp: "2025-11-30T15:42:31Z",
+  cliCommand: "nexus node get f6b858e2-...",
+  apiCall: {
+    method: "GET",
+    endpoint: "/api/nodes/f6b858e2-...",
+    headers: { ... },
+    body: null
+  },
+  response: {
+    status: 200,
+    statusText: "OK",
+    timing: 32,  // milliseconds
+    body: { ... }
+  },
+  summary: "Node: pi-kitchen (online)"
+}
+```
+
+**Storage:**
+- Keep last 50 actions in memory (or localStorage)
+- Auto-scroll to newest by default
+- Allow manual scrolling and pausing
+- Clear button to reset history
+
+**Verbosity Levels:**
+1. **Compact** (Default) - Just CLI command + status
+2. **Normal** - + API endpoint + timing
+3. **Verbose** - + Request/response bodies (expandable)
+
+**Visual Design:**
+- Monospace font (JetBrains Mono)
+- Syntax highlighting for JSON
+- Color-coded status (green = 2xx, amber = 4xx, red = 5xx)
+- Subtle animations when new action appears
+- Dark terminal aesthetic (matches theme)
+
+### Benefits
+
+1. **Educational** - Users learn CLI commands naturally
+2. **Debugging** - See exactly what's happening
+3. **Transparency** - No "magic" - everything is visible
+4. **Copy-Paste** - Click to copy CLI command
+5. **Unique** - Not seen in other dashboards (like UniFi)
+
+### Mobile Behavior
+- Hidden by default on mobile (< 768px)
+- Available via bottom sheet/modal when [>_] tapped
+- Swipe down to dismiss
 
 ---
 

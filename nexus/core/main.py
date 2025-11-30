@@ -126,6 +126,18 @@ app.include_router(metrics.router, prefix="/api/metrics", tags=["metrics"])
 app.include_router(logs.router, prefix="/api/logs", tags=["logs"])
 app.include_router(terminal.router, prefix="/api", tags=["terminal"])
 
+# ============================================================================
+# Web Dashboard
+# ============================================================================
+
+from nexus.web import main as web
+
+# Mount static files
+web.mount_static(app)
+
+# Include web routes (no prefix - root path)
+app.include_router(web.router, tags=["web"])
+
 
 # ============================================================================
 # Entry Point

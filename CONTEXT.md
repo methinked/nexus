@@ -620,6 +620,53 @@ rg "TODO:" nexus/
   - Clear roadmap for dashboard implementation
   - Production-ready CLI system with web UI next
 
+**Session 2025-11-30 (Evening - Phase 6 Started):**
+- Dashboard implementation begun:
+  - Created nexus/web/ directory structure
+  - Web module with FastAPI routes for 5 pages
+  - Static assets directory (CSS, JS)
+  - Templates directory (Jinja2)
+- **Unique CLI View feature implemented:**
+  - Collapsible side panel showing equivalent CLI commands
+  - Displays API calls with method, endpoint, timing
+  - Three verbosity levels (compact, normal, verbose)
+  - Intercepts fetch() calls automatically
+  - Shows request/response bodies (expandable)
+  - Copy-to-clipboard for CLI commands
+  - Auto-scrolling with history limit (50 actions)
+  - Educational and transparent - users learn CLI naturally
+- Base template created (base.html):
+  - Purple dark theme (#7C3AED primary)
+  - Tailwind CSS via CDN
+  - Alpine.js for interactivity
+  - htmx for AJAX (not used yet)
+  - JetBrains Mono font for CLI view
+  - Responsive sidebar navigation
+  - Fleet status summary in sidebar
+  - CLI view toggle button in header
+- Dashboard overview page (dashboard.html):
+  - Stat cards (nodes, jobs, alerts, uptime)
+  - Fleet topology view with live node status
+  - Placeholder for metrics charts
+  - Placeholder for recent activity
+  - Auto-refresh every 30 seconds
+  - Calls real API endpoints
+- Placeholder pages created:
+  - nodes.html, jobs.html, logs.html, settings.html
+  - Consistent layout with "coming soon" messaging
+- Custom CSS and JavaScript:
+  - styles.css with purple theme, status badges, animations
+  - cli-view.js with fetch interception and CLI command inference
+- Integrated into Core server:
+  - Added web router to core/main.py
+  - Mounted static files
+  - Dashboard accessible at root URL (/)
+  - API still at /api/*
+- **Phase 6.1 foundation complete!**
+  - Working dashboard viewable in browser
+  - CLI view feature fully functional
+  - Ready for live data and iteration
+
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)
 - Local network first (lower barrier)

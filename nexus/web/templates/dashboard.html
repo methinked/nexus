@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold">Dashboard</h1>
+            <p class="text-gray-400 mt-1">Fleet overview and health at a glance</p>
+        </div>
+        <button onclick="refreshDashboard()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <span>Refresh</span>
+        </button>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Nodes -->
+        <div class="stat-card hover-lift">
+            <div class="stat-card-label">Total Nodes</div>
+            <div class="stat-card-value" id="stat-nodes">-</div>
+            <div class="text-sm mt-2">
+                <span class="text-green-400" id="stat-online">-</span> online
+            </div>
+        </div>
+
+        <!-- Jobs -->
+        <div class="stat-card hover-lift">
+            <div class="stat-card-label">Jobs</div>
+            <div class="stat-card-value" id="stat-jobs">-</div>
+            <div class="text-sm mt-2">
+                <span class="text-blue-400" id="stat-running">-</span> running
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="stat-card hover-lift">
+            <div class="stat-card-label">Alerts</div>
+            <div class="stat-card-value" id="stat-alerts">0</div>
+            <div class="text-sm mt-2">
+                <span class="text-green-400">🟢 All healthy</span>
+            </div>
+        </div>
+
+        <!-- Uptime -->
+        <div class="stat-card hover-lift">
+            <div class="stat-card-label">Fleet Uptime</div>
+            <div class="stat-card-value">99.8%</div>
+            <div class="text-sm mt-2 text-gray-400">Last 30 days</div>
+        </div>
+    </div>
+
+    <!-- Fleet Topology -->
+    <div class="card">
+        <div class="card-header flex items-center justify-between">
+            <h2 class="text-xl font-semibold">Fleet Topology</h2>
+            <button onclick="loadNodes()" class="text-sm text-purple-400 hover:text-purple-300">
+                Refresh
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="topology-view" class="space-y-3">
+                <div class="flex items-center justify-center py-12">
+                    <div class="spinner"></div>
+                    <span class="ml-3 text-gray-400">Loading nodes...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Metrics Chart Placeholder -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-xl font-semibold">Fleet Metrics</h2>
+                <p class="text-sm text-gray-400 mt-1">Aggregated metrics (last 24h)</p>
+            </div>
+            <div class="card-body">
+                <div class="h-64 flex items-center justify-center text-gray-500">
+                    <div class="text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        <p>Charts coming in Phase 6.2</p>
+                        <p class="text-sm mt-2">Will show CPU, Memory, Disk usage trends</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-xl font-semibold">Recent Activity</h2>
+            </div>
+            <div class="card-body">
+                <div id="recent-activity" class="space-y-3">
+                    <div class="flex items-center justify-center py-12 text-gray-500">
+                        <p>Activity feed coming soon</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Dashboard JavaScript
+
+async function refreshDashboard() {
+    await Promise.all([
+        loadStats(),
+        loadNodes()
+    ]);
+}
+
+async function loadStats() {
+    try {
+        // Fetch nodes
+        const nodesResponse = await fetch('/api/nodes');
+        const nodesData = await nodesResponse.json();
+
+        const totalNodes = nodesData.nodes.length;
+        const onlineNodes = nodesData.nodes.filter(n => n.status === 'online').length;
+
+        document.getElementById('stat-nodes').textContent = totalNodes;
+        document.getElementById('stat-online').textContent = onlineNodes;
+
+        // Update sidebar
+        document.getElementById('sidebar-nodes-count').textContent = totalNodes;
+        document.getElementById('sidebar-online-count').textContent = onlineNodes;
+
+        // Fetch jobs
+        const jobsResponse = await fetch('/api/jobs');
+        const jobsData = await jobsResponse.json();
+
+        const totalJobs = jobsData.total;
+        const runningJobs = jobsData.jobs.filter(j => j.status === 'running').length;
+
+        document.getElementById('stat-jobs').textContent = totalJobs;
+        document.getElementById('stat-running').textContent = runningJobs;
+        document.getElementById('sidebar-jobs-count').textContent = runningJobs;
+
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+async function loadNodes() {
+    try {
+        const response = await fetch('/api/nodes');
+        const data = await response.json();
+
+        const topologyView = document.getElementById('topology-view');
+
+        if (data.nodes.length === 0) {
+            topologyView.innerHTML = `
+                <div class="text-center py-12 text-gray-500">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+                    </svg>
+                    <p class="font-semibold">No nodes registered</p>
+                    <p class="text-sm mt-2">Start an agent to register a node</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Build topology HTML
+        let html = '<div class="space-y-2">';
+        html += '<div class="text-center mb-4"><div class="inline-block px-4 py-2 bg-purple-600 rounded-lg font-semibold">Nexus Core</div></div>';
+
+        for (const node of data.nodes) {
+            const statusColor = node.status === 'online' ? 'green' : 'gray';
+            const statusIcon = node.status === 'online' ? '🟢' : '⚫';
+
+            html += `
+                <div class="flex items-center space-x-3 p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors cursor-pointer"
+                     onclick="window.location.href='/nodes'">
+                    <div class="text-2xl">${statusIcon}</div>
+                    <div class="flex-1">
+                        <div class="font-semibold">${node.name}</div>
+                        <div class="text-sm text-gray-400">${node.ip_address}</div>
+                    </div>
+                    <div class="text-right text-sm">
+                        <div class="text-${statusColor}-400 capitalize">${node.status}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        html += '</div>';
+        topologyView.innerHTML = html;
+
+    } catch (error) {
+        console.error('Error loading nodes:', error);
+        document.getElementById('topology-view').innerHTML = `
+            <div class="text-center py-12 text-red-400">
+                <p>Error loading nodes</p>
+                <p class="text-sm mt-2">${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', refreshDashboard);
+
+// Auto-refresh every 30 seconds
+setInterval(refreshDashboard, 30000);
+</script>
+{% endblock %}
