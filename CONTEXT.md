@@ -1,8 +1,8 @@
 # Nexus Development Context
 
-**Last Session:** 2025-11-30
+**Last Session:** 2025-11-30 (PM)
 **Current Branch:** dev
-**Current Phase:** Phase 1 - The Bedrock (In Progress)
+**Current Phase:** Phase 1 - The Bedrock (Complete ✓)
 
 ---
 
@@ -26,7 +26,7 @@ Nexus is a distributed Raspberry Pi management system with a **CLI-first** philo
 - Development tooling (scripts/dev-setup.sh, .env.example)
 - Git repository initialized with main and dev branches
 
-### Phase 1: The Bedrock (In Progress)
+### Phase 1: The Bedrock (Complete ✓)
 
 #### 1. Shared Models ✓
 **Location:** `nexus/shared/`
@@ -96,20 +96,40 @@ Nexus is a distributed Raspberry Pi management system with a **CLI-first** philo
   - Periodic metric collection
   - Submission to Core
 
+#### 4. CLI Foundation ✓
+**Location:** `nexus/cli/`
+
+- `main.py`: Typer app entry point
+  - Global config management
+  - Rich console output
+  - Command group routing
+  - Version and info commands
+
+- `commands/config.py`: Configuration management
+  - `init` - Interactive configuration wizard
+  - `show` - Display current configuration
+  - `set` - Update individual settings
+  - `validate` - Test connectivity to Core
+
+- `commands/node.py`: Node management
+  - `list` - List all nodes with filtering
+  - `get` - Get detailed node information
+  - `update` - Update node metadata
+  - `delete` - Deregister nodes
+  - `shell` - Stub for future remote shell (Phase 4)
+
+- `commands/job.py`: Job management
+  - `submit` - Submit OCR, shell, or sync jobs
+  - `list` - List jobs with filtering
+  - `get` - Get detailed job information
+  - `cancel` - Stub for job cancellation
+  - `logs` - Stub for job logs (Phase 4)
+
 ---
 
 ## 🚧 What's Next
 
-### Immediate: CLI Foundation
-**Location:** `nexus/cli/` (not started)
-
-Need to implement:
-1. `main.py` - Typer app entry point
-2. `commands/config.py` - Config init/management
-3. `commands/node.py` - Node list/status/shell
-4. `commands/job.py` - Job submit/list/status
-
-### After CLI: Database Layer
+### Immediate: Database Layer (Phase 1.5)
 **Location:** `nexus/core/db/` (not started)
 
 Need to implement:
@@ -305,12 +325,19 @@ rg "TODO:" nexus/
 
 ## 📝 Session Notes
 
-**Session 2025-11-30:**
+**Session 2025-11-30 (AM):**
 - Completed Phase 0 initialization
 - Built shared models, config, and auth
 - Implemented Core FastAPI skeleton (all endpoints stubbed)
 - Implemented Agent FastAPI skeleton (all endpoints stubbed)
-- Next session: Start CLI foundation
+
+**Session 2025-11-30 (PM):**
+- Implemented complete CLI foundation with Typer + Rich
+- Created config management commands (init, show, set, validate)
+- Created node management commands (list, get, update, delete)
+- Created job management commands (submit, list, get)
+- **Phase 1 Complete!**
+- Next session: Implement database layer (Phase 1.5)
 
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)
@@ -321,19 +348,26 @@ rg "TODO:" nexus/
 
 ---
 
-## 🎯 End Goal for Phase 1
+## 🎯 End Goal for Phase 1 ✓
 
-A working system where:
+Phase 1 Complete! Current status:
 1. ✅ Shared models are complete
 2. ✅ Core API structure is complete
 3. ✅ Agent API structure is complete
-4. ⏳ CLI can interact with Core
-5. ⏳ Core has database backing
-6. ⏳ Agent can register with Core
-7. ⏳ Agent can send metrics to Core
-8. ⏳ Can list nodes and see their status via CLI
+4. ✅ CLI can interact with Core (structure ready)
+5. ⏳ Core has database backing (Next: Phase 1.5)
+6. ⏳ Agent can register with Core (Next: Phase 1.5)
+7. ⏳ Agent can send metrics to Core (Next: Phase 1.5)
+8. ⏳ Can list nodes and see their status via CLI (Next: Phase 1.5)
 
-Once Phase 1 is complete, we'll have a minimal viable system that can be tested end-to-end.
+## 🎯 Goal for Phase 1.5 - Database Layer
+
+Make the system functional by adding database persistence:
+1. SQLAlchemy models for nodes, jobs, metrics
+2. Alembic migrations for schema management
+3. Replace all TODO stubs in Core API
+4. Implement CRUD operations
+5. Test end-to-end: CLI → Core → Database
 
 ---
 

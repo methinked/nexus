@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30
-**Current Phase:** Phase 1 - The Bedrock
+**Last Updated:** 2025-11-30 (PM Session)
+**Current Phase:** Phase 1 - The Bedrock (Complete ✓)
 
 ---
 
@@ -32,7 +32,9 @@
 
 ## 🚧 In Progress
 
-#### Phase 1: The Bedrock (Core Library & CLI Foundation)
+#### Phase 1: The Bedrock - COMPLETE ✓ (2025-11-30)
+
+All components completed:
 - [x] Shared models implementation (`nexus/shared/`)
   - models.py: Pydantic models for Node, Job, Metric, Auth
   - config.py: Configuration classes for Core, Agent, CLI
@@ -49,7 +51,13 @@
   - api/system.py: System information endpoint
   - api/jobs.py: Job execution endpoint (called by Core)
   - services/metrics.py: Background metrics collection service
-- [ ] CLI foundation
+- [x] CLI foundation (`nexus/cli/`)
+  - main.py: Typer app with Rich output, global config, command routing
+  - commands/config.py: Init, show, set, validate configuration
+  - commands/node.py: List, get, update, delete nodes
+  - commands/job.py: Submit, list, get jobs
+
+**Phase 1 Complete: 2025-11-30** 🎉
 
 ---
 
@@ -61,31 +69,19 @@
 3. Initialize git repository and make first commit
 4. Set up development environment helper scripts
 
-### Phase 1: The Bedrock (Core Library & CLI Foundation)
-1. **Shared Models** (`nexus/shared/`)
-   - Define Pydantic models for Node, Job, Metric
-   - Create authentication models (Token, SharedSecret)
-   - Configuration schemas
+### Phase 1.5: Database Layer (Next Priority)
+**Goal:** Replace stubbed API endpoints with actual database operations
 
-2. **Database Layer** (`nexus/core/db/`)
+1. **Database Layer** (`nexus/core/db/`)
    - SQLAlchemy models for Core database
    - Alembic migration setup
    - Initial schema (nodes, jobs, metrics tables)
+   - CRUD operations for nodes, jobs, metrics
 
-3. **Core API Skeleton** (`nexus/core/api/`)
-   - FastAPI app setup with health endpoint
-   - Authentication middleware (shared secret + tokens)
-   - Basic CRUD endpoints for nodes
-
-4. **CLI Foundation** (`nexus/cli/`)
-   - Typer app setup
-   - Configuration management (init, config commands)
-   - Node management commands (list, status)
-
-5. **Agent API Skeleton** (`nexus/agent/api/`)
-   - FastAPI app setup with health endpoint
-   - Registration endpoint (call Core with shared secret)
-   - Heartbeat mechanism
+2. **Update Core API**
+   - Replace TODO stubs with database operations
+   - Implement proper error handling
+   - Add pagination support
 
 ### Phase 2: The Mesh (Agent Discovery & Connectivity)
 1. Local network discovery (mDNS/Bonjour)
