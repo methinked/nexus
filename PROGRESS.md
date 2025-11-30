@@ -38,7 +38,12 @@
   - config.py: Configuration classes for Core, Agent, CLI
   - auth.py: JWT token creation/verification utilities
   - __init__.py: Clean exports for easy importing
-- [ ] Core FastAPI skeleton
+- [x] Core FastAPI skeleton (`nexus/core/`)
+  - main.py: FastAPI app with lifespan, CORS, health endpoint
+  - api/auth.py: Node registration and token management
+  - api/nodes.py: Node CRUD operations
+  - api/jobs.py: Job submission and tracking
+  - api/metrics.py: Metrics ingestion and queries
 - [ ] Agent FastAPI skeleton
 - [ ] CLI foundation
 
