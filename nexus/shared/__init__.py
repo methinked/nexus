@@ -1,0 +1,85 @@
+"""
+Nexus shared module.
+
+Provides common models, configuration, and utilities used across Core, Agent, and CLI.
+"""
+
+from nexus.shared.auth import (
+    AuthError,
+    TokenExpiredError,
+    TokenInvalidError,
+    create_access_token,
+    hash_password,
+    verify_password,
+    verify_shared_secret,
+    verify_token,
+)
+from nexus.shared.config import AgentConfig, BaseConfig, CLIConfig, CoreConfig
+from nexus.shared.models import (
+    ErrorResponse,
+    HealthResponse,
+    Job,
+    JobCreate,
+    JobList,
+    JobStatus,
+    JobType,
+    Metric,
+    MetricCreate,
+    MetricData,
+    MetricList,
+    Node,
+    NodeCreate,
+    NodeList,
+    NodeStatus,
+    NodeUpdate,
+    NodeWithMetrics,
+    RegistrationRequest,
+    RegistrationResponse,
+    SystemInfo,
+    Token,
+    TokenData,
+)
+
+__all__ = [
+    # Auth
+    "AuthError",
+    "TokenExpiredError",
+    "TokenInvalidError",
+    "create_access_token",
+    "verify_token",
+    "verify_shared_secret",
+    "hash_password",
+    "verify_password",
+    # Config
+    "BaseConfig",
+    "CoreConfig",
+    "AgentConfig",
+    "CLIConfig",
+    # Models - Node
+    "Node",
+    "NodeCreate",
+    "NodeUpdate",
+    "NodeList",
+    "NodeStatus",
+    "NodeWithMetrics",
+    # Models - Job
+    "Job",
+    "JobCreate",
+    "JobList",
+    "JobType",
+    "JobStatus",
+    # Models - Metric
+    "Metric",
+    "MetricCreate",
+    "MetricData",
+    "MetricList",
+    # Models - Auth
+    "Token",
+    "TokenData",
+    "RegistrationRequest",
+    "RegistrationResponse",
+    # Models - System
+    "SystemInfo",
+    "HealthResponse",
+    "ErrorResponse",
+]

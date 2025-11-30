@@ -33,7 +33,11 @@
 ## 🚧 In Progress
 
 #### Phase 1: The Bedrock (Core Library & CLI Foundation)
-- [ ] Shared models implementation
+- [x] Shared models implementation (`nexus/shared/`)
+  - models.py: Pydantic models for Node, Job, Metric, Auth
+  - config.py: Configuration classes for Core, Agent, CLI
+  - auth.py: JWT token creation/verification utilities
+  - __init__.py: Clean exports for easy importing
 - [ ] Core FastAPI skeleton
 - [ ] Agent FastAPI skeleton
 - [ ] CLI foundation
