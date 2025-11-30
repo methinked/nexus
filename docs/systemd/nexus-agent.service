@@ -1,0 +1,29 @@
+[Unit]
+Description=Nexus Agent
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/nexus
+Environment="PATH=/home/pi/nexus/venv/bin"
+EnvironmentFile=/home/pi/nexus/.env
+ExecStart=/home/pi/nexus/venv/bin/python -m nexus.agent.main
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nexus-agent
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/pi/nexus/data
+
+[Install]
+WantedBy=multi-user.target
