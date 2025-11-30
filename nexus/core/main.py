@@ -46,15 +46,21 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("Database initialized successfully")
 
-    # TODO: Run database migrations (requires alembic command)
-    # TODO: Start background tasks (cleanup, monitoring, etc.)
+    # Start background services
+    from nexus.core.services.log_cleanup import LogCleanupService
+
+    log_cleanup_service = LogCleanupService(config)
+    await log_cleanup_service.start()
 
     yield
 
     # Shutdown
     logger.info("Shutting down Nexus Core...")
+
+    # Stop background services
+    await log_cleanup_service.stop()
+
     # Database connections are closed automatically per-request
-    # TODO: Stop background tasks
 
 
 # Create FastAPI application
@@ -79,15 +85,17 @@ app.add_middleware(
 # Root Endpoints
 # ============================================================================
 
-
-@app.get("/", tags=["root"])
-async def root():
-    """Root endpoint with basic information."""
+# Note: Root "/" is now handled by the web dashboard
+# Old JSON endpoint moved to /api/
+@app.get("/api", tags=["root"])
+async def api_root():
+    """API root endpoint with basic information."""
     return {
-        "name": "Nexus Core",
+        "name": "Nexus Core API",
         "version": "0.1.0",
         "status": "running",
         "docs": "/docs",
+        "dashboard": "/",
     }
 
 
@@ -119,6 +127,18 @@ app.include_router(jobs.router, prefix="/api/jobs", tags=["jobs"])
 app.include_router(metrics.router, prefix="/api/metrics", tags=["metrics"])
 app.include_router(logs.router, prefix="/api/logs", tags=["logs"])
 app.include_router(terminal.router, prefix="/api", tags=["terminal"])
+
+# ============================================================================
+# Web Dashboard
+# ============================================================================
+
+from nexus.web import main as web
+
+# Mount static files
+web.mount_static(app)
+
+# Include web routes (no prefix - root path)
+app.include_router(web.router, tags=["web"])
 
 
 # ============================================================================

@@ -36,42 +36,45 @@ graph TD
     end
 ```
 
-## 🧩 Component Migration (Vigil Legacy)
+## 🎯 Core Features
 
-Nexus integrates the proven logic from the **Vigil** project into a distributed architecture.
+### ✅ Implemented
 
-### 1. Scriptor (OCR Engine) -> `nexus-worker-ocr`
-*   **Purpose:** Digitizes handwritten/printed notes.
-*   **Legacy Stack:** Tesseract 4.x, Pillow, File-based Queue.
-*   **Nexus Implementation:**
-    *   **Input:** Jobs submitted via CLI (`nexus job submit`) or Web.
-    *   **Processing:** Background worker on Agent runs Tesseract.
-    *   **Output:** Markdown files synced back to Core/Vault via Syncthing.
-    *   **Dev Note:** Port `modules.scriptor.worker` logic. Ensure `tesseract-ocr` is in the Docker container.
+**Speculum (System Monitor)** - Real-time system health metrics
+*   Collects CPU, RAM, Disk, Temperature every 30 seconds
+*   Uses `psutil` and `vcgencmd` (for Pi temp)
+*   Pushes lightweight JSON payload to Core API
+*   Health status calculation with configurable thresholds
+*   Historical metrics with aggregated statistics
 
-### 2. Arbiter (Sync Manager) -> `nexus-sync`
-*   **Purpose:** Resolves Syncthing file conflicts.
-*   **Legacy Stack:** Python file scanner, `.stconflict` detection.
-*   **Nexus Implementation:**
-    *   **Monitoring:** Agent watches Syncthing folder for conflict files.
-    *   **Resolution:** Reports conflicts to Core. User resolves via CLI (`nexus sync resolve <id>`) or Web.
-    *   **Dev Note:** Port `modules.arbiter.conflict_scanner`. Needs read/write access to the Syncthing volume.
+**Imperium (Remote Control)** - Centralized logging and job execution
+*   Centralized log collection from all agents
+*   Remote shell command execution via job system
+*   WebSocket-based terminal infrastructure (server-side ready)
+*   Job queue with concurrent execution limits
+*   Result reporting and tracking
 
-### 3. Speculum (System Monitor) -> `nexus-monitor`
-*   **Purpose:** Real-time system health metrics.
-*   **Legacy Stack:** `psutil`, `vcgencmd` (for Pi temp).
-*   **Nexus Implementation:**
-    *   **Collection:** Agent collects CPU, RAM, Disk, Temp every X seconds.
-    *   **Transport:** Pushes lightweight JSON payload to Core API.
-    *   **Dev Note:** Port `modules.speculum.metrics`. Abstract `vcgencmd` to handle non-Pi Linux systems gracefully.
+### 🚀 Planned (In Design)
 
-### 4. Imperium (Remote Terminal) -> `nexus-terminal`
-*   **Purpose:** Secure, web-based shell access.
-*   **Legacy Stack:** Flask-SocketIO, `eventlet`.
-*   **Nexus Implementation:**
-    *   **Connection:** WebSocket tunnel initiated by CLI/Web to Core, proxied to Agent.
-    *   **Security:** Authenticated via API Token.
-    *   **Dev Note:** Port `modules.imperium` logic. FastAPI's native WebSocket support eliminates need for eventlet/socketio. Use Uvicorn for deployment.
+**Web Dashboard** - Real-time fleet monitoring (UniFi-style with purple theme)
+*   Live metrics visualization (CPU, memory, disk, temperature)
+*   Health status overview for all nodes
+*   Log viewer with filtering and search
+*   Job submission and monitoring UI
+*   System topology and node discovery
+*   📋 **See full UI/UX plan:** [`docs/dashboard-ui-plan.md`](docs/dashboard-ui-plan.md)
+
+### 📦 Optional (Vigil Legacy - Parked)
+
+**Scriptor (OCR Engine)** - Digitizes handwritten/printed notes
+*   Infrastructure ready via job system
+*   Would use Tesseract 4.x for OCR processing
+*   Not required for core fleet management
+
+**Arbiter (Sync Manager)** - Resolves Syncthing file conflicts
+*   Infrastructure ready via job system
+*   Would watch for `.stconflict` files
+*   Not required for core fleet management
 
 ## 🛠️ Technology Stack
 
@@ -86,8 +89,9 @@ Nexus integrates the proven logic from the **Vigil** project into a distributed 
 
 ### Prerequisites
 *   Python 3.11+
-*   Docker & Docker Compose
+*   Docker & Docker Compose (optional)
 *   Local network (or VPN like ZeroTier/Tailscale for remote access)
+*   sshpass (for automated Pi deployment)
 
 ### Installation (Dev)
 
@@ -96,12 +100,33 @@ Nexus integrates the proven logic from the **Vigil** project into a distributed 
 git clone https://github.com/yourusername/nexus.git
 cd nexus
 
-# Install dependencies
+# Install dependencies in virtual environment
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 
-# Initialize the Core
-nexus config init
-nexus db migrate
+# Start the Core server
+python -m nexus.core.main
+# Visit http://localhost:8000 for dashboard
+```
+
+### Deploying to Raspberry Pi
+
+```bash
+# Deploy agent to a Raspberry Pi (automated)
+./scripts/deploy-pi.sh <pi_ip> <pi_user> <pi_password> <core_ip>
+
+# Example:
+./scripts/deploy-pi.sh 10.243.14.179 methinked mypassword 10.243.29.55
+
+# The script will:
+# - Copy agent code to Pi
+# - Install dependencies
+# - Configure agent to connect to Core
+# - Start the agent service
+
+# Check deployment
+ssh user@pi_ip "cd ~/nexus-agent && cat agent.log"
 ```
 
 ## 📖 Usage
@@ -140,11 +165,13 @@ nexus fleet update
 
 ## 🗺️ Roadmap
 
-- [ ] **Phase 1: The Bedrock** - Core Library & CLI foundation.
-- [ ] **Phase 2: The Mesh** - Agent discovery & secure connectivity.
-- [ ] **Phase 3: The Pulse** - Metrics collection & Web Dashboard.
-- [ ] **Phase 4: The Brain** - Centralized logging & remote control.
-- [ ] **Phase 5: The Hands** - Workload orchestration (OCR, Sync).
+- [x] **Phase 1: The Bedrock** - Core Library & CLI foundation. ✅
+- [x] **Phase 2: The Mesh** - Agent discovery & secure connectivity. ✅
+- [x] **Phase 3: The Pulse** - Metrics collection & health monitoring. ✅
+- [x] **Phase 4: The Brain** - Centralized logging & remote control. ✅
+- [x] **Phase 5: The Hands** - Workload orchestration (Job execution system). ✅
+- [x] **Phase 6.1: The Dashboard** - Live metrics visualization (Charts with Chart.js). ✅
+- [x] **Pi Deployment** - First real Raspberry Pi deployment successful (moria-pi). ✅
 
 ## 🔒 Security
 
@@ -152,6 +179,31 @@ nexus fleet update
 *   **API Tokens:** Unique tokens issued to agents after registration.
 *   **TLS/HTTPS:** All API communication encrypted with TLS certificates.
 *   **VPN Optional:** For remote access, use encrypted VPN solutions like ZeroTier or Tailscale.
+
+## ⚙️ Configuration
+
+### Log Retention
+
+Nexus automatically manages log retention to prevent disk space issues. Configure log retention in your `.env` file:
+
+```bash
+# Number of days to keep logs (0 = keep forever)
+NEXUS_LOG_RETENTION_DAYS=7  # Default: 7 days
+
+# How often to run cleanup (in hours)
+NEXUS_LOG_CLEANUP_INTERVAL_HOURS=24  # Default: 24 hours
+```
+
+**How it works:**
+- The Core server runs a background cleanup task that deletes logs older than the retention period
+- Cleanup runs automatically on startup (after 1 minute) and then on the specified interval
+- Set `NEXUS_LOG_RETENTION_DAYS=0` to keep logs forever (not recommended for production)
+- Logs are deleted permanently from the database - ensure you have external backups if needed
+
+**Recommendations:**
+- **Development:** 7 days (default)
+- **Production:** 30-90 days depending on fleet size and disk space
+- **High-volume fleets:** 7-14 days with external log aggregation
 
 ---
 *Built with ❤️ for the Raspberry Pi Community.*

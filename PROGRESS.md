@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30 (PM Session - Phase 4 Complete)
-**Current Phase:** Phase 5 - The Hands (Next)
+**Last Updated:** 2025-11-30 (Night Session - Pi Deployment Complete)
+**Current Phase:** Phase 6 - The Dashboard (Phase 6.1 COMPLETE ✓ + Pi Deployment)
 
 ---
 
@@ -148,6 +148,59 @@ All components completed:
 
 **Note:** Terminal CLI client implementation deferred to future (requires complex WebSocket + TTY handling). Terminal infrastructure (Agent + Core) is ready when needed.
 
+#### Phase 5: The Hands - Workload Orchestration (Completed 2025-11-30) ✨
+
+All components completed:
+- [x] Job execution architecture designed
+  - Queue-based system with FIFO scheduling
+  - Concurrent job limits (2 jobs max on Pi)
+  - Background dispatcher service
+  - Executor pattern for different job types
+- [x] Agent job queue implementation
+  - In-memory queue with deque
+  - Thread-safe operations with asyncio.Lock
+  - Job status tracking (pending, running, completed, failed)
+  - QueuedJob dataclass for job metadata
+- [x] Shell executor module
+  - Async subprocess execution
+  - Configurable timeout (default: 300s)
+  - Output capture (stdout/stderr)
+  - Exit code and execution time tracking
+  - JobResult model integration
+- [x] Job dispatcher service
+  - Background asyncio task
+  - Polls queue every 1 second
+  - Routes jobs to appropriate executors
+  - Reports results back to Core
+  - Error handling and logging
+- [x] Agent job API endpoints
+  - POST /api/jobs/{job_id}/execute - Receive jobs from Core
+  - GET /api/jobs/{job_id}/status - Query job status
+  - Integration with job queue
+- [x] Core job API enhancements
+  - POST /api/jobs - Submit job and send to agent
+  - PATCH /api/jobs/{job_id} - Receive result updates from agent
+  - Job validation and error handling
+  - Agent availability checking
+- [x] Agent lifecycle integration
+  - JobQueue and JobDispatcher started on agent startup
+  - Graceful shutdown with cleanup
+  - Global state management
+- [x] Shared model updates
+  - JobResult model with success, output, error, data fields
+  - Exported from nexus.shared for agent use
+- [x] End-to-end testing
+  - Job submitted via Core API
+  - Job sent to Agent automatically
+  - Agent queued and executed job
+  - Shell command executed successfully
+  - Result reported back to Core
+  - Result stored in database with full details
+
+**Phase 5 Complete: 2025-11-30** 🎉
+
+**Note:** OCR (Scriptor) and Sync (Arbiter) modules deferred to future phases. Job execution infrastructure is ready for additional job types.
+
 #### Phase 2: The Mesh - Agent Connectivity (Completed 2025-11-30) ✨
 
 All components completed:
@@ -228,17 +281,100 @@ All components completed:
 
 ## 📋 Next Steps
 
-### Phase 4: The Brain (Logging & Remote Control)
-1. Imperium module (remote terminal)
-2. WebSocket proxy setup
-3. Centralized logging
-4. Log aggregation and search
+### Phase 6: The Dashboard - Visualization & Monitoring (IN PROGRESS)
+The core CLI-based fleet management is complete. The next logical step is a web-based dashboard for real-time visualization.
 
-### Phase 5: The Hands (Workload Orchestration)
-1. Scriptor module (OCR)
-2. Job queue system
-3. Arbiter module (sync conflicts)
-4. Task scheduling
+**Design Philosophy:** UniFi-style dashboard with a purple theme - clean, professional, informative at a glance.
+
+**Full UI/UX Planning:** See [`docs/dashboard-ui-plan.md`](../docs/dashboard-ui-plan.md) for complete design specification.
+
+#### Phase 6.1: Core Dashboard (MVP) - Priority
+1. **Dashboard Overview Page**
+   - Stat cards (nodes, jobs, alerts, uptime)
+   - Fleet topology view with live status
+   - Aggregated metrics charts (CPU, memory, disk)
+   - Recent activity feed
+
+2. **Nodes List Page**
+   - Sortable table with live status
+   - Node detail panel (metrics, charts, actions)
+   - Quick filters and search
+
+3. **Live Updates**
+   - WebSocket for real-time metrics
+   - Auto-refresh without page reload
+   - Status indicators and health badges
+
+4. **Purple Dark Theme**
+   - Professional dark mode UI
+   - Purple primary color (#7C3AED)
+   - Status colors (green/amber/red)
+
+**Technology Stack Decision:**
+- **Option A (Recommended):** FastAPI + htmx + Alpine.js + Tailwind CSS (lightweight, fast to build)
+- **Option B (Future):** FastAPI + React + Vite (richer interactions, complex features)
+
+**Estimated Effort:** 2-3 weeks for MVP
+
+**Current Status (2025-11-30):**
+- ✅ Web dashboard foundation created and tested
+- ✅ Base template with navigation and responsive layout
+- ✅ Unique CLI view feature (shows equivalent CLI commands for all API calls)
+- ✅ CLI view state persistent across page navigation
+- ✅ Purple dark theme implemented (#7C3AED)
+- ✅ Dashboard overview page with stat cards and fleet topology
+- ✅ **Live metrics charts with Chart.js** (CPU, Memory, Disk, Temperature)
+- ✅ Real-time chart updates every 30 seconds
+- ✅ Multi-node support with color-coded datasets
+- ✅ Professional dark theme styling on charts
+- ✅ Integrated into Core server at root path (/)
+- ✅ API integration verified with live agent data
+- ✅ Static assets (CSS, JavaScript) serving correctly
+- ✅ Fetch interception for automatic CLI logging
+- 🚧 Placeholder pages for Nodes, Jobs, Logs, Settings
+- 🚧 WebSocket for real-time updates (next priority)
+
+**Raspberry Pi Deployment (2025-11-30 Night):**
+- ✅ **First real Pi deployment successful!**
+- ✅ Target: Raspberry Pi "moria-pi" at 10.243.14.179
+- ✅ System: Linux 6.12.47, aarch64, Python 3.11.2
+- ✅ Created deployment script (scripts/deploy-pi.sh)
+- ✅ Automated: code copy, venv setup, dependencies, configuration
+- ✅ Agent registered with Core: 113cd27d-6127-459f-8e87-6f2faa7acbda
+- ✅ Metrics flowing: CPU 0-0.5%, Memory ~31%, Disk 14.4%, Temp 47-50°C
+- ✅ Dashboard displaying both laptop + Pi nodes
+- ✅ Real-time charts showing Pi hardware metrics
+- ✅ ZeroTier connectivity verified (10.243.x.x network)
+- ✅ All services operational (metrics, logging, job dispatcher)
+
+**Phase 6.1 COMPLETE!** ✓ - Production-ready dashboard monitoring real Pi hardware
+
+#### Phase 6.2: Job Management UI
+- Jobs page (active + history)
+- Job submission form with templates
+- Live job output viewer
+- **Estimated Effort:** 1 week
+
+#### Phase 6.3: Log Viewer
+- Centralized log viewer with filters
+- Search and export functionality
+- Follow mode (tail -f style)
+- **Estimated Effort:** 1 week
+
+#### Phase 6.4: Advanced Features
+- Terminal in browser (xterm.js)
+- Alerting system with notifications
+- User authentication and access control
+- **Estimated Effort:** 2-3 weeks per feature
+
+**Medium Priority (Post-Dashboard):**
+- **Job Scheduling** - Cron-like scheduling for recurring jobs
+- **Terminal CLI Client** - WebSocket-based remote shell client
+- **Job Templates** - Pre-defined job configurations for common tasks
+
+**Optional (Vigil Legacy - Parked):**
+- **Scriptor Module (OCR)** - Tesseract integration (infrastructure ready)
+- **Arbiter Module (Sync)** - Syncthing conflict resolution (infrastructure ready)
 
 ---
 

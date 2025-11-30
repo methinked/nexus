@@ -23,6 +23,7 @@ from nexus.shared.models import (
     Job,
     JobCreate,
     JobList,
+    JobResult,
     JobStatus,
     JobType,
     LogCreate,
@@ -77,6 +78,7 @@ __all__ = [
     "Job",
     "JobCreate",
     "JobList",
+    "JobResult",
     "JobType",
     "JobStatus",
     # Models - Metric

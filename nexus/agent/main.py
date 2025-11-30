@@ -41,6 +41,8 @@ node_id: UUID | None = None
 api_token: str | None = None
 metrics_collector: MetricsCollector | None = None
 log_collector: LogCollector | None = None
+job_queue: "JobQueue | None" = None
+job_dispatcher: "JobDispatcher | None" = None
 
 # Path to store registration data
 STATE_FILE = config.data_dir / "agent_state.json"
@@ -127,7 +129,7 @@ async def lifespan(app: FastAPI):
     """
     Lifespan context manager for startup and shutdown events.
     """
-    global node_id, api_token, metrics_collector, log_collector
+    global node_id, api_token, metrics_collector, log_collector, job_queue, job_dispatcher
 
     # Startup
     logger.info("Starting Nexus Agent...")
@@ -165,10 +167,22 @@ async def lifespan(app: FastAPI):
     log_collector = LogCollector(config, node_id, api_token)
     await log_collector.start()
 
+    # Start job system
+    from nexus.agent.services.job_queue import JobQueue
+    from nexus.agent.services.job_dispatcher import JobDispatcher
+
+    job_queue = JobQueue(max_concurrent=2)  # Limit to 2 concurrent jobs on Pi
+    job_dispatcher = JobDispatcher(config, job_queue, str(node_id), api_token)
+    await job_dispatcher.start()
+
     yield
 
     # Shutdown
     logger.info("Shutting down Nexus Agent...")
+
+    # Stop job system
+    if job_dispatcher:
+        await job_dispatcher.stop()
 
     # Stop metrics collection
     if metrics_collector:
