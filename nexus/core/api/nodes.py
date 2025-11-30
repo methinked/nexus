@@ -57,8 +57,20 @@ async def list_nodes(
     db_nodes = get_nodes(db, skip=skip, limit=limit, status=status_filter)
     total = get_nodes_count(db, status=status_filter)
 
-    # Convert to Pydantic models
-    nodes = [Node.model_validate(node) for node in db_nodes]
+    # Convert to Pydantic models - map node_metadata to metadata
+    nodes = []
+    for db_node in db_nodes:
+        node_dict = {
+            "id": db_node.id,
+            "name": db_node.name,
+            "ip_address": db_node.ip_address,
+            "status": db_node.status,
+            "metadata": db_node.node_metadata,
+            "created_at": db_node.created_at,
+            "updated_at": db_node.updated_at,
+            "last_seen": db_node.last_seen,
+        }
+        nodes.append(Node.model_validate(node_dict))
 
     # TODO: Implement tag filtering if needed
     if tag:
@@ -115,8 +127,18 @@ async def get_node_details(
         status=JobStatus.PENDING,
     )
 
-    # Build response
-    node = Node.model_validate(db_node)
+    # Build response - map node_metadata to metadata
+    node_dict = {
+        "id": db_node.id,
+        "name": db_node.name,
+        "ip_address": db_node.ip_address,
+        "status": db_node.status,
+        "metadata": db_node.node_metadata,
+        "created_at": db_node.created_at,
+        "updated_at": db_node.updated_at,
+        "last_seen": db_node.last_seen,
+    }
+    node = Node.model_validate(node_dict)
     return NodeWithMetrics(
         **node.model_dump(),
         current_metrics=current_metrics,
@@ -151,7 +173,18 @@ async def update_node_metadata(
             detail=f"Node {node_id} not found",
         )
 
-    return Node.model_validate(db_node)
+    # Map node_metadata to metadata
+    node_dict = {
+        "id": db_node.id,
+        "name": db_node.name,
+        "ip_address": db_node.ip_address,
+        "status": db_node.status,
+        "metadata": db_node.node_metadata,
+        "created_at": db_node.created_at,
+        "updated_at": db_node.updated_at,
+        "last_seen": db_node.last_seen,
+    }
+    return Node.model_validate(node_dict)
 
 
 @router.delete("/{node_id}", status_code=status.HTTP_204_NO_CONTENT)

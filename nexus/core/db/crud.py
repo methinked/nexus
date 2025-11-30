@@ -33,7 +33,7 @@ def create_node(db: Session, node: NodeCreate) -> NodeModel:
         name=node.name,
         ip_address=node.ip_address,
         status=NodeStatus.ONLINE,
-        metadata=node.metadata.model_dump(),
+        node_metadata=node.metadata.model_dump(),
         last_seen=datetime.utcnow(),
     )
     db.add(db_node)
@@ -85,9 +85,9 @@ def update_node(db: Session, node_id: str, node_update: NodeUpdate) -> Optional[
 
     update_data = node_update.model_dump(exclude_unset=True)
 
-    # Handle metadata separately
+    # Handle metadata separately - map to node_metadata field
     if "metadata" in update_data:
-        update_data["metadata"] = update_data["metadata"].model_dump()
+        update_data["node_metadata"] = update_data.pop("metadata").model_dump()
 
     for field, value in update_data.items():
         setattr(db_node, field, value)

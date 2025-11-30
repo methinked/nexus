@@ -33,8 +33,8 @@ class NodeModel(Base):
     ip_address = Column(String(45), nullable=False)  # Support IPv6
     status = Column(Enum(NodeStatus), default=NodeStatus.OFFLINE, nullable=False, index=True)
 
-    # Metadata (stored as JSON)
-    metadata = Column(JSON, default=dict, nullable=False)
+    # Metadata (stored as JSON) - use node_metadata to avoid conflict with Base.metadata
+    node_metadata = Column("metadata", JSON, default=dict, nullable=False)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

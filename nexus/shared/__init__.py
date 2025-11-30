@@ -16,6 +16,7 @@ from nexus.shared.auth import (
 )
 from nexus.shared.config import AgentConfig, BaseConfig, CLIConfig, CoreConfig
 from nexus.shared.models import (
+    BaseResponse,
     ErrorResponse,
     HealthResponse,
     Job,
@@ -82,4 +83,5 @@ __all__ = [
     "SystemInfo",
     "HealthResponse",
     "ErrorResponse",
+    "BaseResponse",
 ]
