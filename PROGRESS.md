@@ -44,7 +44,11 @@
   - api/nodes.py: Node CRUD operations
   - api/jobs.py: Job submission and tracking
   - api/metrics.py: Metrics ingestion and queries
-- [ ] Agent FastAPI skeleton
+- [x] Agent FastAPI skeleton (`nexus/agent/`)
+  - main.py: FastAPI app with registration state tracking
+  - api/system.py: System information endpoint
+  - api/jobs.py: Job execution endpoint (called by Core)
+  - services/metrics.py: Background metrics collection service
 - [ ] CLI foundation
 
 ---
