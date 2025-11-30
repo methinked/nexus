@@ -281,23 +281,63 @@ All components completed:
 
 ## 📋 Next Steps
 
-### Phase 6: The Dashboard - Visualization & Monitoring (Priority)
-The core CLI-based fleet management is complete. The next logical step is a web-based dashboard for real-time visualization:
+### Phase 6: The Dashboard - Visualization & Monitoring (IN PLANNING)
+The core CLI-based fleet management is complete. The next logical step is a web-based dashboard for real-time visualization.
 
-**High Priority:**
-1. **Web Dashboard** - Real-time fleet monitoring
-   - Live metrics visualization (CPU, memory, disk, temperature charts)
-   - Health status overview for all nodes
-   - Log viewer with filtering and search
-   - Job submission and monitoring UI
-   - System topology and node discovery
-   - Technology: FastAPI + htmx/Alpine.js (lightweight) or React
+**Design Philosophy:** UniFi-style dashboard with a purple theme - clean, professional, informative at a glance.
 
-**Medium Priority:**
-2. **Job Scheduling** - Cron-like scheduling for recurring jobs
-3. **Terminal CLI Client** - WebSocket-based remote shell client
-4. **Job Templates** - Pre-defined job configurations for common tasks
-5. **Alerting System** - Notifications for node health issues
+**Full UI/UX Planning:** See [`docs/dashboard-ui-plan.md`](../docs/dashboard-ui-plan.md) for complete design specification.
+
+#### Phase 6.1: Core Dashboard (MVP) - Priority
+1. **Dashboard Overview Page**
+   - Stat cards (nodes, jobs, alerts, uptime)
+   - Fleet topology view with live status
+   - Aggregated metrics charts (CPU, memory, disk)
+   - Recent activity feed
+
+2. **Nodes List Page**
+   - Sortable table with live status
+   - Node detail panel (metrics, charts, actions)
+   - Quick filters and search
+
+3. **Live Updates**
+   - WebSocket for real-time metrics
+   - Auto-refresh without page reload
+   - Status indicators and health badges
+
+4. **Purple Dark Theme**
+   - Professional dark mode UI
+   - Purple primary color (#7C3AED)
+   - Status colors (green/amber/red)
+
+**Technology Stack Decision:**
+- **Option A (Recommended):** FastAPI + htmx + Alpine.js + Tailwind CSS (lightweight, fast to build)
+- **Option B (Future):** FastAPI + React + Vite (richer interactions, complex features)
+
+**Estimated Effort:** 2-3 weeks for MVP
+
+#### Phase 6.2: Job Management UI
+- Jobs page (active + history)
+- Job submission form with templates
+- Live job output viewer
+- **Estimated Effort:** 1 week
+
+#### Phase 6.3: Log Viewer
+- Centralized log viewer with filters
+- Search and export functionality
+- Follow mode (tail -f style)
+- **Estimated Effort:** 1 week
+
+#### Phase 6.4: Advanced Features
+- Terminal in browser (xterm.js)
+- Alerting system with notifications
+- User authentication and access control
+- **Estimated Effort:** 2-3 weeks per feature
+
+**Medium Priority (Post-Dashboard):**
+- **Job Scheduling** - Cron-like scheduling for recurring jobs
+- **Terminal CLI Client** - WebSocket-based remote shell client
+- **Job Templates** - Pre-defined job configurations for common tasks
 
 **Optional (Vigil Legacy - Parked):**
 - **Scriptor Module (OCR)** - Tesseract integration (infrastructure ready)

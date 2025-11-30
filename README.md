@@ -54,14 +54,15 @@ graph TD
 *   Job queue with concurrent execution limits
 *   Result reporting and tracking
 
-### 🚀 Planned
+### 🚀 Planned (In Design)
 
-**Web Dashboard** - Real-time fleet monitoring
+**Web Dashboard** - Real-time fleet monitoring (UniFi-style with purple theme)
 *   Live metrics visualization (CPU, memory, disk, temperature)
 *   Health status overview for all nodes
 *   Log viewer with filtering and search
 *   Job submission and monitoring UI
 *   System topology and node discovery
+*   📋 **See full UI/UX plan:** [`docs/dashboard-ui-plan.md`](docs/dashboard-ui-plan.md)
 
 ### 📦 Optional (Vigil Legacy - Parked)
 
