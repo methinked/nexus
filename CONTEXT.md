@@ -1,8 +1,8 @@
 # Nexus Development Context
 
-**Last Session:** 2025-11-30 (Late Evening - Phase 6.1 Complete)
+**Last Session:** 2025-11-30 (Night - Raspberry Pi Deployment Complete)
 **Current Branch:** dev
-**Current Phase:** Phase 6 - The Dashboard (IN PROGRESS - 6.1 Complete ✓)
+**Current Phase:** Phase 6 - The Dashboard (6.1 Complete ✓ + Pi Deployment Complete ✓)
 
 ---
 
@@ -725,6 +725,49 @@ rg "TODO:" nexus/
 - **Phase 6.1 Metrics Visualization COMPLETE!** ✓
   - Dashboard now production-ready for monitoring
   - Ready for Phase 6.2: Node detail pages and job submission UI
+
+**Session 2025-11-30 (Night - Raspberry Pi Deployment):**
+- **First Real Pi Deployment - COMPLETE!**
+  - Target: Raspberry Pi "moria-pi" at 10.243.14.179 (ZeroTier network)
+  - System specs: Linux 6.12.47, aarch64, Python 3.11.2
+  - Network: ZeroTier VPN (10.243.x.x) connecting laptop to Pi
+- **Deployment automation created:**
+  - scripts/deploy-pi.sh - Comprehensive deployment script
+  - Handles: SSH connection, code copying, venv creation, dependency install
+  - Creates .env configuration with Core server IP
+  - Sets up startup script for agent service
+- **Deployment process:**
+  - SSH connectivity tested via ZeroTier (sshpass required)
+  - Python 3.11.2 verified on Pi (perfect match!)
+  - All dependencies installed successfully from requirements-agent.txt
+  - Virtual environment created on Pi (~/nexus-agent/venv)
+  - Agent code + shared modules copied to ~/nexus-agent/
+  - Configuration: NEXUS_CORE_URL=http://10.243.29.55:8000 (laptop ZeroTier IP)
+  - Agent started successfully in background
+- **End-to-end verification:**
+  - Agent auto-registered with Core on startup
+  - Node ID: 113cd27d-6127-459f-8e87-6f2faa7acbda
+  - Metrics flowing every 30 seconds (HTTP 201 Created)
+  - All services started: metrics collector, log collector, job dispatcher
+  - Dashboard now shows 2 nodes: default-agent (laptop) + moria-pi (Pi)
+  - Real-time charts displaying Pi metrics in browser
+- **Production observations:**
+  - Pi resource usage: CPU 0-0.5%, Memory ~31%, Disk 14.4%
+  - Temperature monitoring working: 47-50°C (vcgencmd)
+  - ZeroTier latency acceptable for metrics/control traffic
+  - Auto-reload enabled in dev mode (watchfiles)
+  - All agent services lightweight and stable
+- **Lessons learned:**
+  - ZeroTier provides seamless VPN connectivity
+  - sshpass required for automated deployments
+  - Pi 3 handles agent workload easily (minimal resources)
+  - Deployment script makes Pi provisioning trivial
+  - Auto-registration flow works perfectly
+- **Ready for multi-Pi fleet:**
+  - Deployment script can be reused for additional Pis
+  - Each Pi gets unique node_id automatically
+  - Dashboard scales to multiple nodes
+  - Metrics collection proven on real ARM hardware
 
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)

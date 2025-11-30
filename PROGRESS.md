@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30 (PM Session - Phase 5 Complete)
-**Current Phase:** Phase 5 - The Hands (COMPLETE ✓)
+**Last Updated:** 2025-11-30 (Night Session - Pi Deployment Complete)
+**Current Phase:** Phase 6 - The Dashboard (Phase 6.1 COMPLETE ✓ + Pi Deployment)
 
 ---
 
@@ -333,6 +333,21 @@ The core CLI-based fleet management is complete. The next logical step is a web-
 - ✅ Fetch interception for automatic CLI logging
 - 🚧 Placeholder pages for Nodes, Jobs, Logs, Settings
 - 🚧 WebSocket for real-time updates (next priority)
+
+**Raspberry Pi Deployment (2025-11-30 Night):**
+- ✅ **First real Pi deployment successful!**
+- ✅ Target: Raspberry Pi "moria-pi" at 10.243.14.179
+- ✅ System: Linux 6.12.47, aarch64, Python 3.11.2
+- ✅ Created deployment script (scripts/deploy-pi.sh)
+- ✅ Automated: code copy, venv setup, dependencies, configuration
+- ✅ Agent registered with Core: 113cd27d-6127-459f-8e87-6f2faa7acbda
+- ✅ Metrics flowing: CPU 0-0.5%, Memory ~31%, Disk 14.4%, Temp 47-50°C
+- ✅ Dashboard displaying both laptop + Pi nodes
+- ✅ Real-time charts showing Pi hardware metrics
+- ✅ ZeroTier connectivity verified (10.243.x.x network)
+- ✅ All services operational (metrics, logging, job dispatcher)
+
+**Phase 6.1 COMPLETE!** ✓ - Production-ready dashboard monitoring real Pi hardware
 
 #### Phase 6.2: Job Management UI
 - Jobs page (active + history)

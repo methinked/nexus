@@ -89,8 +89,9 @@ graph TD
 
 ### Prerequisites
 *   Python 3.11+
-*   Docker & Docker Compose
+*   Docker & Docker Compose (optional)
 *   Local network (or VPN like ZeroTier/Tailscale for remote access)
+*   sshpass (for automated Pi deployment)
 
 ### Installation (Dev)
 
@@ -99,12 +100,33 @@ graph TD
 git clone https://github.com/yourusername/nexus.git
 cd nexus
 
-# Install dependencies
+# Install dependencies in virtual environment
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 
-# Initialize the Core
-nexus config init
-nexus db migrate
+# Start the Core server
+python -m nexus.core.main
+# Visit http://localhost:8000 for dashboard
+```
+
+### Deploying to Raspberry Pi
+
+```bash
+# Deploy agent to a Raspberry Pi (automated)
+./scripts/deploy-pi.sh <pi_ip> <pi_user> <pi_password> <core_ip>
+
+# Example:
+./scripts/deploy-pi.sh 10.243.14.179 methinked mypassword 10.243.29.55
+
+# The script will:
+# - Copy agent code to Pi
+# - Install dependencies
+# - Configure agent to connect to Core
+# - Start the agent service
+
+# Check deployment
+ssh user@pi_ip "cd ~/nexus-agent && cat agent.log"
 ```
 
 ## 📖 Usage
@@ -149,6 +171,7 @@ nexus fleet update
 - [x] **Phase 4: The Brain** - Centralized logging & remote control. ✅
 - [x] **Phase 5: The Hands** - Workload orchestration (Job execution system). ✅
 - [x] **Phase 6.1: The Dashboard** - Live metrics visualization (Charts with Chart.js). ✅
+- [x] **Pi Deployment** - First real Raspberry Pi deployment successful (moria-pi). ✅
 
 ## 🔒 Security
 
