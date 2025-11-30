@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30 (PM Session - Phase 4 Complete)
-**Current Phase:** Phase 5 - The Hands (Next)
+**Last Updated:** 2025-11-30 (PM Session - Phase 5 Complete)
+**Current Phase:** Phase 5 - The Hands (COMPLETE ✓)
 
 ---
 
@@ -148,6 +148,59 @@ All components completed:
 
 **Note:** Terminal CLI client implementation deferred to future (requires complex WebSocket + TTY handling). Terminal infrastructure (Agent + Core) is ready when needed.
 
+#### Phase 5: The Hands - Workload Orchestration (Completed 2025-11-30) ✨
+
+All components completed:
+- [x] Job execution architecture designed
+  - Queue-based system with FIFO scheduling
+  - Concurrent job limits (2 jobs max on Pi)
+  - Background dispatcher service
+  - Executor pattern for different job types
+- [x] Agent job queue implementation
+  - In-memory queue with deque
+  - Thread-safe operations with asyncio.Lock
+  - Job status tracking (pending, running, completed, failed)
+  - QueuedJob dataclass for job metadata
+- [x] Shell executor module
+  - Async subprocess execution
+  - Configurable timeout (default: 300s)
+  - Output capture (stdout/stderr)
+  - Exit code and execution time tracking
+  - JobResult model integration
+- [x] Job dispatcher service
+  - Background asyncio task
+  - Polls queue every 1 second
+  - Routes jobs to appropriate executors
+  - Reports results back to Core
+  - Error handling and logging
+- [x] Agent job API endpoints
+  - POST /api/jobs/{job_id}/execute - Receive jobs from Core
+  - GET /api/jobs/{job_id}/status - Query job status
+  - Integration with job queue
+- [x] Core job API enhancements
+  - POST /api/jobs - Submit job and send to agent
+  - PATCH /api/jobs/{job_id} - Receive result updates from agent
+  - Job validation and error handling
+  - Agent availability checking
+- [x] Agent lifecycle integration
+  - JobQueue and JobDispatcher started on agent startup
+  - Graceful shutdown with cleanup
+  - Global state management
+- [x] Shared model updates
+  - JobResult model with success, output, error, data fields
+  - Exported from nexus.shared for agent use
+- [x] End-to-end testing
+  - Job submitted via Core API
+  - Job sent to Agent automatically
+  - Agent queued and executed job
+  - Shell command executed successfully
+  - Result reported back to Core
+  - Result stored in database with full details
+
+**Phase 5 Complete: 2025-11-30** 🎉
+
+**Note:** OCR (Scriptor) and Sync (Arbiter) modules deferred to future phases. Job execution infrastructure is ready for additional job types.
+
 #### Phase 2: The Mesh - Agent Connectivity (Completed 2025-11-30) ✨
 
 All components completed:
@@ -228,17 +281,27 @@ All components completed:
 
 ## 📋 Next Steps
 
-### Phase 4: The Brain (Logging & Remote Control)
-1. Imperium module (remote terminal)
-2. WebSocket proxy setup
-3. Centralized logging
-4. Log aggregation and search
+### Phase 6: The Dashboard - Visualization & Monitoring (Priority)
+The core CLI-based fleet management is complete. The next logical step is a web-based dashboard for real-time visualization:
 
-### Phase 5: The Hands (Workload Orchestration)
-1. Scriptor module (OCR)
-2. Job queue system
-3. Arbiter module (sync conflicts)
-4. Task scheduling
+**High Priority:**
+1. **Web Dashboard** - Real-time fleet monitoring
+   - Live metrics visualization (CPU, memory, disk, temperature charts)
+   - Health status overview for all nodes
+   - Log viewer with filtering and search
+   - Job submission and monitoring UI
+   - System topology and node discovery
+   - Technology: FastAPI + htmx/Alpine.js (lightweight) or React
+
+**Medium Priority:**
+2. **Job Scheduling** - Cron-like scheduling for recurring jobs
+3. **Terminal CLI Client** - WebSocket-based remote shell client
+4. **Job Templates** - Pre-defined job configurations for common tasks
+5. **Alerting System** - Notifications for node health issues
+
+**Optional (Vigil Legacy - Parked):**
+- **Scriptor Module (OCR)** - Tesseract integration (infrastructure ready)
+- **Arbiter Module (Sync)** - Syncthing conflict resolution (infrastructure ready)
 
 ---
 

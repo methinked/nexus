@@ -1,8 +1,8 @@
 # Nexus Development Context
 
-**Last Session:** 2025-11-30 (PM - Phase 4 Complete)
+**Last Session:** 2025-11-30 (PM - Phase 5 Complete)
 **Current Branch:** dev
-**Current Phase:** Phase 5 - The Hands (Next)
+**Current Phase:** Phase 5 - The Hands (COMPLETE ✓)
 
 ---
 
@@ -127,30 +127,65 @@ Nexus is a distributed Raspberry Pi management system with a **CLI-first** philo
 
 ---
 
-## 🚧 What's Next
+## ✅ What's Been Completed
 
-### Phase 5: The Hands - Workload Orchestration
-**Goal:** Implement job queue system and specialized modules
+### Phase 5: The Hands - Workload Orchestration (COMPLETE ✓)
+**Status:** All core job execution infrastructure complete!
 
-**Components to build:**
-1. Job Queue System
-   - Job scheduling and prioritization
-   - Queue management and persistence
-   - Worker pool management
-2. Scriptor Module (OCR Processing)
-   - Tesseract integration
-   - Image preprocessing
-   - Result formatting and storage
-3. Arbiter Module (Sync Conflict Resolution)
-   - File synchronization logic
-   - Conflict detection and resolution
-   - Merge strategies
-4. Job Execution Framework
-   - Async job runners
-   - Progress tracking
-   - Error handling and retries
+**What's Working:**
+1. ✅ Job Queue System
+   - FIFO scheduling with deque
+   - Concurrent job limits (configurable, default: 2)
+   - Thread-safe operations with asyncio.Lock
+   - Status tracking (pending, running, completed, failed)
+2. ✅ Shell Job Execution
+   - Async subprocess execution
+   - Output capture (stdout/stderr)
+   - Timeout support (configurable, default: 300s)
+   - Result reporting to Core
+3. ✅ Job Dispatcher Service
+   - Background polling loop
+   - Routes jobs to appropriate executors
+   - Reports results back to Core
+   - Graceful error handling
 
-**Note:** Phase 4 (logging and terminal infrastructure) is complete! Terminal CLI client implementation was deferred as it requires complex WebSocket + TTY handling.
+**Deferred for Future:**
+- Scriptor Module (OCR Processing) - Infrastructure ready (optional/parked)
+- Arbiter Module (Sync Conflict Resolution) - Infrastructure ready (optional/parked)
+- Terminal CLI Client - WebSocket + TTY handling complex
+- Job scheduling (cron-like) - Can build on existing queue system
+
+## 🚧 What's Next - Phase 6: The Dashboard
+
+**The core CLI-based fleet management system is complete and production-ready!**
+
+### Priority: Web Dashboard for Visualization
+The next logical enhancement is a web-based dashboard for real-time monitoring:
+
+**High Priority Features:**
+1. **Web Dashboard** - Real-time fleet monitoring
+   - Live metrics visualization (CPU, memory, disk, temperature charts)
+   - Health status overview with color-coded indicators
+   - Centralized log viewer with filtering and search
+   - Job submission and monitoring UI
+   - System topology and node discovery
+   - Technology stack options:
+     - Lightweight: FastAPI + htmx/Alpine.js
+     - Full-featured: FastAPI + React/Vue
+
+2. **Alerting System** - Proactive notifications
+   - Email/webhook alerts for node health issues
+   - Configurable thresholds per node
+   - Alert history and acknowledgment
+
+**Medium Priority:**
+3. **Job Scheduling** - Cron-like recurring job support
+4. **Terminal CLI Client** - WebSocket-based remote shell
+5. **Job Templates** - Pre-defined configurations for common tasks
+
+**Optional (Vigil Legacy - Parked):**
+- OCR Jobs (Scriptor) - Tesseract integration
+- Sync Jobs (Arbiter) - Syncthing conflict resolution
 
 ---
 
@@ -511,6 +546,49 @@ rg "TODO:" nexus/
   - Fully configurable for different environments
   - Production-ready with sensible defaults
 
+**Session 2025-11-30 (PM - Part 9 - Phase 5 Complete):**
+- Implemented complete job execution system:
+  - Job queue implementation (nexus/agent/services/job_queue.py)
+  - In-memory queue with deque for FIFO scheduling
+  - Thread-safe operations using asyncio.Lock
+  - QueuedJob dataclass tracking job lifecycle
+  - Configurable concurrent job limits (default: 2 for Pi)
+- Job dispatcher service:
+  - Background asyncio task polling queue every 1 second
+  - Routes jobs to appropriate executors based on type
+  - Reports results back to Core via PATCH /api/jobs/{job_id}
+  - Graceful error handling and logging
+  - Started/stopped with agent lifecycle
+- Shell executor module:
+  - Async subprocess execution with asyncio.create_subprocess_shell
+  - Configurable timeout (default: 300s)
+  - Output capture (stdout/stderr combined)
+  - Exit code tracking and execution time
+  - JobResult model with success, output, error, data fields
+- Core job API enhancements:
+  - POST /api/jobs - Submit job and automatically send to agent
+  - PATCH /api/jobs/{job_id} - Receive result updates from agents
+  - Node validation and availability checking
+  - Error handling when agent unreachable
+- Agent job API endpoints:
+  - POST /api/jobs/{job_id}/execute - Receive and queue jobs
+  - GET /api/jobs/{job_id}/status - Query job status
+  - Integration with JobQueue for status tracking
+- Shared model updates:
+  - Added JobResult model to nexus.shared
+  - Exported for use across Core, Agent, and CLI
+- End-to-end testing verified:
+  - Job submitted via Core API (curl POST /api/jobs)
+  - Core automatically sends job to agent
+  - Agent queues and executes shell command
+  - Result captured and reported back to Core
+  - Database updated with full job result details
+- **Phase 5 Complete!**
+  - Full job execution infrastructure operational
+  - Shell jobs working end-to-end
+  - OCR (Scriptor) and Sync (Arbiter) deferred to future
+  - Infrastructure ready for additional job types
+
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)
 - Local network first (lower barrier)
@@ -524,9 +602,9 @@ rg "TODO:" nexus/
 
 ---
 
-## 🎯 Phase 1, 1.5, 2, 3 & 4 Complete! ✓
+## 🎯 All Core Phases Complete! ✓
 
-All foundation, mesh, metrics, and logging work complete:
+All foundation, mesh, metrics, logging, and job execution work complete:
 1. ✅ Shared models complete
 2. ✅ Core API structure complete with database
 3. ✅ Agent API structure complete
@@ -543,18 +621,33 @@ All foundation, mesh, metrics, and logging work complete:
 14. ✅ Log collection from agents
 15. ✅ CLI logs viewer with filtering
 16. ✅ Terminal infrastructure (server-side) ready
+17. ✅ Job queue and dispatcher system
+18. ✅ Shell command execution working end-to-end
+19. ✅ Job result reporting to Core
 
-## 🎯 Phase 5: The Hands - Next Phase 🚀
+## 🚀 Next Priority: Web Dashboard (Phase 6)
 
-**Goal:** Job queue system and workload orchestration
+**High Priority - Fleet Visualization:**
+1. **Web Dashboard** - Real-time monitoring and control
+   - Live metrics charts (CPU, memory, disk, temp)
+   - Health status overview for all nodes
+   - Centralized log viewer with search
+   - Job submission and monitoring UI
+   - System topology visualization
 
-**To Implement:**
-1. ⏳ Job queue management and scheduling
-2. ⏳ Scriptor module (OCR processing)
-3. ⏳ Arbiter module (sync conflict resolution)
-4. ⏳ Job execution framework
-5. ⏳ Progress tracking and error handling
+2. **Alerting System** - Proactive monitoring
+   - Health threshold alerts
+   - Email/webhook notifications
+
+**Medium Priority - Advanced Features:**
+3. **Job Scheduling** - Cron-like recurring jobs
+4. **Terminal CLI Client** - WebSocket-based remote shell
+5. **Job Templates** - Pre-configured common tasks
+
+**Optional (Parked) - Vigil Legacy:**
+- Scriptor Module (OCR) - Image text extraction
+- Arbiter Module (Sync) - Syncthing conflict resolution
 
 ---
 
-**Good luck on the next session! Start with PROGRESS.md and this file to get oriented.**
+**System is production-ready for CLI-based fleet management! Dashboard is the next logical enhancement.**
