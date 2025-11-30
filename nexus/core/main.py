@@ -40,15 +40,20 @@ async def lifespan(app: FastAPI):
     logger.info(f"Database: {config.database_url}")
     logger.info(f"Listening on {config.host}:{config.port}")
 
-    # TODO: Initialize database connection
-    # TODO: Run database migrations
+    # Initialize database
+    from nexus.core.db import init_db
+    logger.info("Initializing database...")
+    init_db()
+    logger.info("Database initialized successfully")
+
+    # TODO: Run database migrations (requires alembic command)
     # TODO: Start background tasks (cleanup, monitoring, etc.)
 
     yield
 
     # Shutdown
     logger.info("Shutting down Nexus Core...")
-    # TODO: Close database connections
+    # Database connections are closed automatically per-request
     # TODO: Stop background tasks
 
 

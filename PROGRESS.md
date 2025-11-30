@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30 (PM Session)
-**Current Phase:** Phase 1 - The Bedrock (Complete ✓)
+**Last Updated:** 2025-11-30 (PM Session - Database Layer)
+**Current Phase:** Phase 1.5 - Database Layer (Complete ✓)
 
 ---
 
@@ -59,6 +59,27 @@ All components completed:
 
 **Phase 1 Complete: 2025-11-30** 🎉
 
+#### Phase 1.5: Database Layer - COMPLETE ✓ (2025-11-30)
+
+All components completed:
+- [x] Database layer (`nexus/core/db/`)
+  - database.py: SQLAlchemy engine and session management
+  - models.py: ORM models for nodes, jobs, metrics
+  - crud.py: Complete CRUD operations for all entities
+  - __init__.py: Clean exports for easy importing
+- [x] Alembic migration system
+  - alembic.ini: Configuration file
+  - alembic/env.py: Migration environment
+  - alembic/versions/001_initial_schema.py: Initial database schema
+- [x] Core API updated to use database
+  - api/auth.py: Node registration with duplicate checking
+  - api/nodes.py: Full CRUD with metrics and job counts
+  - api/jobs.py: Job submission and queries with pagination
+  - api/metrics.py: Metrics submission and historical queries
+  - main.py: Database initialization on startup
+
+**Phase 1.5 Complete: 2025-11-30** 🎉
+
 ---
 
 ## 📋 Next Steps
@@ -69,21 +90,8 @@ All components completed:
 3. Initialize git repository and make first commit
 4. Set up development environment helper scripts
 
-### Phase 1.5: Database Layer (Next Priority)
-**Goal:** Replace stubbed API endpoints with actual database operations
-
-1. **Database Layer** (`nexus/core/db/`)
-   - SQLAlchemy models for Core database
-   - Alembic migration setup
-   - Initial schema (nodes, jobs, metrics tables)
-   - CRUD operations for nodes, jobs, metrics
-
-2. **Update Core API**
-   - Replace TODO stubs with database operations
-   - Implement proper error handling
-   - Add pagination support
-
-### Phase 2: The Mesh (Agent Discovery & Connectivity)
+### Phase 2: The Mesh (Agent Discovery & Connectivity) - Next Priority
+**Goal:** Connect agents to Core and establish communication
 1. Local network discovery (mDNS/Bonjour)
 2. Agent registration flow
 3. API token issuance and validation

@@ -1,8 +1,8 @@
 # Nexus Development Context
 
-**Last Session:** 2025-11-30 (PM)
+**Last Session:** 2025-11-30 (PM - Database Layer)
 **Current Branch:** dev
-**Current Phase:** Phase 1 - The Bedrock (Complete ✓)
+**Current Phase:** Phase 1.5 - Database Layer (Complete ✓)
 
 ---
 
@@ -331,13 +331,22 @@ rg "TODO:" nexus/
 - Implemented Core FastAPI skeleton (all endpoints stubbed)
 - Implemented Agent FastAPI skeleton (all endpoints stubbed)
 
-**Session 2025-11-30 (PM):**
+**Session 2025-11-30 (PM - Part 1):**
 - Implemented complete CLI foundation with Typer + Rich
 - Created config management commands (init, show, set, validate)
 - Created node management commands (list, get, update, delete)
 - Created job management commands (submit, list, get)
 - **Phase 1 Complete!**
-- Next session: Implement database layer (Phase 1.5)
+
+**Session 2025-11-30 (PM - Part 2):**
+- Implemented complete database layer with SQLAlchemy
+- Created ORM models for nodes, jobs, and metrics
+- Implemented comprehensive CRUD operations
+- Set up Alembic for database migrations
+- Updated all Core API endpoints to use database
+- Replaced all TODO stubs with working database operations
+- **Phase 1.5 Complete!**
+- Next session: Test integration and begin Phase 2 (Agent connectivity)
 
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)
@@ -348,26 +357,26 @@ rg "TODO:" nexus/
 
 ---
 
-## 🎯 End Goal for Phase 1 ✓
+## 🎯 Phase 1 & 1.5 Complete! ✓
 
-Phase 1 Complete! Current status:
+Current status:
 1. ✅ Shared models are complete
 2. ✅ Core API structure is complete
 3. ✅ Agent API structure is complete
-4. ✅ CLI can interact with Core (structure ready)
-5. ⏳ Core has database backing (Next: Phase 1.5)
-6. ⏳ Agent can register with Core (Next: Phase 1.5)
-7. ⏳ Agent can send metrics to Core (Next: Phase 1.5)
-8. ⏳ Can list nodes and see their status via CLI (Next: Phase 1.5)
+4. ✅ CLI can interact with Core
+5. ✅ Core has database backing
+6. ✅ Node registration endpoint working
+7. ✅ Metrics submission endpoint working
+8. ✅ Can list/manage nodes and jobs via CLI (ready to test)
 
-## 🎯 Goal for Phase 1.5 - Database Layer
+## 🎯 Next Steps - Phase 2: The Mesh
 
-Make the system functional by adding database persistence:
-1. SQLAlchemy models for nodes, jobs, metrics
-2. Alembic migrations for schema management
-3. Replace all TODO stubs in Core API
-4. Implement CRUD operations
-5. Test end-to-end: CLI → Core → Database
+Connect agents to Core and establish communication:
+1. Test Core API and database integration
+2. Implement agent registration flow in agent code
+3. Implement metrics collection with psutil in agent
+4. Test full flow: Agent → Register → Submit Metrics → Core → Database
+5. Test CLI commands against live data
 
 ---
 
