@@ -47,7 +47,7 @@ async def execute_job(job_id: UUID, request: JobExecutionRequest):
     Execute a job (called by Core).
 
     Core sends a job execution request to the agent. The agent
-    starts the job asynchronously and returns immediately.
+    queues the job for background execution and returns immediately.
 
     Args:
         job_id: UUID of the job
@@ -55,18 +55,22 @@ async def execute_job(job_id: UUID, request: JobExecutionRequest):
 
     Returns:
         Job execution acknowledgment
-
-    TODO: Implement job dispatcher based on job type
-    TODO: Queue job for background execution
-    TODO: Return job status
     """
-    # TODO: Validate job type
-    # TODO: Queue job for execution based on type
-    # TODO: Start background worker
+    from nexus.agent.main import job_queue
 
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Job execution not yet implemented",
+    if not job_queue:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Job system not initialized",
+        )
+
+    # Enqueue the job
+    queued_job = await job_queue.enqueue(job_id, request.type, request.payload)
+
+    return JobExecutionResponse(
+        job_id=job_id,
+        status=JobStatus.PENDING,
+        started_at=queued_job.queued_at,
     )
 
 
@@ -82,14 +86,28 @@ async def get_job_status(job_id: UUID):
 
     Returns:
         Current job status and result if completed
-
-    TODO: Implement job status tracking
-    TODO: Return job result when completed
     """
-    # TODO: Query local job status
-    # TODO: Return status and result
+    from nexus.agent.main import job_queue
 
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Job {job_id} not found",
+    if not job_queue:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Job system not initialized",
+        )
+
+    # Query job status from queue
+    job = await job_queue.get_status(job_id)
+
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Job {job_id} not found",
+        )
+
+    return JobStatusResponse(
+        job_id=job.job_id,
+        status=job.status,
+        result=job.result,
+        started_at=job.started_at,
+        completed_at=job.completed_at,
     )
