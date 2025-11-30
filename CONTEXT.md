@@ -1,8 +1,8 @@
 # Nexus Development Context
 
-**Last Session:** 2025-11-30 (PM - Phase 2 Complete)
+**Last Session:** 2025-11-30 (PM - Phase 3 Complete)
 **Current Branch:** dev
-**Current Phase:** Phase 3 - The Pulse (Next)
+**Current Phase:** Phase 4 - The Brain (Next)
 
 ---
 
@@ -129,19 +129,21 @@ Nexus is a distributed Raspberry Pi management system with a **CLI-first** philo
 
 ## 🚧 What's Next
 
-### Phase 3: The Pulse - Metrics Visualization
-**Goal:** Build metrics querying and visualization
+### Phase 4: The Brain - Logging & Remote Control
+**Goal:** Build centralized logging and remote terminal access
 
 Need to implement:
-1. Add metrics query API endpoints to Core
-   - Time-range filtering
-   - Aggregation (avg, min, max)
-   - Per-node queries
-2. CLI commands for viewing metrics
-   - `nexus metrics get <node-id>`
-   - `nexus metrics stats <node-id>`
-3. Node health status based on metrics
-4. Optional: Basic web dashboard
+1. Imperium module (remote terminal)
+   - WebSocket-based terminal proxy
+   - Secure authentication
+   - Session management
+2. Centralized logging system
+   - Agent log collection
+   - Log aggregation and storage
+   - Log querying and search
+3. CLI commands for remote access
+   - `nexus node shell <node-id>` - Remote terminal
+   - `nexus logs <node-id>` - View logs
 
 ---
 
@@ -389,18 +391,54 @@ rg "TODO:" nexus/
   - All components tested and verified
 - Next: Phase 3 - Metrics visualization and querying
 
+**Session 2025-11-30 (PM - Part 5 - Phase 3 Complete):**
+- Implemented complete metrics visualization system:
+  - Enhanced shared models with NodeHealth enum and health-related models
+  - Added MetricStats model for aggregated statistics
+  - Created HealthThresholds and NodeHealthStatus models
+- Core API enhancements:
+  - GET /api/metrics/{node_id}/stats - Aggregated metrics statistics
+  - GET /api/nodes/{node_id}/health - Health status calculation
+  - Time-range filtering support (since/until parameters)
+  - Custom threshold overrides via query parameters
+- Health calculation service:
+  - Created nexus/core/services/health.py
+  - Threshold-based component health assessment
+  - Configurable warning/critical levels
+  - Overall health determined by worst component
+- Database aggregation:
+  - get_metrics_stats() using SQLAlchemy func operations
+  - Efficient min/max/avg calculations
+  - Handles NULL temperature values
+- CLI metrics commands:
+  - nexus metrics get - View recent metrics with color-coded output
+  - nexus metrics stats - View aggregated statistics in formatted panels
+  - nexus metrics health - View health status with visual indicators
+  - Time-range filtering support (--since, --hours, --until)
+  - Rich table and panel formatting
+- Tested end-to-end:
+  - All API endpoints verified with curl
+  - CLI commands tested with live data
+  - Health calculations working correctly
+- **Phase 3 Complete!**
+  - Full metrics visualization operational
+  - Health monitoring integrated
+  - All components tested and working
+
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)
 - Local network first (lower barrier)
 - Pydantic v2 with strict validation
 - JWT with bcrypt for auth
 - SQLite for simplicity
+- Threshold-based health assessment (configurable)
+- Rich CLI formatting for better UX
 
 ---
 
-## 🎯 Phase 1, 1.5 & 2 Complete! ✓
+## 🎯 Phase 1, 1.5, 2 & 3 Complete! ✓
 
-All foundation and mesh work complete:
+All foundation, mesh, and metrics work complete:
 1. ✅ Shared models complete
 2. ✅ Core API structure complete with database
 3. ✅ Agent API structure complete
@@ -410,17 +448,19 @@ All foundation and mesh work complete:
 7. ✅ Metrics collection working (psutil-based, 30s interval)
 8. ✅ Metrics submission working (HTTP POST with JWT auth)
 9. ✅ **Full agent-Core mesh operational!**
+10. ✅ Metrics aggregation and statistics
+11. ✅ Health status calculation and monitoring
+12. ✅ CLI metrics visualization commands
 
-## 🎯 Phase 3: The Pulse - Next
+## 🎯 Phase 4: The Brain - Next
 
-**Goal:** Metrics visualization and querying
+**Goal:** Logging and remote control
 
 **Planned Features:**
-1. API endpoints for querying historical metrics
-2. CLI commands for viewing metrics
-3. Time-range filtering and aggregation
-4. Node health status based on metrics
-5. Optional web dashboard
+1. Imperium module (WebSocket-based remote terminal)
+2. Centralized logging system
+3. Log aggregation and querying
+4. CLI commands for remote access
 
 ---
 

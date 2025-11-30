@@ -16,6 +16,7 @@ from nexus.core.db.crud import (
     get_jobs_count,
     get_latest_metric,
     get_metrics,
+    get_metrics_stats,
     get_node,
     get_node_by_name,
     get_nodes,
@@ -57,6 +58,7 @@ __all__ = [
     # CRUD - Metrics
     "create_metric",
     "get_metrics",
+    "get_metrics_stats",
     "get_latest_metric",
     "delete_old_metrics",
 ]

@@ -20,10 +20,14 @@ from nexus.core.db import (
     update_node as db_update_node,
 )
 from nexus.core.db.database import get_db
+from nexus.core.services.health import calculate_node_health
 from nexus.shared import (
+    HealthThresholds,
     JobStatus,
+    Metric,
     MetricData,
     Node,
+    NodeHealthStatus,
     NodeList,
     NodeStatus,
     NodeUpdate,
@@ -185,6 +189,80 @@ async def update_node_metadata(
         "last_seen": db_node.last_seen,
     }
     return Node.model_validate(node_dict)
+
+
+@router.get("/{node_id}/health", response_model=NodeHealthStatus)
+async def get_node_health(
+    node_id: UUID,
+    db: Session = Depends(get_db),
+    cpu_warning: float = Query(80.0, ge=0, le=100),
+    cpu_critical: float = Query(95.0, ge=0, le=100),
+    memory_warning: float = Query(85.0, ge=0, le=100),
+    memory_critical: float = Query(95.0, ge=0, le=100),
+    disk_warning: float = Query(85.0, ge=0, le=100),
+    disk_critical: float = Query(95.0, ge=0, le=100),
+    temperature_warning: Optional[float] = Query(75.0, ge=-50, le=150),
+    temperature_critical: Optional[float] = Query(85.0, ge=-50, le=150),
+):
+    """
+    Get health status for a node based on latest metrics.
+
+    Calculates health status (HEALTHY, WARNING, CRITICAL, UNKNOWN) for each
+    component (CPU, memory, disk, temperature) and overall health.
+
+    Query Parameters (optional custom thresholds):
+        cpu_warning: CPU usage % for warning (default: 80)
+        cpu_critical: CPU usage % for critical (default: 95)
+        memory_warning: Memory usage % for warning (default: 85)
+        memory_critical: Memory usage % for critical (default: 95)
+        disk_warning: Disk usage % for warning (default: 85)
+        disk_critical: Disk usage % for critical (default: 95)
+        temperature_warning: Temperature °C for warning (default: 75)
+        temperature_critical: Temperature °C for critical (default: 85)
+
+    Args:
+        node_id: UUID of the node
+
+    Returns:
+        Health status with component breakdown and latest metrics
+
+    Raises:
+        404: Node not found
+    """
+    # Validate node exists
+    db_node = get_node(db, str(node_id))
+    if not db_node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Node {node_id} not found",
+        )
+
+    # Get latest metric
+    db_metric = get_latest_metric(db, str(node_id))
+
+    # Convert to Pydantic model if exists
+    latest_metric = Metric.model_validate(db_metric) if db_metric else None
+
+    # Build custom thresholds
+    thresholds = HealthThresholds(
+        cpu_warning=cpu_warning,
+        cpu_critical=cpu_critical,
+        memory_warning=memory_warning,
+        memory_critical=memory_critical,
+        disk_warning=disk_warning,
+        disk_critical=disk_critical,
+        temperature_warning=temperature_warning,
+        temperature_critical=temperature_critical,
+    )
+
+    # Calculate health status
+    health_status = calculate_node_health(
+        node_id=node_id,
+        latest_metric=latest_metric,
+        thresholds=thresholds,
+    )
+
+    return health_status
 
 
 @router.delete("/{node_id}", status_code=status.HTTP_204_NO_CONTENT)

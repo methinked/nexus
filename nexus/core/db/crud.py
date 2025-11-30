@@ -278,6 +278,71 @@ def get_latest_metric(db: Session, node_id: str) -> Optional[MetricModel]:
     )
 
 
+def get_metrics_stats(
+    db: Session,
+    node_id: str,
+    since: Optional[datetime] = None,
+    until: Optional[datetime] = None,
+) -> Optional[dict]:
+    """
+    Get aggregated statistics for metrics over a time period.
+
+    Returns a dictionary with min, max, and avg for each metric type.
+    Returns None if no metrics found in the time range.
+    """
+    from sqlalchemy import func
+
+    query = db.query(
+        func.count(MetricModel.id).label("count"),
+        func.min(MetricModel.timestamp).label("start_time"),
+        func.max(MetricModel.timestamp).label("end_time"),
+        # CPU stats
+        func.avg(MetricModel.cpu_percent).label("cpu_avg"),
+        func.min(MetricModel.cpu_percent).label("cpu_min"),
+        func.max(MetricModel.cpu_percent).label("cpu_max"),
+        # Memory stats
+        func.avg(MetricModel.memory_percent).label("memory_avg"),
+        func.min(MetricModel.memory_percent).label("memory_min"),
+        func.max(MetricModel.memory_percent).label("memory_max"),
+        # Disk stats
+        func.avg(MetricModel.disk_percent).label("disk_avg"),
+        func.min(MetricModel.disk_percent).label("disk_min"),
+        func.max(MetricModel.disk_percent).label("disk_max"),
+        # Temperature stats (can be NULL)
+        func.avg(MetricModel.temperature).label("temperature_avg"),
+        func.min(MetricModel.temperature).label("temperature_min"),
+        func.max(MetricModel.temperature).label("temperature_max"),
+    ).filter(MetricModel.node_id == node_id)
+
+    if since:
+        query = query.filter(MetricModel.timestamp >= since)
+    if until:
+        query = query.filter(MetricModel.timestamp <= until)
+
+    result = query.first()
+
+    if not result or result.count == 0:
+        return None
+
+    return {
+        "count": result.count,
+        "start_time": result.start_time,
+        "end_time": result.end_time,
+        "cpu_avg": result.cpu_avg,
+        "cpu_min": result.cpu_min,
+        "cpu_max": result.cpu_max,
+        "memory_avg": result.memory_avg,
+        "memory_min": result.memory_min,
+        "memory_max": result.memory_max,
+        "disk_avg": result.disk_avg,
+        "disk_min": result.disk_min,
+        "disk_max": result.disk_max,
+        "temperature_avg": result.temperature_avg,
+        "temperature_min": result.temperature_min,
+        "temperature_max": result.temperature_max,
+    }
+
+
 def delete_old_metrics(db: Session, before: datetime) -> int:
     """Delete metrics older than the specified datetime."""
     deleted = db.query(MetricModel).filter(MetricModel.timestamp < before).delete()

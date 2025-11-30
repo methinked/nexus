@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30 (PM Session - Phase 2 Complete)
-**Current Phase:** Phase 3 - The Pulse (Next)
+**Last Updated:** 2025-11-30 (PM Session - Phase 3 Complete)
+**Current Phase:** Phase 4 - The Brain (Next)
 
 ---
 
@@ -126,18 +126,49 @@ All components completed:
 
 **Phase 2 Complete: 2025-11-30** 🎉
 
+#### Phase 3: The Pulse - Metrics Visualization (Completed 2025-11-30) ✨
+
+All components completed:
+- [x] Enhanced shared models
+  - Added NodeHealth enum (HEALTHY, WARNING, CRITICAL, UNKNOWN)
+  - Created MetricStats model for aggregated statistics
+  - Created HealthThresholds model for configurable thresholds
+  - Created NodeHealthStatus model with component breakdown
+- [x] Core API metrics enhancements
+  - GET /api/metrics/{node_id}/stats - Aggregated statistics endpoint
+  - Supports time-range filtering (since/until parameters)
+  - Returns min/max/avg for CPU, memory, disk, temperature
+- [x] Core API health endpoints
+  - GET /api/nodes/{node_id}/health - Health status endpoint
+  - Calculates component-level health (CPU, memory, disk, temp)
+  - Supports custom threshold overrides via query parameters
+  - Returns overall health with detailed breakdown
+- [x] Health calculation service
+  - Created nexus/core/services/health.py
+  - Implements threshold-based health assessment
+  - Supports configurable warning/critical levels
+  - Handles optional temperature monitoring
+- [x] Database aggregation functions
+  - get_metrics_stats() - Aggregates metrics over time ranges
+  - Uses SQLAlchemy func.avg/min/max for efficiency
+  - Handles NULL temperature values gracefully
+- [x] CLI metrics commands
+  - nexus metrics get - View recent metrics with colored output
+  - nexus metrics stats - View aggregated statistics
+  - nexus metrics health - View health status with visual indicators
+  - Supports time-range filtering (--since, --hours)
+  - Rich formatting with tables and panels
+- [x] End-to-end testing
+  - API endpoints verified (stats, health)
+  - CLI commands tested with live data
+  - Health calculation working correctly
+  - All components integrated successfully
+
+**Phase 3 Complete: 2025-11-30** 🎉
+
 ---
 
 ## 📋 Next Steps
-
-### Phase 3: The Pulse (Metrics Visualization) - Next Priority
-**Goal:** Build metrics visualization and monitoring capabilities
-1. Add metrics query endpoints to Core API
-2. Implement CLI commands for metrics viewing
-3. Add time-range filtering for historical metrics
-4. Create basic metrics dashboard (optional web UI)
-5. Add metrics aggregation (averages, min/max)
-6. Implement node health status based on metrics
 
 ### Phase 4: The Brain (Logging & Remote Control)
 1. Imperium module (remote terminal)
