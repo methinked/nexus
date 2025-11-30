@@ -95,6 +95,23 @@ async def logs_page(request: Request):
     )
 
 
+@router.get("/modules", response_class=HTMLResponse)
+async def modules_page(request: Request):
+    """
+    Modules & Services page.
+
+    Manage and deploy services/modules across the fleet.
+    """
+    return templates.TemplateResponse(
+        "modules.html",
+        {
+            "request": request,
+            "page_title": "Modules & Services",
+            "active_page": "modules"
+        }
+    )
+
+
 @router.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request):
     """
