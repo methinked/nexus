@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30
-**Current Phase:** Phase 1 - The Bedrock
+**Last Updated:** 2025-11-30 (PM Session - Database Layer)
+**Current Phase:** Phase 1.5 - Database Layer (Complete ✓)
 
 ---
 
@@ -32,11 +32,53 @@
 
 ## 🚧 In Progress
 
-#### Phase 1: The Bedrock (Core Library & CLI Foundation)
-- [ ] Shared models implementation
-- [ ] Core FastAPI skeleton
-- [ ] Agent FastAPI skeleton
-- [ ] CLI foundation
+#### Phase 1: The Bedrock - COMPLETE ✓ (2025-11-30)
+
+All components completed:
+- [x] Shared models implementation (`nexus/shared/`)
+  - models.py: Pydantic models for Node, Job, Metric, Auth
+  - config.py: Configuration classes for Core, Agent, CLI
+  - auth.py: JWT token creation/verification utilities
+  - __init__.py: Clean exports for easy importing
+- [x] Core FastAPI skeleton (`nexus/core/`)
+  - main.py: FastAPI app with lifespan, CORS, health endpoint
+  - api/auth.py: Node registration and token management
+  - api/nodes.py: Node CRUD operations
+  - api/jobs.py: Job submission and tracking
+  - api/metrics.py: Metrics ingestion and queries
+- [x] Agent FastAPI skeleton (`nexus/agent/`)
+  - main.py: FastAPI app with registration state tracking
+  - api/system.py: System information endpoint
+  - api/jobs.py: Job execution endpoint (called by Core)
+  - services/metrics.py: Background metrics collection service
+- [x] CLI foundation (`nexus/cli/`)
+  - main.py: Typer app with Rich output, global config, command routing
+  - commands/config.py: Init, show, set, validate configuration
+  - commands/node.py: List, get, update, delete nodes
+  - commands/job.py: Submit, list, get jobs
+
+**Phase 1 Complete: 2025-11-30** 🎉
+
+#### Phase 1.5: Database Layer - COMPLETE ✓ (2025-11-30)
+
+All components completed:
+- [x] Database layer (`nexus/core/db/`)
+  - database.py: SQLAlchemy engine and session management
+  - models.py: ORM models for nodes, jobs, metrics
+  - crud.py: Complete CRUD operations for all entities
+  - __init__.py: Clean exports for easy importing
+- [x] Alembic migration system
+  - alembic.ini: Configuration file
+  - alembic/env.py: Migration environment
+  - alembic/versions/001_initial_schema.py: Initial database schema
+- [x] Core API updated to use database
+  - api/auth.py: Node registration with duplicate checking
+  - api/nodes.py: Full CRUD with metrics and job counts
+  - api/jobs.py: Job submission and queries with pagination
+  - api/metrics.py: Metrics submission and historical queries
+  - main.py: Database initialization on startup
+
+**Phase 1.5 Complete: 2025-11-30** 🎉
 
 ---
 
@@ -48,33 +90,8 @@
 3. Initialize git repository and make first commit
 4. Set up development environment helper scripts
 
-### Phase 1: The Bedrock (Core Library & CLI Foundation)
-1. **Shared Models** (`nexus/shared/`)
-   - Define Pydantic models for Node, Job, Metric
-   - Create authentication models (Token, SharedSecret)
-   - Configuration schemas
-
-2. **Database Layer** (`nexus/core/db/`)
-   - SQLAlchemy models for Core database
-   - Alembic migration setup
-   - Initial schema (nodes, jobs, metrics tables)
-
-3. **Core API Skeleton** (`nexus/core/api/`)
-   - FastAPI app setup with health endpoint
-   - Authentication middleware (shared secret + tokens)
-   - Basic CRUD endpoints for nodes
-
-4. **CLI Foundation** (`nexus/cli/`)
-   - Typer app setup
-   - Configuration management (init, config commands)
-   - Node management commands (list, status)
-
-5. **Agent API Skeleton** (`nexus/agent/api/`)
-   - FastAPI app setup with health endpoint
-   - Registration endpoint (call Core with shared secret)
-   - Heartbeat mechanism
-
-### Phase 2: The Mesh (Agent Discovery & Connectivity)
+### Phase 2: The Mesh (Agent Discovery & Connectivity) - Next Priority
+**Goal:** Connect agents to Core and establish communication
 1. Local network discovery (mDNS/Bonjour)
 2. Agent registration flow
 3. API token issuance and validation

@@ -1,0 +1,339 @@
+"""
+Shared Pydantic models for Nexus.
+
+These models are used across Core, Agent, and CLI components for data validation
+and serialization.
+"""
+
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, Optional
+from uuid import UUID, uuid4
+
+from pydantic import BaseModel, Field, field_validator
+
+
+# ============================================================================
+# Enums
+# ============================================================================
+
+
+class NodeStatus(str, Enum):
+    """Status of a node."""
+
+    ONLINE = "online"
+    OFFLINE = "offline"
+    ERROR = "error"
+
+
+class JobType(str, Enum):
+    """Type of job to execute."""
+
+    OCR = "ocr"
+    SHELL = "shell"
+    SYNC = "sync"
+
+
+class JobStatus(str, Enum):
+    """Status of a job."""
+
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+# ============================================================================
+# Base Models
+# ============================================================================
+
+
+class TimestampedModel(BaseModel):
+    """Base model with timestamp fields."""
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime] = None
+
+
+class BaseResponse(BaseModel):
+    """Base response model."""
+
+    message: Optional[str] = None
+
+
+# ============================================================================
+# Node Models
+# ============================================================================
+
+
+class NodeMetadata(BaseModel):
+    """Metadata for a node."""
+
+    location: Optional[str] = None
+    tags: list[str] = Field(default_factory=list)
+    description: Optional[str] = None
+    # Extensible for custom fields
+    custom: Dict[str, Any] = Field(default_factory=dict)
+
+
+class NodeBase(BaseModel):
+    """Base node model with common fields."""
+
+    name: str = Field(..., min_length=1, max_length=100)
+    ip_address: str
+    metadata: NodeMetadata = Field(default_factory=NodeMetadata)
+
+
+class NodeCreate(NodeBase):
+    """Model for creating a new node (registration)."""
+
+    shared_secret: str = Field(..., min_length=8)
+
+
+class NodeUpdate(BaseModel):
+    """Model for updating node information."""
+
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    metadata: Optional[NodeMetadata] = None
+
+
+class Node(NodeBase, TimestampedModel):
+    """Complete node model."""
+
+    id: UUID = Field(default_factory=uuid4)
+    status: NodeStatus = NodeStatus.OFFLINE
+    last_seen: Optional[datetime] = None
+
+    class Config:
+        """Pydantic configuration."""
+
+        from_attributes = True
+
+
+class NodeWithMetrics(Node):
+    """Node model with current metrics included."""
+
+    current_metrics: Optional["MetricData"] = None
+    active_jobs: int = 0
+
+
+class NodeList(BaseModel):
+    """Response model for listing nodes."""
+
+    nodes: list[Node]
+    total: int
+
+
+# ============================================================================
+# Job Models
+# ============================================================================
+
+
+class JobPayload(BaseModel):
+    """Base payload for jobs - extensible for different job types."""
+
+    # Common fields
+    timeout: Optional[int] = Field(None, description="Timeout in seconds")
+
+    # Extensible for job-specific fields
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OCRJobPayload(JobPayload):
+    """Payload for OCR jobs."""
+
+    file_path: str
+    language: str = "eng"
+    output_format: str = "markdown"
+
+
+class ShellJobPayload(JobPayload):
+    """Payload for shell command jobs."""
+
+    command: str
+    working_dir: Optional[str] = None
+    env: Dict[str, str] = Field(default_factory=dict)
+
+
+class JobCreate(BaseModel):
+    """Model for creating a new job."""
+
+    type: JobType
+    node_id: UUID
+    payload: Dict[str, Any]
+
+
+class JobResult(BaseModel):
+    """Result data from job execution."""
+
+    success: bool = True
+    output: Optional[str] = None
+    error: Optional[str] = None
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class Job(TimestampedModel):
+    """Complete job model."""
+
+    id: UUID = Field(default_factory=uuid4)
+    type: JobType
+    node_id: UUID
+    status: JobStatus = JobStatus.PENDING
+    payload: Dict[str, Any]
+    result: Optional[JobResult] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+
+    class Config:
+        """Pydantic configuration."""
+
+        from_attributes = True
+
+
+class JobList(BaseModel):
+    """Response model for listing jobs."""
+
+    jobs: list[Job]
+    total: int
+
+
+# ============================================================================
+# Metric Models
+# ============================================================================
+
+
+class MetricData(BaseModel):
+    """System metrics data."""
+
+    cpu_percent: float = Field(..., ge=0, le=100)
+    memory_percent: float = Field(..., ge=0, le=100)
+    disk_percent: float = Field(..., ge=0, le=100)
+    temperature: Optional[float] = Field(None, description="CPU temperature in Celsius")
+
+    @field_validator("temperature")
+    @classmethod
+    def validate_temperature(cls, v: Optional[float]) -> Optional[float]:
+        """Validate temperature is within reasonable range."""
+        if v is not None and (v < -50 or v > 150):
+            raise ValueError("Temperature must be between -50 and 150 Celsius")
+        return v
+
+
+class MetricCreate(BaseModel):
+    """Model for submitting metrics from agent."""
+
+    node_id: UUID
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    cpu_percent: float = Field(..., ge=0, le=100)
+    memory_percent: float = Field(..., ge=0, le=100)
+    disk_percent: float = Field(..., ge=0, le=100)
+    temperature: Optional[float] = None
+
+
+class Metric(TimestampedModel):
+    """Complete metric model with storage timestamp."""
+
+    id: UUID = Field(default_factory=uuid4)
+    node_id: UUID
+    timestamp: datetime
+    cpu_percent: float
+    memory_percent: float
+    disk_percent: float
+    temperature: Optional[float] = None
+
+    class Config:
+        """Pydantic configuration."""
+
+        from_attributes = True
+
+
+class MetricList(BaseModel):
+    """Response model for listing metrics."""
+
+    node_id: UUID
+    metrics: list[Metric]
+
+
+# ============================================================================
+# Authentication Models
+# ============================================================================
+
+
+class TokenData(BaseModel):
+    """Data contained in JWT token."""
+
+    node_id: UUID
+    node_name: str
+    exp: Optional[datetime] = None
+
+
+class Token(BaseModel):
+    """JWT token response."""
+
+    api_token: str
+    token_type: str = "bearer"
+    expires_at: datetime
+
+
+class RegistrationRequest(NodeCreate):
+    """Request model for node registration."""
+
+    pass
+
+
+class RegistrationResponse(BaseModel):
+    """Response model for successful registration."""
+
+    node_id: UUID
+    api_token: str
+    expires_at: datetime
+
+
+# ============================================================================
+# System Info Models
+# ============================================================================
+
+
+class SystemInfo(BaseModel):
+    """System information from agent."""
+
+    hostname: str
+    os: str
+    kernel: str
+    architecture: str
+    cpu_count: int
+    total_memory: int = Field(..., description="Total memory in MB")
+    total_disk: int = Field(..., description="Total disk in MB")
+
+
+# ============================================================================
+# Health Check Models
+# ============================================================================
+
+
+class HealthResponse(BaseModel):
+    """Health check response."""
+
+    status: str = "healthy"
+    version: str = "0.1.0"
+    uptime: Optional[int] = Field(None, description="Uptime in seconds")
+    node_id: Optional[UUID] = Field(None, description="For agent health checks")
+
+
+# ============================================================================
+# Error Models
+# ============================================================================
+
+
+class ErrorDetail(BaseModel):
+    """Error detail information."""
+
+    code: str
+    message: str
+    details: Optional[Dict[str, Any]] = None
+
+
+class ErrorResponse(BaseModel):
+    """Standard error response."""
+
+    error: ErrorDetail
