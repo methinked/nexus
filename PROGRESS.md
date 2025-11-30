@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30 (PM Session - Database Layer)
-**Current Phase:** Phase 1.5 - Database Layer (Complete ✓)
+**Last Updated:** 2025-11-30 (PM Session - Phase 2 Started)
+**Current Phase:** Phase 2 - The Mesh (In Progress)
 
 ---
 
@@ -79,6 +79,31 @@ All components completed:
   - main.py: Database initialization on startup
 
 **Phase 1.5 Complete: 2025-11-30** 🎉
+
+---
+
+## 🚧 In Progress
+
+#### Phase 2: The Mesh - Agent Connectivity (Started 2025-11-30)
+
+Progress so far:
+- [x] Development environment setup
+  - Python 3.13 virtual environment created
+  - All dependencies installed (FastAPI, SQLAlchemy, Typer, psutil, etc.)
+  - Package installed in editable mode
+- [x] Fixed SQLAlchemy metadata conflict
+  - Renamed NodeModel.metadata to node_metadata (database column)
+  - Added proper mapping in API layer
+  - Fixed missing BaseResponse export
+- [x] Core server operational
+  - Server running on http://localhost:8000
+  - Database initialized (SQLite at data/nexus.db)
+  - Health endpoint working
+  - FastAPI OpenAPI docs available at /docs
+- [ ] Agent registration flow
+- [ ] Real metrics collection with psutil
+- [ ] End-to-end testing
+- [ ] CLI testing with live data
 
 ---
 

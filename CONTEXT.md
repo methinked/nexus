@@ -1,8 +1,8 @@
 # Nexus Development Context
 
-**Last Session:** 2025-11-30 (PM - Database Layer)
+**Last Session:** 2025-11-30 (PM - Phase 2 Start)
 **Current Branch:** dev
-**Current Phase:** Phase 1.5 - Database Layer (Complete ✓)
+**Current Phase:** Phase 2 - The Mesh (In Progress)
 
 ---
 
@@ -346,7 +346,25 @@ rg "TODO:" nexus/
 - Updated all Core API endpoints to use database
 - Replaced all TODO stubs with working database operations
 - **Phase 1.5 Complete!**
-- Next session: Test integration and begin Phase 2 (Agent connectivity)
+
+**Session 2025-11-30 (PM - Part 3 - Phase 2 Start):**
+- Merged Phase 1 & 1.5 to main branch
+- Tagged release v0.1.0 (Foundations Complete)
+- Started Phase 2: The Mesh
+- Set up development environment:
+  - Created Python 3.13 virtual environment
+  - Installed all dependencies (core + agent + dev)
+  - Installed package in editable mode
+- Fixed critical SQLAlchemy metadata conflict:
+  - Renamed NodeModel.metadata → node_metadata
+  - Updated CRUD and API mapping
+  - Fixed missing BaseResponse export
+- **Core server is now operational!**
+  - Running on http://localhost:8000
+  - Database initialized successfully
+  - Health endpoint responding
+  - All API routes loaded
+- Next: Agent registration and metrics collection
 
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)
@@ -359,7 +377,7 @@ rg "TODO:" nexus/
 
 ## 🎯 Phase 1 & 1.5 Complete! ✓
 
-Current status:
+All foundation work complete:
 1. ✅ Shared models are complete
 2. ✅ Core API structure is complete
 3. ✅ Agent API structure is complete
@@ -367,16 +385,21 @@ Current status:
 5. ✅ Core has database backing
 6. ✅ Node registration endpoint working
 7. ✅ Metrics submission endpoint working
-8. ✅ Can list/manage nodes and jobs via CLI (ready to test)
+8. ✅ **Core server is running and operational**
 
-## 🎯 Next Steps - Phase 2: The Mesh
+## 🎯 Phase 2: The Mesh - In Progress
 
-Connect agents to Core and establish communication:
-1. Test Core API and database integration
-2. Implement agent registration flow in agent code
-3. Implement metrics collection with psutil in agent
-4. Test full flow: Agent → Register → Submit Metrics → Core → Database
-5. Test CLI commands against live data
+**Completed:**
+- ✅ Development environment setup (venv + dependencies)
+- ✅ Fixed SQLAlchemy metadata conflict
+- ✅ Core server running and tested
+
+**Next Steps:**
+1. Implement agent registration flow in agent code
+2. Implement metrics collection with psutil in agent
+3. Test full flow: Agent → Register → Submit Metrics → Core → Database
+4. Test CLI commands against live data
+5. Document any issues and iterate
 
 ---
 
