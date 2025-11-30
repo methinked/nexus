@@ -134,21 +134,53 @@
                 <!-- Metrics Charts -->
                 <div class="card">
                     <div class="card-body">
-                        <h3 class="text-lg font-semibold mb-4">Real-time Metrics</h3>
-                        <div class="grid grid-cols-2 gap-6">
-                            <div>
-                                <canvas :id="'chart-cpu-' + selectedNode.id"></canvas>
+                        <h3 class="text-lg font-semibold mb-4">Real-time Metrics (Last 50 readings)</h3>
+
+                        <template x-if="!latestMetrics || latestMetrics.length === 0">
+                            <div class="text-center py-12 text-gray-500">
+                                <p>Loading metrics...</p>
                             </div>
-                            <div>
-                                <canvas :id="'chart-memory-' + selectedNode.id"></canvas>
+                        </template>
+
+                        <template x-if="latestMetrics && latestMetrics.length > 0">
+                            <div class="grid grid-cols-2 gap-6">
+                                <!-- CPU Chart -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h4 class="text-sm font-semibold text-gray-400">CPU Usage</h4>
+                                        <span class="text-2xl font-bold text-purple-400" x-text="latestMetrics[0]?.cpu_percent.toFixed(1) + '%'"></span>
+                                    </div>
+                                    <canvas :id="'chart-cpu-' + selectedNode.id"></canvas>
+                                </div>
+
+                                <!-- Memory Chart -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h4 class="text-sm font-semibold text-gray-400">Memory Usage</h4>
+                                        <span class="text-2xl font-bold text-blue-400" x-text="latestMetrics[0]?.memory_percent.toFixed(1) + '%'"></span>
+                                    </div>
+                                    <canvas :id="'chart-memory-' + selectedNode.id"></canvas>
+                                </div>
+
+                                <!-- Disk Chart -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h4 class="text-sm font-semibold text-gray-400">Disk Usage</h4>
+                                        <span class="text-2xl font-bold text-green-400" x-text="latestMetrics[0]?.disk_percent.toFixed(1) + '%'"></span>
+                                    </div>
+                                    <canvas :id="'chart-disk-' + selectedNode.id"></canvas>
+                                </div>
+
+                                <!-- Temperature Chart -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h4 class="text-sm font-semibold text-gray-400">Temperature</h4>
+                                        <span class="text-2xl font-bold text-amber-400" x-text="latestMetrics[0]?.temperature ? latestMetrics[0].temperature.toFixed(1) + '°C' : 'N/A'"></span>
+                                    </div>
+                                    <canvas :id="'chart-temp-' + selectedNode.id"></canvas>
+                                </div>
                             </div>
-                            <div>
-                                <canvas :id="'chart-disk-' + selectedNode.id"></canvas>
-                            </div>
-                            <div>
-                                <canvas :id="'chart-temp-' + selectedNode.id"></canvas>
-                            </div>
-                        </div>
+                        </template>
                     </div>
                 </div>
 
@@ -249,7 +281,9 @@ function nodesPage() {
         healthStatus: null,
         recentJobs: [],
         recentLogs: [],
+        latestMetrics: [],
         charts: {},
+        refreshInterval: null,
 
         async init() {
             await this.loadNodes();
@@ -258,10 +292,10 @@ function nodesPage() {
                 await this.selectNode(this.nodes[0].id);
             }
             // Refresh every 30 seconds
-            setInterval(() => {
+            this.refreshInterval = setInterval(() => {
                 this.loadNodes();
                 if (this.selectedNodeId) {
-                    this.loadNodeDetails(this.selectedNodeId);
+                    this.refreshNodeData(this.selectedNodeId);
                 }
             }, 30000);
         },
@@ -279,6 +313,11 @@ function nodesPage() {
         async selectNode(nodeId) {
             this.selectedNodeId = nodeId;
             this.selectedNode = this.nodes.find(n => n.id === nodeId);
+
+            // Clear old charts when switching nodes
+            Object.values(this.charts).forEach(chart => chart.destroy());
+            this.charts = {};
+
             await this.loadNodeDetails(nodeId);
         },
 
@@ -291,7 +330,8 @@ function nodesPage() {
                 // Load metrics and create charts
                 const metricsResponse = await fetch(`/api/metrics/${nodeId}?limit=50`);
                 const metricsData = await metricsResponse.json();
-                this.updateCharts(metricsData.metrics || []);
+                this.latestMetrics = (metricsData.metrics || []).reverse(); // Newest first
+                this.createCharts(this.latestMetrics);
 
                 // Load recent jobs
                 const jobsResponse = await fetch(`/api/jobs?node_id=${nodeId}&limit=5`);
@@ -307,7 +347,25 @@ function nodesPage() {
             }
         },
 
-        updateCharts(metrics) {
+        async refreshNodeData(nodeId) {
+            try {
+                // Refresh metrics and update charts
+                const metricsResponse = await fetch(`/api/metrics/${nodeId}?limit=50`);
+                const metricsData = await metricsResponse.json();
+                this.latestMetrics = (metricsData.metrics || []).reverse(); // Newest first
+                this.updateChartData(this.latestMetrics);
+
+                // Refresh health status
+                const healthResponse = await fetch(`/api/nodes/${nodeId}/health`);
+                this.healthStatus = await healthResponse.json();
+            } catch (error) {
+                console.error('Failed to refresh node data:', error);
+            }
+        },
+
+        createCharts(metrics) {
+            if (!metrics || metrics.length === 0) return;
+
             const nodeId = this.selectedNodeId;
             const times = metrics.map(m => new Date(m.timestamp)).reverse();
             const cpuData = metrics.map(m => m.cpu_percent).reverse();
@@ -315,61 +373,188 @@ function nodesPage() {
             const diskData = metrics.map(m => m.disk_percent).reverse();
             const tempData = metrics.map(m => m.temperature).reverse();
 
-            // Destroy old charts
-            Object.values(this.charts).forEach(chart => chart.destroy());
-            this.charts = {};
-
-            // Create charts
             this.$nextTick(() => {
                 const commonOptions = {
                     responsive: true,
                     maintainAspectRatio: true,
-                    aspectRatio: 2,
+                    aspectRatio: 2.5,
+                    animation: false,
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            titleColor: '#9ca3af',
+                            bodyColor: '#fff',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false
+                        }
                     },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: '#374151' } },
-                        x: { grid: { color: '#374151' }, type: 'time', time: { unit: 'minute' } }
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#374151' },
+                            ticks: { color: '#9ca3af', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { color: '#374151' },
+                            type: 'time',
+                            time: {
+                                unit: 'minute',
+                                displayFormats: { minute: 'HH:mm' }
+                            },
+                            ticks: { color: '#9ca3af', font: { size: 11 }, maxRotation: 0 }
+                        }
                     }
                 };
 
-                this.charts.cpu = new Chart(document.getElementById(`chart-cpu-${nodeId}`), {
-                    type: 'line',
-                    data: {
-                        labels: times,
-                        datasets: [{ label: 'CPU %', data: cpuData, borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.1)', fill: true, tension: 0.4 }]
-                    },
-                    options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, max: 100 } } }
-                });
+                const cpuEl = document.getElementById(`chart-cpu-${nodeId}`);
+                if (cpuEl && !this.charts.cpu) {
+                    this.charts.cpu = new Chart(cpuEl, {
+                        type: 'line',
+                        data: {
+                            labels: times,
+                            datasets: [{
+                                label: 'CPU %',
+                                data: cpuData,
+                                borderColor: '#a855f7',
+                                backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                pointHoverRadius: 4
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            scales: {
+                                ...commonOptions.scales,
+                                y: { ...commonOptions.scales.y, max: 100, ticks: { ...commonOptions.scales.y.ticks, callback: (value) => value + '%' } }
+                            }
+                        }
+                    });
+                }
 
-                this.charts.memory = new Chart(document.getElementById(`chart-memory-${nodeId}`), {
-                    type: 'line',
-                    data: {
-                        labels: times,
-                        datasets: [{ label: 'Memory %', data: memData, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4 }]
-                    },
-                    options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, max: 100 } } }
-                });
+                const memEl = document.getElementById(`chart-memory-${nodeId}`);
+                if (memEl && !this.charts.memory) {
+                    this.charts.memory = new Chart(memEl, {
+                        type: 'line',
+                        data: {
+                            labels: times,
+                            datasets: [{
+                                label: 'Memory %',
+                                data: memData,
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                pointHoverRadius: 4
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            scales: {
+                                ...commonOptions.scales,
+                                y: { ...commonOptions.scales.y, max: 100, ticks: { ...commonOptions.scales.y.ticks, callback: (value) => value + '%' } }
+                            }
+                        }
+                    });
+                }
 
-                this.charts.disk = new Chart(document.getElementById(`chart-disk-${nodeId}`), {
-                    type: 'line',
-                    data: {
-                        labels: times,
-                        datasets: [{ label: 'Disk %', data: diskData, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4 }]
-                    },
-                    options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, max: 100 } } }
-                });
+                const diskEl = document.getElementById(`chart-disk-${nodeId}`);
+                if (diskEl && !this.charts.disk) {
+                    this.charts.disk = new Chart(diskEl, {
+                        type: 'line',
+                        data: {
+                            labels: times,
+                            datasets: [{
+                                label: 'Disk %',
+                                data: diskData,
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                pointHoverRadius: 4
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            scales: {
+                                ...commonOptions.scales,
+                                y: { ...commonOptions.scales.y, max: 100, ticks: { ...commonOptions.scales.y.ticks, callback: (value) => value + '%' } }
+                            }
+                        }
+                    });
+                }
 
-                this.charts.temp = new Chart(document.getElementById(`chart-temp-${nodeId}`), {
-                    type: 'line',
-                    data: {
-                        labels: times,
-                        datasets: [{ label: 'Temp °C', data: tempData, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4 }]
-                    },
-                    options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, min: 30, max: 80 } } }
-                });
+                const tempEl = document.getElementById(`chart-temp-${nodeId}`);
+                if (tempEl && !this.charts.temp) {
+                    this.charts.temp = new Chart(tempEl, {
+                        type: 'line',
+                        data: {
+                            labels: times,
+                            datasets: [{
+                                label: 'Temperature',
+                                data: tempData,
+                                borderColor: '#f59e0b',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                pointHoverRadius: 4
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            scales: {
+                                ...commonOptions.scales,
+                                y: { ...commonOptions.scales.y, min: 30, max: 80, ticks: { ...commonOptions.scales.y.ticks, callback: (value) => value + '°C' } }
+                            }
+                        }
+                    });
+                }
             });
+        },
+
+        updateChartData(metrics) {
+            if (!metrics || metrics.length === 0 || Object.keys(this.charts).length === 0) return;
+
+            const times = metrics.map(m => new Date(m.timestamp)).reverse();
+            const cpuData = metrics.map(m => m.cpu_percent).reverse();
+            const memData = metrics.map(m => m.memory_percent).reverse();
+            const diskData = metrics.map(m => m.disk_percent).reverse();
+            const tempData = metrics.map(m => m.temperature).reverse();
+
+            if (this.charts.cpu) {
+                this.charts.cpu.data.labels = times;
+                this.charts.cpu.data.datasets[0].data = cpuData;
+                this.charts.cpu.update('none');
+            }
+
+            if (this.charts.memory) {
+                this.charts.memory.data.labels = times;
+                this.charts.memory.data.datasets[0].data = memData;
+                this.charts.memory.update('none');
+            }
+
+            if (this.charts.disk) {
+                this.charts.disk.data.labels = times;
+                this.charts.disk.data.datasets[0].data = diskData;
+                this.charts.disk.update('none');
+            }
+
+            if (this.charts.temp) {
+                this.charts.temp.data.labels = times;
+                this.charts.temp.data.datasets[0].data = tempData;
+                this.charts.temp.update('none');
+            }
         },
 
         formatLastSeen(timestamp) {
