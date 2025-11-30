@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30 (PM Session - Database Layer)
-**Current Phase:** Phase 1.5 - Database Layer (Complete ✓)
+**Last Updated:** 2025-11-30 (PM Session - Phase 4 Complete)
+**Current Phase:** Phase 5 - The Hands (Next)
 
 ---
 
@@ -82,28 +82,151 @@ All components completed:
 
 ---
 
+## 🚧 In Progress
+
+_No active development phase at the moment. Phase 4 complete!_
+
+---
+
+## ✅ Completed
+
+#### Phase 4: The Brain - Logging & Remote Control (Completed 2025-11-30) ✨
+
+All components completed:
+- [x] Terminal WebSocket architecture designed
+  - CLI ↔ Core ↔ Agent relay pattern
+  - Bidirectional message forwarding
+  - Authentication via JWT tokens
+- [x] Agent terminal endpoint (Imperium module)
+  - WebSocket endpoint at /api/terminal
+  - PTY-based shell spawning
+  - Bidirectional I/O handling
+  - Terminal resize support
+  - Session cleanup on disconnect
+- [x] Core terminal proxy
+  - WebSocket proxy at /api/terminal/{node_id}
+  - Node validation and status checking
+  - Message relay between CLI and Agent
+  - Connection management
+- [x] Centralized logging system
+  - LogLevel enum (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  - LogEntry, LogCreate, LogList models
+  - Database model (LogModel) with indexing
+  - Node relationship with cascade delete
+- [x] Database migration for logs table
+  - Alembic migration with proper indexes
+  - Foreign key constraints with cascade delete
+- [x] Log CRUD operations
+  - create_log, get_logs, get_logs_count
+  - Filtering by level, source, time range
+  - delete_old_logs for cleanup
+- [x] Log API endpoints
+  - POST /api/logs - Submit log entries from agents
+  - GET /api/logs/{node_id} - Query logs for specific node
+  - GET /api/logs - Query logs from all nodes
+  - Full filtering and pagination support
+- [x] Agent log collection service
+  - Custom Python logging handler (CoreLogHandler)
+  - Queue-based log buffering (non-blocking)
+  - LogCollector service with background task
+  - Batch sending logs every 30 seconds
+  - Graceful startup/shutdown in agent lifecycle
+- [x] CLI logs viewer command
+  - nexus logs list - View logs from all nodes
+  - nexus logs list {node_id} - View logs from specific node
+  - nexus logs tail - Tail logs from a node
+  - Filtering by level, source, time range
+  - Follow mode (-f) for real-time log streaming
+  - Rich table formatting with color-coded levels
+- [x] End-to-end testing
+  - Agent logs collected and sent to Core
+  - Core receives and stores logs in database
+  - CLI successfully queries and displays logs
+  - Filtering and pagination verified
+
+**Phase 4 Complete: 2025-11-30** 🎉
+
+**Note:** Terminal CLI client implementation deferred to future (requires complex WebSocket + TTY handling). Terminal infrastructure (Agent + Core) is ready when needed.
+
+#### Phase 2: The Mesh - Agent Connectivity (Completed 2025-11-30) ✨
+
+All components completed:
+- [x] Development environment setup
+  - Python 3.13 virtual environment created
+  - All dependencies installed (FastAPI, SQLAlchemy, Typer, psutil, etc.)
+  - Package installed in editable mode
+- [x] Fixed SQLAlchemy metadata conflict
+  - Renamed NodeModel.metadata to node_metadata (database column)
+  - Added proper mapping in API layer
+  - Fixed missing BaseResponse export
+- [x] Core server operational
+  - Server running on http://localhost:8000
+  - Database initialized (SQLite at data/nexus.db)
+  - Health endpoint working
+  - FastAPI OpenAPI docs available at /docs
+- [x] Agent registration flow
+  - Automatic registration on startup
+  - State persistence (data/agent_state.json)
+  - JWT token management
+  - Error handling for registration failures
+- [x] Real metrics collection with psutil
+  - CPU, memory, disk, temperature monitoring
+  - Background asyncio task (30s interval)
+  - Temperature detection with Pi/Linux fallback
+- [x] End-to-end testing
+  - Agent successfully registered with Core
+  - Metrics continuously submitted and stored
+  - Database verification confirmed
+- [x] CLI testing with live data
+  - Node listing working
+  - Node details working
+  - Metrics visible in database
+
+**Phase 2 Complete: 2025-11-30** 🎉
+
+#### Phase 3: The Pulse - Metrics Visualization (Completed 2025-11-30) ✨
+
+All components completed:
+- [x] Enhanced shared models
+  - Added NodeHealth enum (HEALTHY, WARNING, CRITICAL, UNKNOWN)
+  - Created MetricStats model for aggregated statistics
+  - Created HealthThresholds model for configurable thresholds
+  - Created NodeHealthStatus model with component breakdown
+- [x] Core API metrics enhancements
+  - GET /api/metrics/{node_id}/stats - Aggregated statistics endpoint
+  - Supports time-range filtering (since/until parameters)
+  - Returns min/max/avg for CPU, memory, disk, temperature
+- [x] Core API health endpoints
+  - GET /api/nodes/{node_id}/health - Health status endpoint
+  - Calculates component-level health (CPU, memory, disk, temp)
+  - Supports custom threshold overrides via query parameters
+  - Returns overall health with detailed breakdown
+- [x] Health calculation service
+  - Created nexus/core/services/health.py
+  - Implements threshold-based health assessment
+  - Supports configurable warning/critical levels
+  - Handles optional temperature monitoring
+- [x] Database aggregation functions
+  - get_metrics_stats() - Aggregates metrics over time ranges
+  - Uses SQLAlchemy func.avg/min/max for efficiency
+  - Handles NULL temperature values gracefully
+- [x] CLI metrics commands
+  - nexus metrics get - View recent metrics with colored output
+  - nexus metrics stats - View aggregated statistics
+  - nexus metrics health - View health status with visual indicators
+  - Supports time-range filtering (--since, --hours)
+  - Rich formatting with tables and panels
+- [x] End-to-end testing
+  - API endpoints verified (stats, health)
+  - CLI commands tested with live data
+  - Health calculation working correctly
+  - All components integrated successfully
+
+**Phase 3 Complete: 2025-11-30** 🎉
+
+---
+
 ## 📋 Next Steps
-
-### Immediate (Phase 0 Completion)
-1. Create initial documentation structure (architecture.md, API design)
-2. Set up Docker configuration (Dockerfile, docker-compose.yml)
-3. Initialize git repository and make first commit
-4. Set up development environment helper scripts
-
-### Phase 2: The Mesh (Agent Discovery & Connectivity) - Next Priority
-**Goal:** Connect agents to Core and establish communication
-1. Local network discovery (mDNS/Bonjour)
-2. Agent registration flow
-3. API token issuance and validation
-4. Connection health monitoring
-5. Node status tracking
-
-### Phase 3: The Pulse (Metrics Collection)
-1. Speculum module implementation
-2. Metrics collection on Agent
-3. Metrics push to Core
-4. Historical data storage
-5. Basic web dashboard
 
 ### Phase 4: The Brain (Logging & Remote Control)
 1. Imperium module (remote terminal)

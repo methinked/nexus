@@ -43,6 +43,15 @@ class JobStatus(str, Enum):
     FAILED = "failed"
 
 
+class NodeHealth(str, Enum):
+    """Health status of a node based on metrics."""
+
+    HEALTHY = "healthy"
+    WARNING = "warning"
+    CRITICAL = "critical"
+    UNKNOWN = "unknown"
+
+
 # ============================================================================
 # Base Models
 # ============================================================================
@@ -252,6 +261,117 @@ class MetricList(BaseModel):
 
     node_id: UUID
     metrics: list[Metric]
+
+
+class MetricStats(BaseModel):
+    """Aggregated statistics for metrics over a time period."""
+
+    node_id: UUID
+    start_time: datetime
+    end_time: datetime
+    count: int
+
+    # CPU statistics
+    cpu_avg: float
+    cpu_min: float
+    cpu_max: float
+
+    # Memory statistics
+    memory_avg: float
+    memory_min: float
+    memory_max: float
+
+    # Disk statistics
+    disk_avg: float
+    disk_min: float
+    disk_max: float
+
+    # Temperature statistics (optional)
+    temperature_avg: Optional[float] = None
+    temperature_min: Optional[float] = None
+    temperature_max: Optional[float] = None
+
+
+class HealthThresholds(BaseModel):
+    """Thresholds for determining node health status."""
+
+    cpu_warning: float = 80.0
+    cpu_critical: float = 95.0
+    memory_warning: float = 85.0
+    memory_critical: float = 95.0
+    disk_warning: float = 85.0
+    disk_critical: float = 95.0
+    temperature_warning: Optional[float] = 75.0
+    temperature_critical: Optional[float] = 85.0
+
+
+class NodeHealthStatus(BaseModel):
+    """Health status of a node with detailed breakdown."""
+
+    node_id: UUID
+    overall_health: NodeHealth
+    last_check: datetime
+
+    # Component health
+    cpu_health: NodeHealth
+    memory_health: NodeHealth
+    disk_health: NodeHealth
+    temperature_health: Optional[NodeHealth] = None
+
+    # Latest metric values
+    latest_metrics: Optional[Metric] = None
+
+    # Thresholds used for calculation
+    thresholds: HealthThresholds = Field(default_factory=HealthThresholds)
+
+
+# ============================================================================
+# Log Models
+# ============================================================================
+
+
+class LogLevel(str, Enum):
+    """Log level."""
+
+    DEBUG = "debug"
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+    CRITICAL = "critical"
+
+
+class LogEntry(TimestampedModel):
+    """Log entry from an agent."""
+
+    id: UUID = Field(default_factory=uuid4)
+    node_id: UUID
+    level: LogLevel
+    source: str  # Module/component name
+    message: str
+    extra: Dict[str, Any] = Field(default_factory=dict)  # Additional context
+
+    class Config:
+        """Pydantic configuration."""
+
+        from_attributes = True
+
+
+class LogCreate(BaseModel):
+    """Model for creating a log entry."""
+
+    node_id: UUID
+    level: LogLevel
+    source: str
+    message: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    extra: Dict[str, Any] = Field(default_factory=dict)
+
+
+class LogList(BaseModel):
+    """Response model for listing logs."""
+
+    logs: list[LogEntry]
+    total: int
 
 
 # ============================================================================

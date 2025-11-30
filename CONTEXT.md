@@ -1,8 +1,8 @@
 # Nexus Development Context
 
-**Last Session:** 2025-11-30 (PM - Database Layer)
+**Last Session:** 2025-11-30 (PM - Phase 4 Complete)
 **Current Branch:** dev
-**Current Phase:** Phase 1.5 - Database Layer (Complete ✓)
+**Current Phase:** Phase 5 - The Hands (Next)
 
 ---
 
@@ -129,22 +129,28 @@ Nexus is a distributed Raspberry Pi management system with a **CLI-first** philo
 
 ## 🚧 What's Next
 
-### Immediate: Database Layer (Phase 1.5)
-**Location:** `nexus/core/db/` (not started)
+### Phase 5: The Hands - Workload Orchestration
+**Goal:** Implement job queue system and specialized modules
 
-Need to implement:
-1. SQLAlchemy models
-2. Alembic migrations
-3. Database initialization
-4. CRUD operations
+**Components to build:**
+1. Job Queue System
+   - Job scheduling and prioritization
+   - Queue management and persistence
+   - Worker pool management
+2. Scriptor Module (OCR Processing)
+   - Tesseract integration
+   - Image preprocessing
+   - Result formatting and storage
+3. Arbiter Module (Sync Conflict Resolution)
+   - File synchronization logic
+   - Conflict detection and resolution
+   - Merge strategies
+4. Job Execution Framework
+   - Async job runners
+   - Progress tracking
+   - Error handling and retries
 
-Replace all the TODO markers in Core API with actual database queries.
-
-### Then: Connect Core and Agent
-1. Implement agent registration flow
-2. Implement metrics collection with psutil
-3. Implement metrics submission to Core
-4. Test end-to-end on laptop
+**Note:** Phase 4 (logging and terminal infrastructure) is complete! Terminal CLI client implementation was deferred as it requires complex WebSocket + TTY handling.
 
 ---
 
@@ -346,7 +352,136 @@ rg "TODO:" nexus/
 - Updated all Core API endpoints to use database
 - Replaced all TODO stubs with working database operations
 - **Phase 1.5 Complete!**
-- Next session: Test integration and begin Phase 2 (Agent connectivity)
+
+**Session 2025-11-30 (PM - Part 3 - Phase 2 Start):**
+- Merged Phase 1 & 1.5 to main branch
+- Tagged release v0.1.0 (Foundations Complete)
+- Started Phase 2: The Mesh
+- Set up development environment:
+  - Created Python 3.13 virtual environment
+  - Installed all dependencies (core + agent + dev)
+  - Installed package in editable mode
+- Fixed critical SQLAlchemy metadata conflict:
+  - Renamed NodeModel.metadata → node_metadata
+  - Updated CRUD and API mapping
+  - Fixed missing BaseResponse export
+- **Core server is now operational!**
+  - Running on http://localhost:8000
+  - Database initialized successfully
+  - Health endpoint responding
+  - All API routes loaded
+- Next: Agent registration and metrics collection
+
+**Session 2025-11-30 (PM - Part 4 - Phase 2 Complete):**
+- Implemented complete agent registration flow:
+  - Automatic registration on startup with Core
+  - State persistence (data/agent_state.json)
+  - Local IP detection and node metadata
+  - JWT token management
+  - Full error handling
+- Implemented real metrics collection:
+  - CPU, memory, disk, temperature monitoring using psutil
+  - Temperature detection with Pi/Linux fallback (vcgencmd/sensors)
+  - Background asyncio task (30s interval)
+  - HTTP POST to Core with JWT authentication
+- Fixed agent API bugs:
+  - Type annotation errors (any → Any)
+  - Added NodeMetadata to shared exports
+- Tested full end-to-end flow:
+  - Agent successfully registered with Core (node_id: f6b858e2...)
+  - Metrics continuously submitted every 30s
+  - Database verification: 6+ metrics stored
+  - CLI commands working (node list, node get)
+- **Phase 2 Complete!**
+  - Agent-Core mesh fully operational
+  - Real system metrics flowing
+  - All components tested and verified
+- Next: Phase 3 - Metrics visualization and querying
+
+**Session 2025-11-30 (PM - Part 5 - Phase 3 Complete):**
+- Implemented complete metrics visualization system:
+  - Enhanced shared models with NodeHealth enum and health-related models
+  - Added MetricStats model for aggregated statistics
+  - Created HealthThresholds and NodeHealthStatus models
+- Core API enhancements:
+  - GET /api/metrics/{node_id}/stats - Aggregated metrics statistics
+  - GET /api/nodes/{node_id}/health - Health status calculation
+  - Time-range filtering support (since/until parameters)
+  - Custom threshold overrides via query parameters
+- Health calculation service:
+  - Created nexus/core/services/health.py
+  - Threshold-based component health assessment
+  - Configurable warning/critical levels
+  - Overall health determined by worst component
+- Database aggregation:
+  - get_metrics_stats() using SQLAlchemy func operations
+  - Efficient min/max/avg calculations
+  - Handles NULL temperature values
+- CLI metrics commands:
+  - nexus metrics get - View recent metrics with color-coded output
+  - nexus metrics stats - View aggregated statistics in formatted panels
+  - nexus metrics health - View health status with visual indicators
+  - Time-range filtering support (--since, --hours, --until)
+  - Rich table and panel formatting
+- Tested end-to-end:
+  - All API endpoints verified with curl
+  - CLI commands tested with live data
+  - Health calculations working correctly
+- **Phase 3 Complete!**
+  - Full metrics visualization operational
+  - Health monitoring integrated
+  - All components tested and working
+
+**Session 2025-11-30 (PM - Part 6 - Phase 4 Partial):**
+- Implemented terminal infrastructure (Imperium module):
+  - WebSocket architecture designed (CLI ↔ Core ↔ Agent relay)
+  - Agent terminal endpoint created (nexus/agent/api/terminal.py)
+  - PTY-based shell spawning with bidirectional I/O
+  - Terminal resize support via control messages
+  - Session cleanup on disconnect
+- Core terminal proxy:
+  - WebSocket proxy endpoint (nexus/core/api/terminal.py)
+  - Message relay between CLI and Agent
+  - Node validation and status checking
+  - Connection management with error handling
+- Centralized logging infrastructure:
+  - Added LogLevel enum and log models
+  - Created LogModel database model with indexing
+  - Node relationship with cascade delete
+  - Ready for log collection implementation
+- **Phase 4 Partial:**
+  - Terminal infrastructure complete (server-side)
+  - CLI client implementation remaining (complex)
+  - Logging models ready, API/CRUD pending
+
+**Session 2025-11-30 (PM - Part 7 - Phase 4 Complete):**
+- Implemented complete centralized logging system:
+  - Database migration for logs table (alembic revision 002)
+  - Log CRUD operations (create_log, get_logs, get_logs_count, delete_old_logs)
+  - Log API endpoints (POST /api/logs, GET /api/logs, GET /api/logs/{node_id})
+  - Full filtering support (level, source, time range, pagination)
+- Agent log collection service:
+  - CoreLogHandler - Custom Python logging handler
+  - Queue-based non-blocking log buffering
+  - LogCollector service with background batch sending
+  - Integrated into agent lifecycle (startup/shutdown)
+  - Logs sent to Core every 30 seconds
+- CLI logs viewer:
+  - nexus logs list command with rich table formatting
+  - nexus logs tail command for following logs
+  - Filtering by node, level, source, time range
+  - Follow mode (-f) for real-time streaming
+  - Color-coded log levels for better visibility
+- End-to-end testing verified:
+  - Agent captures Python logs via custom handler
+  - Logs batched and sent to Core successfully
+  - Core stores logs in database with proper indexing
+  - CLI successfully queries and displays logs
+  - Filtering and pagination working correctly
+- **Phase 4 Complete!**
+  - Centralized logging fully operational
+  - Terminal infrastructure ready (CLI client deferred)
+  - All logging components tested and verified
 
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)
@@ -354,29 +489,43 @@ rg "TODO:" nexus/
 - Pydantic v2 with strict validation
 - JWT with bcrypt for auth
 - SQLite for simplicity
+- Threshold-based health assessment (configurable)
+- Rich CLI formatting for better UX
+- WebSocket for terminal (native FastAPI support)
+- PTY for terminal sessions (Unix-standard)
 
 ---
 
-## 🎯 Phase 1 & 1.5 Complete! ✓
+## 🎯 Phase 1, 1.5, 2, 3 & 4 Complete! ✓
 
-Current status:
-1. ✅ Shared models are complete
-2. ✅ Core API structure is complete
-3. ✅ Agent API structure is complete
+All foundation, mesh, metrics, and logging work complete:
+1. ✅ Shared models complete
+2. ✅ Core API structure complete with database
+3. ✅ Agent API structure complete
 4. ✅ CLI can interact with Core
-5. ✅ Core has database backing
-6. ✅ Node registration endpoint working
-7. ✅ Metrics submission endpoint working
-8. ✅ Can list/manage nodes and jobs via CLI (ready to test)
+5. ✅ Core has database backing (SQLite + SQLAlchemy)
+6. ✅ Node registration working (automatic on agent startup)
+7. ✅ Metrics collection working (psutil-based, 30s interval)
+8. ✅ Metrics submission working (HTTP POST with JWT auth)
+9. ✅ **Full agent-Core mesh operational!**
+10. ✅ Metrics aggregation and statistics
+11. ✅ Health status calculation and monitoring
+12. ✅ CLI metrics visualization commands
+13. ✅ Centralized logging system operational
+14. ✅ Log collection from agents
+15. ✅ CLI logs viewer with filtering
+16. ✅ Terminal infrastructure (server-side) ready
 
-## 🎯 Next Steps - Phase 2: The Mesh
+## 🎯 Phase 5: The Hands - Next Phase 🚀
 
-Connect agents to Core and establish communication:
-1. Test Core API and database integration
-2. Implement agent registration flow in agent code
-3. Implement metrics collection with psutil in agent
-4. Test full flow: Agent → Register → Submit Metrics → Core → Database
-5. Test CLI commands against live data
+**Goal:** Job queue system and workload orchestration
+
+**To Implement:**
+1. ⏳ Job queue management and scheduling
+2. ⏳ Scriptor module (OCR processing)
+3. ⏳ Arbiter module (sync conflict resolution)
+4. ⏳ Job execution framework
+5. ⏳ Progress tracking and error handling
 
 ---
 

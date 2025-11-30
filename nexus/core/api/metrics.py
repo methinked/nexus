@@ -11,9 +11,15 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from nexus.core.db import create_metric, get_metrics, get_node, update_node_status
+from nexus.core.db import (
+    create_metric,
+    get_metrics,
+    get_metrics_stats,
+    get_node,
+    update_node_status,
+)
 from nexus.core.db.database import get_db
-from nexus.shared import BaseResponse, Metric, MetricCreate, MetricList, NodeStatus
+from nexus.shared import BaseResponse, Metric, MetricCreate, MetricList, MetricStats, NodeStatus
 
 router = APIRouter()
 
@@ -106,6 +112,67 @@ async def get_node_metrics(
     # Convert to Pydantic models
     metrics = [Metric.model_validate(m) for m in db_metrics]
 
-    # TODO: Implement aggregation by interval (Phase 3)
-
     return MetricList(node_id=node_id, metrics=metrics)
+
+
+@router.get("/{node_id}/stats", response_model=MetricStats)
+async def get_node_metrics_stats(
+    node_id: UUID,
+    since: Optional[datetime] = Query(None, description="Start time for aggregation"),
+    until: Optional[datetime] = Query(None, description="End time for aggregation"),
+    db: Session = Depends(get_db),
+):
+    """
+    Get aggregated statistics for node metrics over a time period.
+
+    Returns min, max, and average values for all metric types.
+
+    Query Parameters:
+        since: Start timestamp (ISO format) - defaults to all time
+        until: End timestamp (ISO format) - defaults to now
+
+    Args:
+        node_id: UUID of the node
+
+    Returns:
+        Aggregated statistics (min, max, avg) for CPU, memory, disk, temperature
+
+    Raises:
+        404: Node not found or no metrics available
+    """
+    # Validate node exists
+    node = get_node(db, str(node_id))
+    if not node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Node {node_id} not found",
+        )
+
+    # Get aggregated statistics
+    stats = get_metrics_stats(db, str(node_id), since=since, until=until)
+
+    if not stats:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No metrics found for node {node_id} in the specified time range",
+        )
+
+    # Convert to Pydantic model
+    return MetricStats(
+        node_id=node_id,
+        start_time=stats["start_time"],
+        end_time=stats["end_time"],
+        count=stats["count"],
+        cpu_avg=stats["cpu_avg"],
+        cpu_min=stats["cpu_min"],
+        cpu_max=stats["cpu_max"],
+        memory_avg=stats["memory_avg"],
+        memory_min=stats["memory_min"],
+        memory_max=stats["memory_max"],
+        disk_avg=stats["disk_avg"],
+        disk_min=stats["disk_min"],
+        disk_max=stats["disk_max"],
+        temperature_avg=stats["temperature_avg"],
+        temperature_min=stats["temperature_min"],
+        temperature_max=stats["temperature_max"],
+    )

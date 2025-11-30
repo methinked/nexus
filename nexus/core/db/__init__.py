@@ -6,16 +6,21 @@ Provides SQLAlchemy models, CRUD operations, and database session management.
 
 from nexus.core.db.crud import (
     create_job,
+    create_log,
     create_metric,
     create_node,
     delete_job,
     delete_node,
+    delete_old_logs,
     delete_old_metrics,
     get_job,
     get_jobs,
     get_jobs_count,
     get_latest_metric,
+    get_logs,
+    get_logs_count,
     get_metrics,
+    get_metrics_stats,
     get_node,
     get_node_by_name,
     get_nodes,
@@ -57,6 +62,12 @@ __all__ = [
     # CRUD - Metrics
     "create_metric",
     "get_metrics",
+    "get_metrics_stats",
     "get_latest_metric",
     "delete_old_metrics",
+    # CRUD - Logs
+    "create_log",
+    "get_logs",
+    "get_logs_count",
+    "delete_old_logs",
 ]

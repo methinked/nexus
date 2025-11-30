@@ -33,7 +33,7 @@ def create_node(db: Session, node: NodeCreate) -> NodeModel:
         name=node.name,
         ip_address=node.ip_address,
         status=NodeStatus.ONLINE,
-        metadata=node.metadata.model_dump(),
+        node_metadata=node.metadata.model_dump(),
         last_seen=datetime.utcnow(),
     )
     db.add(db_node)
@@ -85,9 +85,9 @@ def update_node(db: Session, node_id: str, node_update: NodeUpdate) -> Optional[
 
     update_data = node_update.model_dump(exclude_unset=True)
 
-    # Handle metadata separately
+    # Handle metadata separately - map to node_metadata field
     if "metadata" in update_data:
-        update_data["metadata"] = update_data["metadata"].model_dump()
+        update_data["node_metadata"] = update_data.pop("metadata").model_dump()
 
     for field, value in update_data.items():
         setattr(db_node, field, value)
@@ -278,8 +278,161 @@ def get_latest_metric(db: Session, node_id: str) -> Optional[MetricModel]:
     )
 
 
+def get_metrics_stats(
+    db: Session,
+    node_id: str,
+    since: Optional[datetime] = None,
+    until: Optional[datetime] = None,
+) -> Optional[dict]:
+    """
+    Get aggregated statistics for metrics over a time period.
+
+    Returns a dictionary with min, max, and avg for each metric type.
+    Returns None if no metrics found in the time range.
+    """
+    from sqlalchemy import func
+
+    query = db.query(
+        func.count(MetricModel.id).label("count"),
+        func.min(MetricModel.timestamp).label("start_time"),
+        func.max(MetricModel.timestamp).label("end_time"),
+        # CPU stats
+        func.avg(MetricModel.cpu_percent).label("cpu_avg"),
+        func.min(MetricModel.cpu_percent).label("cpu_min"),
+        func.max(MetricModel.cpu_percent).label("cpu_max"),
+        # Memory stats
+        func.avg(MetricModel.memory_percent).label("memory_avg"),
+        func.min(MetricModel.memory_percent).label("memory_min"),
+        func.max(MetricModel.memory_percent).label("memory_max"),
+        # Disk stats
+        func.avg(MetricModel.disk_percent).label("disk_avg"),
+        func.min(MetricModel.disk_percent).label("disk_min"),
+        func.max(MetricModel.disk_percent).label("disk_max"),
+        # Temperature stats (can be NULL)
+        func.avg(MetricModel.temperature).label("temperature_avg"),
+        func.min(MetricModel.temperature).label("temperature_min"),
+        func.max(MetricModel.temperature).label("temperature_max"),
+    ).filter(MetricModel.node_id == node_id)
+
+    if since:
+        query = query.filter(MetricModel.timestamp >= since)
+    if until:
+        query = query.filter(MetricModel.timestamp <= until)
+
+    result = query.first()
+
+    if not result or result.count == 0:
+        return None
+
+    return {
+        "count": result.count,
+        "start_time": result.start_time,
+        "end_time": result.end_time,
+        "cpu_avg": result.cpu_avg,
+        "cpu_min": result.cpu_min,
+        "cpu_max": result.cpu_max,
+        "memory_avg": result.memory_avg,
+        "memory_min": result.memory_min,
+        "memory_max": result.memory_max,
+        "disk_avg": result.disk_avg,
+        "disk_min": result.disk_min,
+        "disk_max": result.disk_max,
+        "temperature_avg": result.temperature_avg,
+        "temperature_min": result.temperature_min,
+        "temperature_max": result.temperature_max,
+    }
+
+
 def delete_old_metrics(db: Session, before: datetime) -> int:
     """Delete metrics older than the specified datetime."""
     deleted = db.query(MetricModel).filter(MetricModel.timestamp < before).delete()
+    db.commit()
+    return deleted
+
+
+# ============================================================================
+# Log CRUD Operations
+# ============================================================================
+
+
+def create_log(db: Session, log: "LogCreate") -> "LogModel":
+    """Create a new log entry."""
+    from nexus.core.db.models import LogModel
+
+    db_log = LogModel(
+        node_id=str(log.node_id),
+        timestamp=log.timestamp,
+        level=log.level.value,
+        source=log.source,
+        message=log.message,
+        extra=log.extra,
+    )
+    db.add(db_log)
+    db.commit()
+    db.refresh(db_log)
+    return db_log
+
+
+def get_logs(
+    db: Session,
+    node_id: Optional[str] = None,
+    level: Optional[str] = None,
+    source: Optional[str] = None,
+    since: Optional[datetime] = None,
+    until: Optional[datetime] = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> List["LogModel"]:
+    """Get logs with optional filtering."""
+    from nexus.core.db.models import LogModel
+
+    query = db.query(LogModel)
+
+    if node_id:
+        query = query.filter(LogModel.node_id == node_id)
+    if level:
+        query = query.filter(LogModel.level == level)
+    if source:
+        query = query.filter(LogModel.source.like(f"%{source}%"))
+    if since:
+        query = query.filter(LogModel.timestamp >= since)
+    if until:
+        query = query.filter(LogModel.timestamp <= until)
+
+    return query.order_by(LogModel.timestamp.desc()).offset(skip).limit(limit).all()
+
+
+def get_logs_count(
+    db: Session,
+    node_id: Optional[str] = None,
+    level: Optional[str] = None,
+    source: Optional[str] = None,
+    since: Optional[datetime] = None,
+    until: Optional[datetime] = None,
+) -> int:
+    """Get count of logs matching filters."""
+    from nexus.core.db.models import LogModel
+
+    query = db.query(LogModel)
+
+    if node_id:
+        query = query.filter(LogModel.node_id == node_id)
+    if level:
+        query = query.filter(LogModel.level == level)
+    if source:
+        query = query.filter(LogModel.source.like(f"%{source}%"))
+    if since:
+        query = query.filter(LogModel.timestamp >= since)
+    if until:
+        query = query.filter(LogModel.timestamp <= until)
+
+    return query.count()
+
+
+def delete_old_logs(db: Session, before: datetime) -> int:
+    """Delete logs older than the specified datetime."""
+    from nexus.core.db.models import LogModel
+
+    deleted = db.query(LogModel).filter(LogModel.timestamp < before).delete()
     db.commit()
     return deleted
