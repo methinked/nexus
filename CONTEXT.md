@@ -483,6 +483,34 @@ rg "TODO:" nexus/
   - Terminal infrastructure ready (CLI client deferred)
   - All logging components tested and verified
 
+**Session 2025-11-30 (PM - Part 8 - Log Retention):**
+- Implemented automatic log retention to prevent disk space issues:
+  - Added log retention configuration to CoreConfig
+  - NEXUS_LOG_RETENTION_DAYS (default: 7 days, 0 = keep forever)
+  - NEXUS_LOG_CLEANUP_INTERVAL_HOURS (default: 24 hours)
+- Created LogCleanupService background task:
+  - Runs automatically on Core startup (after 1 minute delay)
+  - Then runs on configurable interval (default: 24 hours)
+  - Uses delete_old_logs() CRUD operation
+  - Gracefully handles shutdown and errors
+  - Skips if retention_days=0
+- Integrated into Core lifecycle:
+  - Starts with Core server
+  - Stops gracefully on shutdown
+  - Logs all cleanup operations
+- Updated documentation:
+  - Added configuration examples to .env.example
+  - Added Configuration section to README.md
+  - Documented how retention works and recommendations
+- Tested end-to-end:
+  - Service starts correctly with default settings
+  - Logs startup message with retention configuration
+  - Verified graceful shutdown
+- **Log retention complete!**
+  - Prevents unlimited disk space consumption
+  - Fully configurable for different environments
+  - Production-ready with sensible defaults
+
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)
 - Local network first (lower barrier)

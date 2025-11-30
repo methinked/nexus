@@ -140,10 +140,10 @@ nexus fleet update
 
 ## 🗺️ Roadmap
 
-- [ ] **Phase 1: The Bedrock** - Core Library & CLI foundation.
-- [ ] **Phase 2: The Mesh** - Agent discovery & secure connectivity.
-- [ ] **Phase 3: The Pulse** - Metrics collection & Web Dashboard.
-- [ ] **Phase 4: The Brain** - Centralized logging & remote control.
+- [x] **Phase 1: The Bedrock** - Core Library & CLI foundation. ✅
+- [x] **Phase 2: The Mesh** - Agent discovery & secure connectivity. ✅
+- [x] **Phase 3: The Pulse** - Metrics collection & health monitoring. ✅
+- [x] **Phase 4: The Brain** - Centralized logging & remote control. ✅
 - [ ] **Phase 5: The Hands** - Workload orchestration (OCR, Sync).
 
 ## 🔒 Security
