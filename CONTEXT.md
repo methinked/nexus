@@ -1,8 +1,8 @@
 # Nexus Development Context
 
-**Last Session:** 2025-11-30 (Night - Raspberry Pi Deployment Complete)
+**Last Session:** 2025-11-30 (Late Night - Phase 6.2 Node Detail View Complete)
 **Current Branch:** dev
-**Current Phase:** Phase 6 - The Dashboard (6.1 Complete ✓ + Pi Deployment Complete ✓)
+**Current Phase:** Phase 6 - The Dashboard (6.1 ✓ + 6.2 ✓ + Modules Preview)
 
 ---
 
@@ -768,6 +768,61 @@ rg "TODO:" nexus/
   - Each Pi gets unique node_id automatically
   - Dashboard scales to multiple nodes
   - Metrics collection proven on real ARM hardware
+
+**Session 2025-11-30 (Late Night - Phase 6.2 Node Detail View):**
+- **Comprehensive Node Detail View - COMPLETE!**
+  - Created full-featured node management page at /nodes
+  - Left panel: Node list with status indicators and selection
+  - Right panel: Detailed view for selected node
+- **Node detail components:**
+  - Node header with name, ID, and large status badge
+  - Info cards: IP address, last seen, location
+  - Health status: Overall + component breakdown (CPU, Memory, Disk)
+  - Real-time metrics charts (4 charts):
+    * CPU Usage - purple theme, current value display
+    * Memory Usage - blue theme, current value display
+    * Disk Usage - green theme, current value display
+    * Temperature - amber theme, current value display
+    * Proper labels and titles
+    * Y-axis with units (%, °C)
+    * X-axis as time (HH:mm format)
+    * Dark-themed tooltips
+    * Auto-refresh every 30 seconds
+  - Agent services status (Metrics, Logging, Job Dispatcher)
+  - Recent jobs list (last 5 with status colors)
+  - Recent logs preview (last 20 with level colors)
+- **Chart improvements:**
+  - Initial charts had no labels or values - fixed
+  - Added chart titles (CPU Usage, Memory Usage, etc.)
+  - Added current value displays above charts (e.g., 31.2%)
+  - Proper axis labels with unit suffixes
+  - Separated chart creation from updates (better performance)
+  - No destroy/recreate on refresh - just update data
+  - Better tooltips and styling
+- **Technical implementation:**
+  - Alpine.js for state management
+  - Chart.js for visualization
+  - Auto-select first node on load
+  - Clean charts when switching nodes
+  - Loading states while fetching data
+  - CLI view integration (all API calls logged)
+- **Modules & Services stub page created:**
+  - Vision for Phase 7: Module deployment system
+  - Available modules grid: Docker, Pi-hole, Home Assistant, Prometheus, Grafana
+  - Module cards with icons, versions, descriptions
+  - Deployment status table showing all nodes
+  - Coming soon notice explaining future capabilities
+  - Added "Modules" to navigation (desktop + mobile)
+  - Route: /modules
+- **Production observations:**
+  - Node detail view works perfectly with both laptop + Pi
+  - Charts update smoothly with real data
+  - Health status calculations working correctly
+  - All API integrations functional
+- **Phase 6.2 COMPLETE!** ✓
+  - Professional node management interface
+  - Real-time monitoring per node
+  - Ready for job management UI (Phase 6.3)
 
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)

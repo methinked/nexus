@@ -172,6 +172,8 @@ nexus fleet update
 - [x] **Phase 5: The Hands** - Workload orchestration (Job execution system). ✅
 - [x] **Phase 6.1: The Dashboard** - Live metrics visualization (Charts with Chart.js). ✅
 - [x] **Pi Deployment** - First real Raspberry Pi deployment successful (moria-pi). ✅
+- [x] **Phase 6.2: Node Detail View** - Comprehensive node management with real-time charts. ✅
+- [x] **Modules Preview** - Stub page for future module deployment system (Phase 7). ✅
 
 ## 🔒 Security
 

@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30 (Night Session - Pi Deployment Complete)
-**Current Phase:** Phase 6 - The Dashboard (Phase 6.1 COMPLETE ✓ + Pi Deployment)
+**Last Updated:** 2025-11-30 (Late Night Session - Phase 6.2 Node Detail View Complete)
+**Current Phase:** Phase 6 - The Dashboard (6.1 ✓ + 6.2 Node Detail View ✓ + Modules Preview)
 
 ---
 
@@ -349,19 +349,56 @@ The core CLI-based fleet management is complete. The next logical step is a web-
 
 **Phase 6.1 COMPLETE!** ✓ - Production-ready dashboard monitoring real Pi hardware
 
-#### Phase 6.2: Job Management UI
+**Node Detail View (2025-11-30 Late Night):**
+- ✅ **Phase 6.2 Node Detail View - COMPLETE!**
+- ✅ Comprehensive node detail page at /nodes
+- ✅ Node list panel with status indicators
+- ✅ Interactive node selection (click to view details)
+- ✅ Node info cards (IP, last seen, location)
+- ✅ Health status display (Overall, CPU, Memory, Disk)
+- ✅ Real-time metrics charts (4 charts per node):
+  - CPU Usage with current value display (e.g., 15.3%)
+  - Memory Usage with current value
+  - Disk Usage with current value
+  - Temperature with current value
+  - Proper labels, titles, and axis units
+  - Time axis formatted as HH:mm
+  - Dark-themed tooltips
+  - Auto-refresh every 30 seconds
+- ✅ Agent services status display (Metrics, Logging, Job Dispatcher)
+- ✅ Recent jobs list (last 5 jobs)
+- ✅ Recent logs preview (last 20 entries)
+- ✅ CLI view integration (all API calls logged)
+- ✅ Loading states and error handling
+- ✅ Tested with both laptop + Pi nodes
+
+**Modules Preview (2025-11-30 Late Night):**
+- ✅ **Modules & Services stub page created** (Phase 7 preview)
+- ✅ Available modules grid showing:
+  - Docker Engine, Pi-hole, Home Assistant, Prometheus, Grafana
+  - Module cards with icons, versions, descriptions
+  - Deployment status (0/2 nodes)
+  - Deploy buttons (stub)
+- ✅ Deployment status table for all nodes
+- ✅ Coming soon notice with Phase 7 vision
+- ✅ Added "Modules" to navigation (desktop + mobile)
+- ✅ Route: /modules
+
+**Phase 6.2 Node Detail View COMPLETE!** ✓ - Production-ready node management and monitoring
+
+#### Phase 6.3: Job Management UI (Next Priority)
 - Jobs page (active + history)
 - Job submission form with templates
 - Live job output viewer
 - **Estimated Effort:** 1 week
 
-#### Phase 6.3: Log Viewer
+#### Phase 6.4: Log Viewer UI
 - Centralized log viewer with filters
 - Search and export functionality
 - Follow mode (tail -f style)
 - **Estimated Effort:** 1 week
 
-#### Phase 6.4: Advanced Features
+#### Phase 6.5: Advanced Features
 - Terminal in browser (xterm.js)
 - Alerting system with notifications
 - User authentication and access control
