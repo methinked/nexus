@@ -348,3 +348,91 @@ def delete_old_metrics(db: Session, before: datetime) -> int:
     deleted = db.query(MetricModel).filter(MetricModel.timestamp < before).delete()
     db.commit()
     return deleted
+
+
+# ============================================================================
+# Log CRUD Operations
+# ============================================================================
+
+
+def create_log(db: Session, log: "LogCreate") -> "LogModel":
+    """Create a new log entry."""
+    from nexus.core.db.models import LogModel
+
+    db_log = LogModel(
+        node_id=str(log.node_id),
+        timestamp=log.timestamp,
+        level=log.level.value,
+        source=log.source,
+        message=log.message,
+        extra=log.extra,
+    )
+    db.add(db_log)
+    db.commit()
+    db.refresh(db_log)
+    return db_log
+
+
+def get_logs(
+    db: Session,
+    node_id: Optional[str] = None,
+    level: Optional[str] = None,
+    source: Optional[str] = None,
+    since: Optional[datetime] = None,
+    until: Optional[datetime] = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> List["LogModel"]:
+    """Get logs with optional filtering."""
+    from nexus.core.db.models import LogModel
+
+    query = db.query(LogModel)
+
+    if node_id:
+        query = query.filter(LogModel.node_id == node_id)
+    if level:
+        query = query.filter(LogModel.level == level)
+    if source:
+        query = query.filter(LogModel.source.like(f"%{source}%"))
+    if since:
+        query = query.filter(LogModel.timestamp >= since)
+    if until:
+        query = query.filter(LogModel.timestamp <= until)
+
+    return query.order_by(LogModel.timestamp.desc()).offset(skip).limit(limit).all()
+
+
+def get_logs_count(
+    db: Session,
+    node_id: Optional[str] = None,
+    level: Optional[str] = None,
+    source: Optional[str] = None,
+    since: Optional[datetime] = None,
+    until: Optional[datetime] = None,
+) -> int:
+    """Get count of logs matching filters."""
+    from nexus.core.db.models import LogModel
+
+    query = db.query(LogModel)
+
+    if node_id:
+        query = query.filter(LogModel.node_id == node_id)
+    if level:
+        query = query.filter(LogModel.level == level)
+    if source:
+        query = query.filter(LogModel.source.like(f"%{source}%"))
+    if since:
+        query = query.filter(LogModel.timestamp >= since)
+    if until:
+        query = query.filter(LogModel.timestamp <= until)
+
+    return query.count()
+
+
+def delete_old_logs(db: Session, before: datetime) -> int:
+    """Delete logs older than the specified datetime."""
+    from nexus.core.db.models import LogModel
+
+    deleted = db.query(LogModel).filter(LogModel.timestamp < before).delete()
+    db.commit()
+    return deleted

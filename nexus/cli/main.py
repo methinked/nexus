@@ -100,6 +100,7 @@ def info() -> None:
 try:
     from nexus.cli.commands import config as config_commands
     from nexus.cli.commands import job as job_commands
+    from nexus.cli.commands import logs as logs_commands
     from nexus.cli.commands import metrics as metrics_commands
     from nexus.cli.commands import node as node_commands
 
@@ -107,6 +108,7 @@ try:
     app.add_typer(node_commands.app, name="node", help="Node management")
     app.add_typer(job_commands.app, name="job", help="Job management")
     app.add_typer(metrics_commands.app, name="metrics", help="View and analyze metrics")
+    app.add_typer(logs_commands.app, name="logs", help="View logs from nodes")
 except ImportError as e:
     # Commands not yet implemented - gracefully continue
     console.print(f"[yellow]Warning: Some command modules not yet available: {e}[/yellow]")

@@ -19,6 +19,7 @@ from uuid import UUID
 import httpx
 from fastapi import FastAPI
 
+from nexus.agent.services.logging import LogCollector
 from nexus.agent.services.metrics import MetricsCollector
 from nexus.shared import AgentConfig, HealthResponse, NodeMetadata, RegistrationRequest
 
@@ -39,6 +40,7 @@ startup_time = datetime.utcnow()
 node_id: UUID | None = None
 api_token: str | None = None
 metrics_collector: MetricsCollector | None = None
+log_collector: LogCollector | None = None
 
 # Path to store registration data
 STATE_FILE = config.data_dir / "agent_state.json"
@@ -125,7 +127,7 @@ async def lifespan(app: FastAPI):
     """
     Lifespan context manager for startup and shutdown events.
     """
-    global node_id, api_token, metrics_collector
+    global node_id, api_token, metrics_collector, log_collector
 
     # Startup
     logger.info("Starting Nexus Agent...")
@@ -159,6 +161,10 @@ async def lifespan(app: FastAPI):
     metrics_collector = MetricsCollector(config, node_id, api_token)
     await metrics_collector.start()
 
+    # Start log collection
+    log_collector = LogCollector(config, node_id, api_token)
+    await log_collector.start()
+
     yield
 
     # Shutdown
@@ -167,6 +173,10 @@ async def lifespan(app: FastAPI):
     # Stop metrics collection
     if metrics_collector:
         await metrics_collector.stop()
+
+    # Stop log collection
+    if log_collector:
+        await log_collector.stop()
 
 
 # Create FastAPI application

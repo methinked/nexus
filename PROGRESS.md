@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30 (PM Session - Phase 4 Partial)
-**Current Phase:** Phase 4 - The Brain (In Progress)
+**Last Updated:** 2025-11-30 (PM Session - Phase 4 Complete)
+**Current Phase:** Phase 5 - The Hands (Next)
 
 ---
 
@@ -84,9 +84,15 @@ All components completed:
 
 ## 🚧 In Progress
 
-#### Phase 4: The Brain - Logging & Remote Control (Partial - 2025-11-30) 🔄
+_No active development phase at the moment. Phase 4 complete!_
 
-Infrastructure components completed:
+---
+
+## ✅ Completed
+
+#### Phase 4: The Brain - Logging & Remote Control (Completed 2025-11-30) ✨
+
+All components completed:
 - [x] Terminal WebSocket architecture designed
   - CLI ↔ Core ↔ Agent relay pattern
   - Bidirectional message forwarding
@@ -102,25 +108,45 @@ Infrastructure components completed:
   - Node validation and status checking
   - Message relay between CLI and Agent
   - Connection management
-- [x] Centralized logging models
+- [x] Centralized logging system
   - LogLevel enum (DEBUG, INFO, WARNING, ERROR, CRITICAL)
   - LogEntry, LogCreate, LogList models
   - Database model (LogModel) with indexing
   - Node relationship with cascade delete
+- [x] Database migration for logs table
+  - Alembic migration with proper indexes
+  - Foreign key constraints with cascade delete
+- [x] Log CRUD operations
+  - create_log, get_logs, get_logs_count
+  - Filtering by level, source, time range
+  - delete_old_logs for cleanup
+- [x] Log API endpoints
+  - POST /api/logs - Submit log entries from agents
+  - GET /api/logs/{node_id} - Query logs for specific node
+  - GET /api/logs - Query logs from all nodes
+  - Full filtering and pagination support
+- [x] Agent log collection service
+  - Custom Python logging handler (CoreLogHandler)
+  - Queue-based log buffering (non-blocking)
+  - LogCollector service with background task
+  - Batch sending logs every 30 seconds
+  - Graceful startup/shutdown in agent lifecycle
+- [x] CLI logs viewer command
+  - nexus logs list - View logs from all nodes
+  - nexus logs list {node_id} - View logs from specific node
+  - nexus logs tail - Tail logs from a node
+  - Filtering by level, source, time range
+  - Follow mode (-f) for real-time log streaming
+  - Rich table formatting with color-coded levels
+- [x] End-to-end testing
+  - Agent logs collected and sent to Core
+  - Core receives and stores logs in database
+  - CLI successfully queries and displays logs
+  - Filtering and pagination verified
 
-Remaining work:
-- [ ] Database migration for logs table
-- [ ] Log CRUD operations and API endpoints
-- [ ] CLI terminal client (complex - requires WebSocket + TTY handling)
-- [ ] CLI logs viewer command
-- [ ] End-to-end testing of terminal sessions
-- [ ] Log aggregation from agents
+**Phase 4 Complete: 2025-11-30** 🎉
 
-**Note:** Terminal infrastructure is ready but requires a WebSocket-capable CLI client for interactive sessions.
-
----
-
-## ✅ Completed
+**Note:** Terminal CLI client implementation deferred to future (requires complex WebSocket + TTY handling). Terminal infrastructure (Agent + Core) is ready when needed.
 
 #### Phase 2: The Mesh - Agent Connectivity (Completed 2025-11-30) ✨
 
