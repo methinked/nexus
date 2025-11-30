@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30 (PM Session - Phase 2 Started)
-**Current Phase:** Phase 2 - The Mesh (In Progress)
+**Last Updated:** 2025-11-30 (PM Session - Phase 2 Complete)
+**Current Phase:** Phase 3 - The Pulse (Next)
 
 ---
 
@@ -84,9 +84,15 @@ All components completed:
 
 ## 🚧 In Progress
 
-#### Phase 2: The Mesh - Agent Connectivity (Started 2025-11-30)
+Nothing currently in progress.
 
-Progress so far:
+---
+
+## ✅ Completed
+
+#### Phase 2: The Mesh - Agent Connectivity (Completed 2025-11-30) ✨
+
+All components completed:
 - [x] Development environment setup
   - Python 3.13 virtual environment created
   - All dependencies installed (FastAPI, SQLAlchemy, Typer, psutil, etc.)
@@ -100,35 +106,38 @@ Progress so far:
   - Database initialized (SQLite at data/nexus.db)
   - Health endpoint working
   - FastAPI OpenAPI docs available at /docs
-- [ ] Agent registration flow
-- [ ] Real metrics collection with psutil
-- [ ] End-to-end testing
-- [ ] CLI testing with live data
+- [x] Agent registration flow
+  - Automatic registration on startup
+  - State persistence (data/agent_state.json)
+  - JWT token management
+  - Error handling for registration failures
+- [x] Real metrics collection with psutil
+  - CPU, memory, disk, temperature monitoring
+  - Background asyncio task (30s interval)
+  - Temperature detection with Pi/Linux fallback
+- [x] End-to-end testing
+  - Agent successfully registered with Core
+  - Metrics continuously submitted and stored
+  - Database verification confirmed
+- [x] CLI testing with live data
+  - Node listing working
+  - Node details working
+  - Metrics visible in database
+
+**Phase 2 Complete: 2025-11-30** 🎉
 
 ---
 
 ## 📋 Next Steps
 
-### Immediate (Phase 0 Completion)
-1. Create initial documentation structure (architecture.md, API design)
-2. Set up Docker configuration (Dockerfile, docker-compose.yml)
-3. Initialize git repository and make first commit
-4. Set up development environment helper scripts
-
-### Phase 2: The Mesh (Agent Discovery & Connectivity) - Next Priority
-**Goal:** Connect agents to Core and establish communication
-1. Local network discovery (mDNS/Bonjour)
-2. Agent registration flow
-3. API token issuance and validation
-4. Connection health monitoring
-5. Node status tracking
-
-### Phase 3: The Pulse (Metrics Collection)
-1. Speculum module implementation
-2. Metrics collection on Agent
-3. Metrics push to Core
-4. Historical data storage
-5. Basic web dashboard
+### Phase 3: The Pulse (Metrics Visualization) - Next Priority
+**Goal:** Build metrics visualization and monitoring capabilities
+1. Add metrics query endpoints to Core API
+2. Implement CLI commands for metrics viewing
+3. Add time-range filtering for historical metrics
+4. Create basic metrics dashboard (optional web UI)
+5. Add metrics aggregation (averages, min/max)
+6. Implement node health status based on metrics
 
 ### Phase 4: The Brain (Logging & Remote Control)
 1. Imperium module (remote terminal)

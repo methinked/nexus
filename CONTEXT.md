@@ -1,8 +1,8 @@
 # Nexus Development Context
 
-**Last Session:** 2025-11-30 (PM - Phase 2 Start)
+**Last Session:** 2025-11-30 (PM - Phase 2 Complete)
 **Current Branch:** dev
-**Current Phase:** Phase 2 - The Mesh (In Progress)
+**Current Phase:** Phase 3 - The Pulse (Next)
 
 ---
 
@@ -129,22 +129,19 @@ Nexus is a distributed Raspberry Pi management system with a **CLI-first** philo
 
 ## 🚧 What's Next
 
-### Immediate: Database Layer (Phase 1.5)
-**Location:** `nexus/core/db/` (not started)
+### Phase 3: The Pulse - Metrics Visualization
+**Goal:** Build metrics querying and visualization
 
 Need to implement:
-1. SQLAlchemy models
-2. Alembic migrations
-3. Database initialization
-4. CRUD operations
-
-Replace all the TODO markers in Core API with actual database queries.
-
-### Then: Connect Core and Agent
-1. Implement agent registration flow
-2. Implement metrics collection with psutil
-3. Implement metrics submission to Core
-4. Test end-to-end on laptop
+1. Add metrics query API endpoints to Core
+   - Time-range filtering
+   - Aggregation (avg, min, max)
+   - Per-node queries
+2. CLI commands for viewing metrics
+   - `nexus metrics get <node-id>`
+   - `nexus metrics stats <node-id>`
+3. Node health status based on metrics
+4. Optional: Basic web dashboard
 
 ---
 
@@ -366,6 +363,32 @@ rg "TODO:" nexus/
   - All API routes loaded
 - Next: Agent registration and metrics collection
 
+**Session 2025-11-30 (PM - Part 4 - Phase 2 Complete):**
+- Implemented complete agent registration flow:
+  - Automatic registration on startup with Core
+  - State persistence (data/agent_state.json)
+  - Local IP detection and node metadata
+  - JWT token management
+  - Full error handling
+- Implemented real metrics collection:
+  - CPU, memory, disk, temperature monitoring using psutil
+  - Temperature detection with Pi/Linux fallback (vcgencmd/sensors)
+  - Background asyncio task (30s interval)
+  - HTTP POST to Core with JWT authentication
+- Fixed agent API bugs:
+  - Type annotation errors (any → Any)
+  - Added NodeMetadata to shared exports
+- Tested full end-to-end flow:
+  - Agent successfully registered with Core (node_id: f6b858e2...)
+  - Metrics continuously submitted every 30s
+  - Database verification: 6+ metrics stored
+  - CLI commands working (node list, node get)
+- **Phase 2 Complete!**
+  - Agent-Core mesh fully operational
+  - Real system metrics flowing
+  - All components tested and verified
+- Next: Phase 3 - Metrics visualization and querying
+
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)
 - Local network first (lower barrier)
@@ -375,31 +398,29 @@ rg "TODO:" nexus/
 
 ---
 
-## 🎯 Phase 1 & 1.5 Complete! ✓
+## 🎯 Phase 1, 1.5 & 2 Complete! ✓
 
-All foundation work complete:
-1. ✅ Shared models are complete
-2. ✅ Core API structure is complete
-3. ✅ Agent API structure is complete
+All foundation and mesh work complete:
+1. ✅ Shared models complete
+2. ✅ Core API structure complete with database
+3. ✅ Agent API structure complete
 4. ✅ CLI can interact with Core
-5. ✅ Core has database backing
-6. ✅ Node registration endpoint working
-7. ✅ Metrics submission endpoint working
-8. ✅ **Core server is running and operational**
+5. ✅ Core has database backing (SQLite + SQLAlchemy)
+6. ✅ Node registration working (automatic on agent startup)
+7. ✅ Metrics collection working (psutil-based, 30s interval)
+8. ✅ Metrics submission working (HTTP POST with JWT auth)
+9. ✅ **Full agent-Core mesh operational!**
 
-## 🎯 Phase 2: The Mesh - In Progress
+## 🎯 Phase 3: The Pulse - Next
 
-**Completed:**
-- ✅ Development environment setup (venv + dependencies)
-- ✅ Fixed SQLAlchemy metadata conflict
-- ✅ Core server running and tested
+**Goal:** Metrics visualization and querying
 
-**Next Steps:**
-1. Implement agent registration flow in agent code
-2. Implement metrics collection with psutil in agent
-3. Test full flow: Agent → Register → Submit Metrics → Core → Database
-4. Test CLI commands against live data
-5. Document any issues and iterate
+**Planned Features:**
+1. API endpoints for querying historical metrics
+2. CLI commands for viewing metrics
+3. Time-range filtering and aggregation
+4. Node health status based on metrics
+5. Optional web dashboard
 
 ---
 
