@@ -15,32 +15,35 @@ window.addCliAction = function(cliCommand, apiCall, response, summary) {
         summary: summary || ''
     };
 
-    // Get Alpine.js data
-    const alpineData = Alpine.store || window;
+    // Wait for Alpine.js to be ready
+    const addAction = () => {
+        if (window.Alpine) {
+            // Find the root Alpine component
+            const body = document.querySelector('body');
+            if (body && body._x_dataStack && body._x_dataStack.length > 0) {
+                const data = body._x_dataStack[0];
+                data.cliActions.push(action);
 
-    // Add to actions array (via Alpine.js)
-    if (window.Alpine) {
-        // Find the root Alpine component
-        const body = document.querySelector('body');
-        if (body && body.__x) {
-            const data = body.__x.$data;
-            data.cliActions.push(action);
-
-            // Keep only last 50 actions
-            if (data.cliActions.length > 50) {
-                data.cliActions = data.cliActions.slice(-50);
-            }
-
-            // Auto-scroll to bottom
-            setTimeout(() => {
-                const cliContent = document.getElementById('cli-view-content');
-                if (cliContent) {
-                    cliContent.scrollTop = 0; // Scroll to top (newest at top)
+                // Keep only last 50 actions
+                if (data.cliActions.length > 50) {
+                    data.cliActions = data.cliActions.slice(-50);
                 }
-            }, 100);
-        }
-    }
 
+                // Auto-scroll to bottom
+                setTimeout(() => {
+                    const cliContent = document.getElementById('cli-view-content');
+                    if (cliContent) {
+                        cliContent.scrollTop = 0; // Scroll to top (newest at top)
+                    }
+                }, 100);
+            }
+        } else {
+            // Retry if Alpine not ready yet
+            setTimeout(addAction, 50);
+        }
+    };
+
+    addAction();
     console.log('[CLI View]', action);
 };
 
