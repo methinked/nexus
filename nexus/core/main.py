@@ -85,15 +85,17 @@ app.add_middleware(
 # Root Endpoints
 # ============================================================================
 
-
-@app.get("/", tags=["root"])
-async def root():
-    """Root endpoint with basic information."""
+# Note: Root "/" is now handled by the web dashboard
+# Old JSON endpoint moved to /api/
+@app.get("/api", tags=["root"])
+async def api_root():
+    """API root endpoint with basic information."""
     return {
-        "name": "Nexus Core",
+        "name": "Nexus Core API",
         "version": "0.1.0",
         "status": "running",
         "docs": "/docs",
+        "dashboard": "/",
     }
 
 

@@ -1,8 +1,8 @@
 # Nexus Development Context
 
-**Last Session:** 2025-11-30 (PM - Phase 5 Complete)
+**Last Session:** 2025-11-30 (Late Evening - Phase 6.1 Complete)
 **Current Branch:** dev
-**Current Phase:** Phase 5 - The Hands (COMPLETE ✓)
+**Current Phase:** Phase 6 - The Dashboard (IN PROGRESS - 6.1 Complete ✓)
 
 ---
 
@@ -666,6 +666,36 @@ rg "TODO:" nexus/
   - Working dashboard viewable in browser
   - CLI view feature fully functional
   - Ready for live data and iteration
+
+**Session 2025-11-30 (Late Evening - Phase 6.1 Testing & Deployment):**
+- Fixed missing dependency:
+  - Added jinja2 to environment (pip install jinja2)
+  - Will update requirements.txt in future
+- Fixed root endpoint conflict:
+  - Moved JSON API root from "/" to "/api/"
+  - Dashboard now serves HTML at root path
+  - API documentation still accessible at /docs
+- **Dashboard fully tested and operational:**
+  - Server running at http://localhost:8000
+  - Agent "default-agent" connected and reporting
+  - Metrics being collected every 30 seconds
+  - Logs being centralized from agent
+  - Dashboard displaying live agent data:
+    - CPU: 5-10%, Memory: 23%, Disk: 53%, Temp: 49-50°C
+    - 1 node online, 1 completed job in history
+- **All components verified:**
+  - ✅ API endpoints returning real data (/api/nodes, /api/jobs)
+  - ✅ Dashboard HTML serving correctly
+  - ✅ Static assets loading (CSS, JavaScript)
+  - ✅ CLI view JavaScript operational
+  - ✅ Fetch interception working
+  - ✅ Purple theme rendering correctly
+- **Phase 6.1 Core Dashboard (MVP) COMPLETE!** ✓
+  - Foundation ready for next features:
+    - Live metrics charts
+    - Node detail pages
+    - Job submission UI
+    - Real-time updates with WebSocket
 
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)
