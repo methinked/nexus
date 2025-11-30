@@ -49,10 +49,30 @@
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased"
       x-data="{
-          cliViewOpen: false,
+          // Persistent state using localStorage
+          cliViewOpen: localStorage.getItem('nexus_cliViewOpen') === 'true' || false,
           sidebarOpen: true,
-          cliActions: [],
-          verbosity: 'normal'
+          cliActions: JSON.parse(localStorage.getItem('nexus_cliActions') || '[]'),
+          verbosity: localStorage.getItem('nexus_verbosity') || 'normal',
+
+          // Initialize watchers for persistence
+          init() {
+              // Watch cliViewOpen and save to localStorage
+              this.$watch('cliViewOpen', value => {
+                  localStorage.setItem('nexus_cliViewOpen', value);
+              });
+
+              // Watch verbosity and save to localStorage
+              this.$watch('verbosity', value => {
+                  localStorage.setItem('nexus_verbosity', value);
+              });
+
+              // Watch cliActions and save to localStorage (keep last 50)
+              this.$watch('cliActions', value => {
+                  const actionsToSave = value.slice(-50);
+                  localStorage.setItem('nexus_cliActions', JSON.stringify(actionsToSave));
+              });
+          }
       }">
 
     <!-- Header -->
