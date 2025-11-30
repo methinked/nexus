@@ -1,8 +1,8 @@
 # Nexus Development Context
 
-**Last Session:** 2025-11-30 (PM - Phase 3 Complete)
+**Last Session:** 2025-11-30 (PM - Phase 4 Partial)
 **Current Branch:** dev
-**Current Phase:** Phase 4 - The Brain (Next)
+**Current Phase:** Phase 4 - The Brain (In Progress)
 
 ---
 
@@ -129,21 +129,27 @@ Nexus is a distributed Raspberry Pi management system with a **CLI-first** philo
 
 ## 🚧 What's Next
 
-### Phase 4: The Brain - Logging & Remote Control
+### Phase 4: The Brain - Logging & Remote Control (In Progress)
 **Goal:** Build centralized logging and remote terminal access
 
-Need to implement:
-1. Imperium module (remote terminal)
-   - WebSocket-based terminal proxy
-   - Secure authentication
-   - Session management
-2. Centralized logging system
-   - Agent log collection
-   - Log aggregation and storage
-   - Log querying and search
-3. CLI commands for remote access
-   - `nexus node shell <node-id>` - Remote terminal
-   - `nexus logs <node-id>` - View logs
+**Completed so far:**
+- ✅ Terminal WebSocket architecture (Agent ↔ Core ↔ CLI)
+- ✅ Agent terminal endpoint with PTY spawning
+- ✅ Core terminal proxy with message relay
+- ✅ Logging data models and database schema
+
+**Still need to implement:**
+1. Database migration for logs table
+2. Log CRUD operations and API endpoints
+3. CLI WebSocket client for interactive terminal
+   - Requires WebSocket client library
+   - TTY raw mode handling
+   - Signal forwarding
+4. CLI logs viewer command
+5. Log collection service on Agent
+6. End-to-end testing
+
+**Note:** The terminal infrastructure (Agent + Core) is ready. The main challenge is implementing a robust CLI WebSocket client with proper TTY handling.
 
 ---
 
@@ -425,6 +431,28 @@ rg "TODO:" nexus/
   - Health monitoring integrated
   - All components tested and working
 
+**Session 2025-11-30 (PM - Part 6 - Phase 4 Partial):**
+- Implemented terminal infrastructure (Imperium module):
+  - WebSocket architecture designed (CLI ↔ Core ↔ Agent relay)
+  - Agent terminal endpoint created (nexus/agent/api/terminal.py)
+  - PTY-based shell spawning with bidirectional I/O
+  - Terminal resize support via control messages
+  - Session cleanup on disconnect
+- Core terminal proxy:
+  - WebSocket proxy endpoint (nexus/core/api/terminal.py)
+  - Message relay between CLI and Agent
+  - Node validation and status checking
+  - Connection management with error handling
+- Centralized logging infrastructure:
+  - Added LogLevel enum and log models
+  - Created LogModel database model with indexing
+  - Node relationship with cascade delete
+  - Ready for log collection implementation
+- **Phase 4 Partial:**
+  - Terminal infrastructure complete (server-side)
+  - CLI client implementation remaining (complex)
+  - Logging models ready, API/CRUD pending
+
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)
 - Local network first (lower barrier)
@@ -433,6 +461,8 @@ rg "TODO:" nexus/
 - SQLite for simplicity
 - Threshold-based health assessment (configurable)
 - Rich CLI formatting for better UX
+- WebSocket for terminal (native FastAPI support)
+- PTY for terminal sessions (Unix-standard)
 
 ---
 
@@ -452,15 +482,20 @@ All foundation, mesh, and metrics work complete:
 11. ✅ Health status calculation and monitoring
 12. ✅ CLI metrics visualization commands
 
-## 🎯 Phase 4: The Brain - Next
+## 🎯 Phase 4: The Brain - In Progress 🔄
 
 **Goal:** Logging and remote control
 
-**Planned Features:**
-1. Imperium module (WebSocket-based remote terminal)
-2. Centralized logging system
-3. Log aggregation and querying
-4. CLI commands for remote access
+**Completed:**
+1. ✅ Terminal WebSocket infrastructure (Agent + Core)
+2. ✅ Logging data models and database schema
+
+**Remaining:**
+1. ⏳ Database migration for logs
+2. ⏳ Log API endpoints and CRUD
+3. ⏳ CLI WebSocket client for terminal
+4. ⏳ CLI logs viewer
+5. ⏳ Log collection service on Agent
 
 ---
 

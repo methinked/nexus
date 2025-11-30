@@ -111,12 +111,13 @@ async def health_check():
 # API Routers
 # ============================================================================
 
-from nexus.core.api import auth, jobs, metrics, nodes
+from nexus.core.api import auth, jobs, metrics, nodes, terminal
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(nodes.router, prefix="/api/nodes", tags=["nodes"])
 app.include_router(jobs.router, prefix="/api/jobs", tags=["jobs"])
 app.include_router(metrics.router, prefix="/api/metrics", tags=["metrics"])
+app.include_router(terminal.router, prefix="/api", tags=["terminal"])
 
 
 # ============================================================================

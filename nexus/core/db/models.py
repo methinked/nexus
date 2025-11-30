@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import JSON, Column, DateTime, Enum, Float, ForeignKey, Integer, String
+from sqlalchemy import JSON, Column, DateTime, Enum, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from nexus.core.db.database import Base
@@ -44,6 +44,7 @@ class NodeModel(Base):
     # Relationships
     jobs = relationship("JobModel", back_populates="node", cascade="all, delete-orphan")
     metrics = relationship("MetricModel", back_populates="node", cascade="all, delete-orphan")
+    logs = relationship("LogModel", back_populates="node", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Node(id={self.id}, name={self.name}, status={self.status})>"
@@ -108,3 +109,32 @@ class MetricModel(Base):
 
     def __repr__(self) -> str:
         return f"<Metric(id={self.id}, node_id={self.node_id}, timestamp={self.timestamp})>"
+
+
+class LogModel(Base):
+    """Log entry database model."""
+
+    __tablename__ = "logs"
+
+    # Primary key
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+
+    # Foreign key to node
+    node_id = Column(String(36), ForeignKey("nodes.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Log data
+    timestamp = Column(DateTime, nullable=False, index=True)
+    level = Column(String(20), nullable=False, index=True)  # debug, info, warning, error, critical
+    source = Column(String(255), nullable=False, index=True)  # Module/component name
+    message = Column(Text, nullable=False)
+    extra = Column(JSON, nullable=True)  # Additional context as JSON
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    node = relationship("NodeModel", back_populates="logs")
+
+    def __repr__(self) -> str:
+        return f"<Log(id={self.id}, node_id={self.node_id}, level={self.level}, source={self.source})>"

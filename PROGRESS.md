@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30 (PM Session - Phase 3 Complete)
-**Current Phase:** Phase 4 - The Brain (Next)
+**Last Updated:** 2025-11-30 (PM Session - Phase 4 Partial)
+**Current Phase:** Phase 4 - The Brain (In Progress)
 
 ---
 
@@ -84,7 +84,39 @@ All components completed:
 
 ## 🚧 In Progress
 
-Nothing currently in progress.
+#### Phase 4: The Brain - Logging & Remote Control (Partial - 2025-11-30) 🔄
+
+Infrastructure components completed:
+- [x] Terminal WebSocket architecture designed
+  - CLI ↔ Core ↔ Agent relay pattern
+  - Bidirectional message forwarding
+  - Authentication via JWT tokens
+- [x] Agent terminal endpoint (Imperium module)
+  - WebSocket endpoint at /api/terminal
+  - PTY-based shell spawning
+  - Bidirectional I/O handling
+  - Terminal resize support
+  - Session cleanup on disconnect
+- [x] Core terminal proxy
+  - WebSocket proxy at /api/terminal/{node_id}
+  - Node validation and status checking
+  - Message relay between CLI and Agent
+  - Connection management
+- [x] Centralized logging models
+  - LogLevel enum (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  - LogEntry, LogCreate, LogList models
+  - Database model (LogModel) with indexing
+  - Node relationship with cascade delete
+
+Remaining work:
+- [ ] Database migration for logs table
+- [ ] Log CRUD operations and API endpoints
+- [ ] CLI terminal client (complex - requires WebSocket + TTY handling)
+- [ ] CLI logs viewer command
+- [ ] End-to-end testing of terminal sessions
+- [ ] Log aggregation from agents
+
+**Note:** Terminal infrastructure is ready but requires a WebSocket-capable CLI client for interactive sessions.
 
 ---
 

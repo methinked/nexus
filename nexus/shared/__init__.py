@@ -25,6 +25,10 @@ from nexus.shared.models import (
     JobList,
     JobStatus,
     JobType,
+    LogCreate,
+    LogEntry,
+    LogLevel,
+    LogList,
     Metric,
     MetricCreate,
     MetricData,
@@ -84,6 +88,11 @@ __all__ = [
     "NodeHealth",
     "NodeHealthStatus",
     "HealthThresholds",
+    # Models - Log
+    "LogEntry",
+    "LogCreate",
+    "LogList",
+    "LogLevel",
     # Models - Auth
     "Token",
     "TokenData",

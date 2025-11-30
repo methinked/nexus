@@ -326,6 +326,55 @@ class NodeHealthStatus(BaseModel):
 
 
 # ============================================================================
+# Log Models
+# ============================================================================
+
+
+class LogLevel(str, Enum):
+    """Log level."""
+
+    DEBUG = "debug"
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+    CRITICAL = "critical"
+
+
+class LogEntry(TimestampedModel):
+    """Log entry from an agent."""
+
+    id: UUID = Field(default_factory=uuid4)
+    node_id: UUID
+    level: LogLevel
+    source: str  # Module/component name
+    message: str
+    extra: Dict[str, Any] = Field(default_factory=dict)  # Additional context
+
+    class Config:
+        """Pydantic configuration."""
+
+        from_attributes = True
+
+
+class LogCreate(BaseModel):
+    """Model for creating a log entry."""
+
+    node_id: UUID
+    level: LogLevel
+    source: str
+    message: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    extra: Dict[str, Any] = Field(default_factory=dict)
+
+
+class LogList(BaseModel):
+    """Response model for listing logs."""
+
+    logs: list[LogEntry]
+    total: int
+
+
+# ============================================================================
 # Authentication Models
 # ============================================================================
 
