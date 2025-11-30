@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  nexus-core:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.core
+    container_name: nexus-core
+    ports:
+      - "8000:8000"
+    environment:
+      - NEXUS_ENV=production
+      - NEXUS_SHARED_SECRET=${NEXUS_SHARED_SECRET:-change-me-in-production}
+      - NEXUS_DATABASE_URL=sqlite:///data/nexus.db
+      - NEXUS_LOG_LEVEL=info
+    volumes:
+      - nexus-core-data:/app/data
+      - nexus-core-logs:/app/logs
+    networks:
+      - nexus-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nexus-agent:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.agent
+    container_name: nexus-agent
+    ports:
+      - "8001:8001"
+    environment:
+      - NEXUS_ENV=production
+      - NEXUS_CORE_URL=${NEXUS_CORE_URL:-http://nexus-core:8000}
+      - NEXUS_SHARED_SECRET=${NEXUS_SHARED_SECRET:-change-me-in-production}
+      - NEXUS_NODE_NAME=${NEXUS_NODE_NAME:-default-agent}
+      - NEXUS_LOG_LEVEL=info
+    volumes:
+      - nexus-agent-data:/app/data
+      - nexus-agent-logs:/app/logs
+      # Mount for file sync (Syncthing integration)
+      - nexus-sync:/app/sync
+    networks:
+      - nexus-network
+    restart: unless-stopped
+    depends_on:
+      - nexus-core
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Web dashboard (future)
+  # nexus-web:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.web
+  #   container_name: nexus-web
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NEXUS_CORE_URL=http://nexus-core:8000
+  #   networks:
+  #     - nexus-network
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - nexus-core
+
+volumes:
+  nexus-core-data:
+    driver: local
+  nexus-core-logs:
+    driver: local
+  nexus-agent-data:
+    driver: local
+  nexus-agent-logs:
+    driver: local
+  nexus-sync:
+    driver: local
+
+networks:
+  nexus-network:
+    driver: bridge

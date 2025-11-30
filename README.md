@@ -10,7 +10,7 @@ Nexus is a lightweight, secure, and modular system for managing a fleet of Raspb
 
 *   **CLI-First:** Every feature is built as a command-line tool first. Automation and scripting are first-class citizens.
 *   **Decentralized:** Agents run locally on each node, handling monitoring and tasks independently.
-*   **Secure Mesh:** Built on top of ZeroTier for secure, configuration-free networking.
+*   **Network Agnostic:** Works on any local network out of the box. Optionally use ZeroTier for secure remote access.
 *   **Modular:** Features like OCR, File Sync, and Monitoring are pluggable components.
 
 ## 🏗️ Architecture
@@ -18,17 +18,18 @@ Nexus is a lightweight, secure, and modular system for managing a fleet of Raspb
 ```mermaid
 graph TD
     User[User] -->|CLI / Web| Core[Nexus Core]
-    Core -->|ZeroTier| Agent1[Agent: Kitchen]
-    Core -->|ZeroTier| Agent2[Agent: Study]
-    Core -->|ZeroTier| Agent3[Agent: Garage]
-    
+    Core -->|Local Network / VPN| Agent1[Agent: Kitchen]
+    Core -->|Local Network / VPN| Agent2[Agent: Study]
+    Core -->|Local Network / VPN| Agent3[Agent: Garage]
+
     subgraph "Nexus Core"
         DB[(SQLite)]
-        API[API Server]
+        API[FastAPI Server]
         CLI[CLI Tool]
     end
-    
+
     subgraph "Agent Node"
+        AgentAPI[FastAPI Agent]
         Monitor[Speculum (Metrics)]
         Terminal[Imperium (Shell)]
         Worker[Scriptor (Jobs)]
@@ -70,22 +71,23 @@ Nexus integrates the proven logic from the **Vigil** project into a distributed 
 *   **Nexus Implementation:**
     *   **Connection:** WebSocket tunnel initiated by CLI/Web to Core, proxied to Agent.
     *   **Security:** Authenticated via API Token.
-    *   **Dev Note:** Port `modules.imperium` logic. Ensure Gunicorn/Uvicorn is configured for WebSockets (Eventlet/ASGI).
+    *   **Dev Note:** Port `modules.imperium` logic. FastAPI's native WebSocket support eliminates need for eventlet/socketio. Use Uvicorn for deployment.
 
 ## 🛠️ Technology Stack
 
 *   **Language:** Python 3.11+
 *   **CLI:** [Typer](https://typer.tiangolo.com/) - *Fast, easy CLI building.*
-*   **Web/API:** Flask (Core) + FastAPI (Agent)
+*   **Web/API:** FastAPI - *Modern async framework with built-in OpenAPI docs and WebSocket support.*
 *   **Database:** SQLite - *Single-file, easy backup.*
 *   **Deployment:** Docker & Docker Compose
+*   **Networking:** Local network discovery with optional ZeroTier/Tailscale for remote access.
 
 ## ⚡ Getting Started
 
 ### Prerequisites
 *   Python 3.11+
 *   Docker & Docker Compose
-*   ZeroTier Account
+*   Local network (or VPN like ZeroTier/Tailscale for remote access)
 
 ### Installation (Dev)
 
@@ -148,7 +150,8 @@ nexus fleet update
 
 *   **Shared Secret:** Pre-shared key authentication for new nodes.
 *   **API Tokens:** Unique tokens issued to agents after registration.
-*   **Encrypted Transport:** All traffic flows over the ZeroTier encrypted mesh.
+*   **TLS/HTTPS:** All API communication encrypted with TLS certificates.
+*   **VPN Optional:** For remote access, use encrypted VPN solutions like ZeroTier or Tailscale.
 
 ---
 *Built with ❤️ for the Raspberry Pi Community.*
