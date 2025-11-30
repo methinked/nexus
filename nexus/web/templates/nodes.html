@@ -291,13 +291,52 @@ function nodesPage() {
             if (this.nodes.length > 0) {
                 await this.selectNode(this.nodes[0].id);
             }
-            // Refresh every 30 seconds
-            this.refreshInterval = setInterval(() => {
-                this.loadNodes();
-                if (this.selectedNodeId) {
+
+            // Setup WebSocket listeners for real-time updates
+            this.setupWebSocket();
+        },
+
+        setupWebSocket() {
+            // Handle metric updates
+            window.nexusWS.on('metric_update', (data) => {
+                // If this is for the selected node, refresh its data
+                if (data.node_id === this.selectedNodeId) {
+                    console.log('[Nodes] Metric update for selected node');
                     this.refreshNodeData(this.selectedNodeId);
                 }
-            }, 30000);
+                // Also refresh node list to update last_seen times
+                this.loadNodes();
+            });
+
+            // Handle WebSocket fallback to polling
+            window.nexusWS.on('fallback_to_polling', () => {
+                console.log('[Nodes] Enabling polling fallback');
+                this.enablePolling();
+            });
+
+            // Re-disable polling if WebSocket reconnects
+            window.nexusWS.on('connected', () => {
+                console.log('[Nodes] WebSocket reconnected, disabling polling');
+                this.disablePolling();
+            });
+        },
+
+        enablePolling() {
+            if (!this.refreshInterval) {
+                this.refreshInterval = setInterval(() => {
+                    this.loadNodes();
+                    if (this.selectedNodeId) {
+                        this.refreshNodeData(this.selectedNodeId);
+                    }
+                }, 30000);
+            }
+        },
+
+        disablePolling() {
+            if (this.refreshInterval) {
+                clearInterval(this.refreshInterval);
+                this.refreshInterval = null;
+            }
         },
 
         async loadNodes() {
