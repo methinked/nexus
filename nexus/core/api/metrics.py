@@ -52,7 +52,7 @@ async def submit_metrics(
         )
 
     # Store metrics in database
-    create_metric(db, metric)
+    db_metric = create_metric(db, metric)
 
     # Update node status to ONLINE and last_seen timestamp
     update_node_status(
@@ -61,6 +61,18 @@ async def submit_metrics(
         NodeStatus.ONLINE,
         datetime.utcnow(),
     )
+
+    # Broadcast metric update via WebSocket
+    from nexus.core.services.websocket_manager import manager
+    import asyncio
+    asyncio.create_task(manager.broadcast_event("metric_update", {
+        "node_id": str(metric.node_id),
+        "timestamp": metric.timestamp.isoformat(),
+        "cpu_percent": metric.cpu_percent,
+        "memory_percent": metric.memory_percent,
+        "disk_percent": metric.disk_percent,
+        "temperature": metric.temperature,
+    }))
 
     # TODO: Check for alerts/thresholds (Phase 3)
 

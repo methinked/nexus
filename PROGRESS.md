@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-11-30 (Night Session - Pi Deployment Complete)
-**Current Phase:** Phase 6 - The Dashboard (Phase 6.1 COMPLETE ✓ + Pi Deployment)
+**Last Updated:** 2025-12-01 (Evening Session - Phase 7.1 Docker Orchestration API Complete)
+**Current Phase:** Phase 7 - Docker Orchestration (7.1 Core API ✓)
 
 ---
 
@@ -349,19 +349,204 @@ The core CLI-based fleet management is complete. The next logical step is a web-
 
 **Phase 6.1 COMPLETE!** ✓ - Production-ready dashboard monitoring real Pi hardware
 
-#### Phase 6.2: Job Management UI
-- Jobs page (active + history)
-- Job submission form with templates
-- Live job output viewer
-- **Estimated Effort:** 1 week
+**Node Detail View (2025-11-30 Late Night):**
+- ✅ **Phase 6.2 Node Detail View - COMPLETE!**
+- ✅ Comprehensive node detail page at /nodes
+- ✅ Node list panel with status indicators
+- ✅ Interactive node selection (click to view details)
+- ✅ Node info cards (IP, last seen, location)
+- ✅ Health status display (Overall, CPU, Memory, Disk)
+- ✅ Real-time metrics charts (4 charts per node):
+  - CPU Usage with current value display (e.g., 15.3%)
+  - Memory Usage with current value
+  - Disk Usage with current value
+  - Temperature with current value
+  - Proper labels, titles, and axis units
+  - Time axis formatted as HH:mm
+  - Dark-themed tooltips
+  - Auto-refresh every 30 seconds
+- ✅ Agent services status display (Metrics, Logging, Job Dispatcher)
+- ✅ Recent jobs list (last 5 jobs)
+- ✅ Recent logs preview (last 20 entries)
+- ✅ CLI view integration (all API calls logged)
+- ✅ Loading states and error handling
+- ✅ Tested with both laptop + Pi nodes
 
-#### Phase 6.3: Log Viewer
+**Modules Preview (2025-11-30 Late Night):**
+- ✅ **Modules & Services stub page created** (Phase 7 preview)
+- ✅ Available modules grid showing:
+  - Docker Engine, Pi-hole, Home Assistant, Prometheus, Grafana
+  - Module cards with icons, versions, descriptions
+  - Deployment status (0/2 nodes)
+  - Deploy buttons (stub)
+- ✅ Deployment status table for all nodes
+- ✅ Coming soon notice with Phase 7 vision
+- ✅ Added "Modules" to navigation (desktop + mobile)
+- ✅ Route: /modules
+
+**Phase 6.2 Node Detail View COMPLETE!** ✓ - Production-ready node management and monitoring
+
+**WebSocket Real-time Updates (2025-11-30 Late Night):**
+- ✅ **WebSocket system implemented - COMPLETE!**
+- ✅ WebSocket connection manager:
+  - Manages multiple client connections
+  - Broadcasts events to all connected clients
+  - Thread-safe with asyncio locks
+  - Personal message support
+  - Connection tracking and cleanup
+- ✅ WebSocket endpoint (/api/ws):
+  - Accepts WebSocket connections
+  - Handles ping/pong for keepalive
+  - Connection success messages
+  - Proper error handling and disconnection
+- ✅ Broadcast system:
+  - Metric updates broadcast when agents submit
+  - Event types: metric_update, node_status, job_update, log_entry
+  - JSON message format with type and data
+- ✅ Client-side WebSocket library:
+  - Auto-connect on page load
+  - Reconnection with exponential backoff (max 5 attempts)
+  - Event listener system (on/off/emit)
+  - Ping/pong keepalive (30s interval)
+  - Graceful fallback to polling after max reconnect attempts
+- ✅ Dashboard real-time updates:
+  - Removed 30-second polling
+  - Instant updates on metric changes
+  - Fallback to polling if WebSocket fails
+  - Re-enables WebSocket on reconnection
+- ✅ Nodes page real-time updates:
+  - Instant metric updates for selected node
+  - Node list updates (last seen times)
+  - Smart fallback handling
+  - Seamless reconnection
+- ✅ Benefits:
+  - **Instant updates** instead of 30-second delay
+  - Lower bandwidth usage (push vs pull)
+  - More responsive user experience
+  - Professional real-time dashboard
+  - Reliable with automatic fallback
+
+**Phase 6.2 + WebSocket COMPLETE!** ✓ - Real-time monitoring with instant updates
+
+**Jobs Management UI (2025-12-01 Morning):**
+- ✅ **Phase 6.3 Job Management UI - COMPLETE!**
+- ✅ Comprehensive jobs page at /jobs
+- ✅ Job listing table with columns:
+  - Status badges (pending, running, completed, failed)
+  - Job type (SHELL, OCR, SYNC)
+  - Node name display
+  - Command preview
+  - Created timestamp (relative time)
+  - Duration calculation
+  - Details button
+- ✅ Stats cards (Total, Running, Completed, Failed)
+- ✅ Filter tabs (All, Running, Completed, Failed)
+- ✅ Job details modal:
+  - Full job information display
+  - Command/payload view
+  - Output viewer with syntax highlighting
+  - Error display with red theme
+  - Timestamps for created/started/completed
+- ✅ Job submission form modal:
+  - Job type selector (Shell, OCR-disabled, Sync-disabled)
+  - Node dropdown with IP addresses
+  - Command textarea (multi-line)
+  - Timeout configuration (1-3600s)
+  - Form validation
+  - Submit to /api/jobs endpoint
+- ✅ Real-time updates via WebSocket
+- ✅ Fallback polling (30s interval)
+- ✅ Responsive design with purple theme
+- ✅ CLI view integration
+- ✅ Empty state handling
+- ✅ Error handling and user feedback
+
+**Phase 6.3 COMPLETE!** ✓ - Full-featured job management via web UI
+
+---
+
+#### Phase 7.1: Core Service Management API - Docker Orchestration (2025-12-01 Evening)
+
+**Status:** ✅ COMPLETE
+
+**Goal:** Build the foundational database layer and API for Docker service orchestration.
+
+**Completed Tasks:**
+- ✅ **Database Models:**
+  - ServiceModel: Docker service templates with compose YAML
+  - DeploymentModel: Service deployment instances per node
+  - DeploymentStatus enum (DEPLOYING, RUNNING, STOPPED, FAILED, REMOVING)
+
+- ✅ **Pydantic Models** (12 new models):
+  - Service, ServiceCreate, ServiceUpdate, ServiceList
+  - Deployment, DeploymentCreate, DeploymentUpdate, DeploymentList
+  - DeploymentConfig, DeploymentWithDetails, ContainerStatus
+
+- ✅ **Database Migration:**
+  - services table with indexes and unique constraints
+  - deployments table with foreign keys (CASCADE delete)
+  - Alembic migration successfully applied
+
+- ✅ **CRUD Operations** (28 functions):
+  - Services: create, get, get_by_name, list, count, update, delete
+  - Deployments: create, get, list, count, update, update_status, delete
+  - Full filtering support (category, node, service, status)
+  - Pagination support
+
+- ✅ **API Endpoints** (13 RESTful endpoints):
+  - **Services API** (/api/services):
+    - GET /api/services - List service templates
+    - GET /api/services/{id} - Get service details
+    - POST /api/services - Create custom service template
+    - PUT /api/services/{id} - Update service template
+    - DELETE /api/services/{id} - Delete service template
+
+  - **Deployments API** (/api/deployments):
+    - GET /api/deployments - List deployments
+    - GET /api/deployments/{id} - Get deployment details
+    - POST /api/deployments - Deploy service to node
+    - PUT /api/deployments/{id} - Update deployment config
+    - POST /api/deployments/{id}/start - Start stopped deployment
+    - POST /api/deployments/{id}/stop - Stop running deployment
+    - POST /api/deployments/{id}/restart - Restart deployment
+    - DELETE /api/deployments/{id} - Remove deployment
+
+- ✅ **Validation:**
+  - Service name uniqueness enforced
+  - Node must be ONLINE to accept deployments
+  - Service and node existence validated before deployment
+
+- ✅ **Integration:**
+  - Routers registered in main FastAPI app
+  - All imports and exports wired correctly
+  - Server starts successfully with new endpoints
+  - OpenAPI documentation auto-generated
+
+**Technical Debt:**
+- TODO markers added for Phase 7.4 (deployment workflow)
+- Agent-side Docker operations not yet implemented
+
+**Files Changed:**
+- 10 files modified/created
+- 1000+ lines of code added
+- 3 new files: services.py, deployments.py, migration
+
+**What's Next (Phase 7.2):**
+- Agent Docker module (docker SDK for Python)
+- Container lifecycle management on agents
+- Real Docker operations
+
+**Phase 7.1 COMPLETE!** ✓ - Foundation ready for Docker orchestration
+
+---
+
+#### Phase 6.4: Log Viewer UI
 - Centralized log viewer with filters
 - Search and export functionality
 - Follow mode (tail -f style)
 - **Estimated Effort:** 1 week
 
-#### Phase 6.4: Advanced Features
+#### Phase 6.5: Advanced Features
 - Terminal in browser (xterm.js)
 - Alerting system with notifications
 - User authentication and access control

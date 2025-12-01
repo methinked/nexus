@@ -115,6 +115,9 @@
                 <a href="/logs" class="px-4 py-2 rounded-lg hover:bg-gray-700 {% if active_page == 'logs' %}bg-gray-700 text-purple-400{% endif %}">
                     Logs
                 </a>
+                <a href="/modules" class="px-4 py-2 rounded-lg hover:bg-gray-700 {% if active_page == 'modules' %}bg-gray-700 text-purple-400{% endif %}">
+                    Modules
+                </a>
             </nav>
 
             <!-- Actions -->
@@ -159,6 +162,9 @@
                     </a>
                     <a href="/logs" class="block px-4 py-2 rounded-lg hover:bg-gray-700 {% if active_page == 'logs' %}bg-gray-700 text-purple-400{% endif %}">
                         Logs
+                    </a>
+                    <a href="/modules" class="block px-4 py-2 rounded-lg hover:bg-gray-700 {% if active_page == 'modules' %}bg-gray-700 text-purple-400{% endif %}">
+                        Modules
                     </a>
                 </nav>
 
@@ -300,6 +306,9 @@
 
     <!-- CLI View JavaScript -->
     <script src="/static/js/cli-view.js"></script>
+
+    <!-- WebSocket Real-time Updates -->
+    <script src="/static/js/websocket-client.js"></script>
 
     {% block extra_scripts %}{% endblock %}
 </body>

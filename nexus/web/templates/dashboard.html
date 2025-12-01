@@ -225,10 +225,51 @@ async function loadNodes() {
 document.addEventListener('DOMContentLoaded', () => {
     refreshDashboard();
     initCharts();
+    setupWebSocketListeners();
 });
 
-// Auto-refresh every 30 seconds
-setInterval(refreshDashboard, 30000);
+// Polling fallback (disabled by default, enabled if WebSocket fails)
+let pollingInterval = null;
+
+function enablePolling() {
+    if (!pollingInterval) {
+        pollingInterval = setInterval(() => {
+            refreshDashboard();
+            loadChartData();
+        }, 30000);
+        console.log('[Dashboard] Polling mode enabled');
+    }
+}
+
+function disablePolling() {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+        console.log('[Dashboard] Polling mode disabled');
+    }
+}
+
+// Setup WebSocket event listeners
+function setupWebSocketListeners() {
+    // Handle metric updates
+    window.nexusWS.on('metric_update', (data) => {
+        console.log('[Dashboard] Metric update received:', data.node_id);
+        // Refresh dashboard stats
+        refreshDashboard();
+        // Note: Charts will be updated when we fetch latest metrics
+        loadChartData();
+    });
+
+    // Handle WebSocket fallback to polling
+    window.nexusWS.on('fallback_to_polling', () => {
+        enablePolling();
+    });
+
+    // Re-disable polling if WebSocket reconnects
+    window.nexusWS.on('connected', () => {
+        disablePolling();
+    });
+}
 
 // Chart.js configuration and initialization
 let cpuChart, memoryChart, diskChart, tempChart;
@@ -422,8 +463,8 @@ function initCharts() {
     // Load initial chart data
     loadChartData();
 
-    // Auto-refresh charts every 30 seconds
-    setInterval(loadChartData, 30000);
+    // Note: Auto-refresh is now handled by WebSocket events
+    // Polling will only be used as fallback if WebSocket fails
 }
 
 async function loadChartData() {

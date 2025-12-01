@@ -1,18 +1,20 @@
 # Nexus Development Context
 
-**Last Session:** 2025-11-30 (Night - Raspberry Pi Deployment Complete)
+**Last Session:** 2025-11-30 (Late Night - WebSocket Real-time Updates Complete)
 **Current Branch:** dev
-**Current Phase:** Phase 6 - The Dashboard (6.1 Complete ✓ + Pi Deployment Complete ✓)
+**Current Phase:** Phase 6 - The Dashboard (6.1 ✓ + 6.2 ✓ + WebSocket ✓ + Modules Preview)
 
 ---
 
 ## 🎯 Project Overview
 
-Nexus is a distributed Raspberry Pi management system with a **CLI-first** philosophy. It allows you to manage a fleet of Raspberry Pis from the command line, with an optional web dashboard.
+Nexus is a distributed fleet orchestration platform for Debian-based machines with a **CLI-first** and **Docker-first** philosophy. It manages fleets of Raspberry Pis, Ubuntu servers, Debian machines, and any Debian-derivative Linux systems from the command line, with an optional web dashboard. The core focus is on Docker-based service orchestration across the fleet.
 
 **Target Hardware:**
 - Development: Linux laptop (x86_64)
-- Testing: Raspberry Pi 3 Model B (ARMv7/v8, 1GB RAM)
+- Production: Raspberry Pi (ARMv7/v8), Ubuntu servers (x86_64/ARM), Debian machines
+- Tested: Raspberry Pi 3 Model B (ARMv7/v8, 1GB RAM) - "moria-pi"
+- Compatible: Any Debian-based Linux distribution
 
 ---
 
@@ -196,23 +198,36 @@ The next logical enhancement is a web-based dashboard for real-time monitoring:
    - Native WebSocket support
    - Built-in OpenAPI docs
 
-2. **Local Network First:** Designed for LAN, VPN optional
+2. **Docker-First Service Management:** Docker is the foundational orchestration technology
+   - Services deployed as containers across the fleet
+   - Consistent deployments regardless of underlying hardware
+   - Service templates for common applications (Pi-hole, Home Assistant, etc.)
+   - Docker SDK for Python for container management
+
+3. **Debian-Based Platform:** Supports any Debian-derivative Linux distribution
+   - Raspberry Pi OS (primary target)
+   - Ubuntu Server (x86_64 and ARM)
+   - Debian (stable and testing)
+   - Platform-specific optimizations (vcgencmd for Pi, lm-sensors for others)
+
+4. **Local Network First:** Designed for LAN, VPN optional
    - Works without ZeroTier/Tailscale
    - VPN is an enhancement, not a requirement
+   - Tested with ZeroTier for remote Pi management
 
-3. **SQLite for Core:** Simple, file-based database
+5. **SQLite for Core:** Simple, file-based database
    - Sufficient for small-to-medium fleets
    - Easy backup and migration
 
-4. **CLI-First Development:** Every feature gets a CLI command first
+6. **CLI-First Development:** Every feature gets a CLI command first
    - Web dashboard is optional
    - Automation-friendly from day one
 
-5. **Pydantic for Everything:** All models use Pydantic v2
+7. **Pydantic for Everything:** All models use Pydantic v2
    - Validation at API boundaries
    - Type-safe throughout
 
-6. **JWT Authentication:** Token-based auth for agents
+8. **JWT Authentication:** Token-based auth for agents
    - Shared secret for initial registration
    - JWT tokens for ongoing requests
 
@@ -769,6 +784,158 @@ rg "TODO:" nexus/
   - Dashboard scales to multiple nodes
   - Metrics collection proven on real ARM hardware
 
+**Session 2025-11-30 (Late Night - Phase 6.2 Node Detail View):**
+- **Comprehensive Node Detail View - COMPLETE!**
+  - Created full-featured node management page at /nodes
+  - Left panel: Node list with status indicators and selection
+  - Right panel: Detailed view for selected node
+- **Node detail components:**
+  - Node header with name, ID, and large status badge
+  - Info cards: IP address, last seen, location
+  - Health status: Overall + component breakdown (CPU, Memory, Disk)
+  - Real-time metrics charts (4 charts):
+    * CPU Usage - purple theme, current value display
+    * Memory Usage - blue theme, current value display
+    * Disk Usage - green theme, current value display
+    * Temperature - amber theme, current value display
+    * Proper labels and titles
+    * Y-axis with units (%, °C)
+    * X-axis as time (HH:mm format)
+    * Dark-themed tooltips
+    * Auto-refresh every 30 seconds
+  - Agent services status (Metrics, Logging, Job Dispatcher)
+  - Recent jobs list (last 5 with status colors)
+  - Recent logs preview (last 20 with level colors)
+- **Chart improvements:**
+  - Initial charts had no labels or values - fixed
+  - Added chart titles (CPU Usage, Memory Usage, etc.)
+  - Added current value displays above charts (e.g., 31.2%)
+  - Proper axis labels with unit suffixes
+  - Separated chart creation from updates (better performance)
+  - No destroy/recreate on refresh - just update data
+  - Better tooltips and styling
+- **Technical implementation:**
+  - Alpine.js for state management
+  - Chart.js for visualization
+  - Auto-select first node on load
+  - Clean charts when switching nodes
+  - Loading states while fetching data
+  - CLI view integration (all API calls logged)
+- **Modules & Services stub page created:**
+  - Vision for Phase 7: Module deployment system
+  - Available modules grid: Docker, Pi-hole, Home Assistant, Prometheus, Grafana
+  - Module cards with icons, versions, descriptions
+  - Deployment status table showing all nodes
+  - Coming soon notice explaining future capabilities
+  - Added "Modules" to navigation (desktop + mobile)
+  - Route: /modules
+- **Production observations:**
+  - Node detail view works perfectly with both laptop + Pi
+  - Charts update smoothly with real data
+  - Health status calculations working correctly
+  - All API integrations functional
+- **Phase 6.2 COMPLETE!** ✓
+  - Professional node management interface
+  - Real-time monitoring per node
+  - Ready for job management UI (Phase 6.3)
+
+**Session 2025-11-30 (Late Night Continued - WebSocket Real-time Updates):**
+- **WebSocket Real-time Updates - COMPLETE!**
+  - Replaced 30-second polling with instant WebSocket updates
+  - Major upgrade to dashboard responsiveness
+- **Backend implementation:**
+  - Connection manager (nexus/core/services/websocket_manager.py):
+    * Manages multiple WebSocket connections
+    * Broadcast events to all clients
+    * Thread-safe with async locks
+    * Personal messaging support
+    * Automatic connection cleanup
+  - WebSocket endpoint (/api/ws):
+    * Accepts connections with client ID tracking
+    * Ping/pong keepalive every 30 seconds
+    * Connection success messages
+    * Proper disconnection handling
+  - Metric broadcast integration:
+    * Modified metrics API to broadcast on submit
+    * Event format: {type: "metric_update", data: {...}}
+    * Async task creation for non-blocking broadcasts
+- **Frontend implementation:**
+  - WebSocket client library (websocket-client.js):
+    * Auto-connect on page load
+    * Reconnection with exponential backoff
+    * Max 5 reconnect attempts before fallback
+    * Event listener system (on/off/emit)
+    * Graceful error handling
+  - Dashboard integration:
+    * Removed setInterval polling
+    * Added WebSocket event listeners
+    * Instant refreshes on metric_update events
+    * Fallback to polling if WebSocket fails
+    * Re-enables WebSocket on reconnection
+  - Nodes page integration:
+    * Real-time updates for selected node
+    * Node list updates on any metric
+    * Smart polling fallback
+    * Seamless WebSocket reconnection
+- **Benefits achieved:**
+  - **Instant updates** (0s delay vs 30s polling)
+  - **Lower bandwidth** (push only when data changes)
+  - **Better UX** (feels more responsive and professional)
+  - **Reliable** (automatic fallback to polling)
+  - **Scalable** (broadcast to many clients efficiently)
+- **Technical decisions:**
+  - Used FastAPI native WebSocket support
+  - Async/await for non-blocking operations
+  - Event-driven architecture on client
+  - Graceful degradation pattern
+  - Connection pooling with cleanup
+- **Testing:**
+  - WebSocket connection working
+  - Metric broadcasts functional
+  - Reconnection logic tested
+  - Fallback to polling verified
+  - Both dashboard and nodes page updated
+- **WebSocket System COMPLETE!** ✓
+  - Real-time updates across entire dashboard
+  - Professional grade implementation
+  - Ready for production use
+
+**Session 2025-12-01 (Morning - Phase 6.3 Jobs Management UI):**
+- **Jobs Page Implementation - COMPLETE!**
+  - Created comprehensive jobs management page at /jobs
+  - Job listing table with sortable columns
+  - Stats cards showing Total, Running, Completed, Failed jobs
+  - Filter tabs for All, Running, Completed, Failed jobs
+  - Job details modal with full information:
+    * Job ID, type, node, timestamps
+    * Command/payload display
+    * Output and error viewing
+    * Duration calculation
+  - Job submission form:
+    * Job type selector (Shell, OCR, Sync)
+    * Node dropdown with IP addresses
+    * Command textarea (multi-line support)
+    * Timeout configuration
+    * Form validation
+  - Real-time updates via WebSocket
+  - Fallback polling (30s interval)
+  - Empty state handling
+  - Responsive design with purple theme
+  - CLI view integration (all API calls logged)
+- **Features implemented:**
+  - Real-time job status updates
+  - Smart filtering and search
+  - Job duration calculation
+  - Relative timestamps (e.g., "5m ago")
+  - Click row to view details
+  - Modal dialogs for details and submission
+  - Error handling and user feedback
+  - Consistent styling with dashboard
+- **Phase 6.3 Jobs Management UI COMPLETE!** ✓
+  - Full-featured job management interface
+  - Submit, monitor, and review jobs via web UI
+  - Ready for production use
+
 **Key Decisions Made:**
 - FastAPI everywhere (consistency)
 - Local network first (lower barrier)
@@ -805,24 +972,36 @@ All foundation, mesh, metrics, logging, and job execution work complete:
 18. ✅ Shell command execution working end-to-end
 19. ✅ Job result reporting to Core
 
-## 🚀 Next Priority: Web Dashboard (Phase 6)
+## 🚀 Next Priority: Docker Orchestration (Phase 7)
 
-**High Priority - Fleet Visualization:**
-1. **Web Dashboard** - Real-time monitoring and control
-   - Live metrics charts (CPU, memory, disk, temp)
-   - Health status overview for all nodes
-   - Centralized log viewer with search
-   - Job submission and monitoring UI
-   - System topology visualization
+**Strategic Direction:**
+Nexus is shifting from a monitoring-focused platform to a **full fleet orchestration system** with Docker as the foundational technology for deploying and managing services across Debian-based machines.
 
-2. **Alerting System** - Proactive monitoring
-   - Health threshold alerts
-   - Email/webhook notifications
+**High Priority - Docker Service Management (Phase 7):**
+1. **Docker Module System** - Container deployment and lifecycle management
+   - Deploy Docker containers to individual nodes or entire fleet
+   - Service templates (Pi-hole, Home Assistant, Prometheus, Grafana, etc.)
+   - Container lifecycle operations (deploy, start, stop, restart, update, remove)
+   - Docker Compose support for multi-container applications
+   - Container health monitoring and resource tracking
 
-**Medium Priority - Advanced Features:**
-3. **Job Scheduling** - Cron-like recurring jobs
-4. **Terminal CLI Client** - WebSocket-based remote shell
-5. **Job Templates** - Pre-configured common tasks
+2. **Web UI for Docker Management** - Extend existing dashboard
+   - Service catalog with available templates
+   - Deployment wizard (select service → select nodes → deploy)
+   - Container status dashboard (running/stopped/failed)
+   - Per-container resource usage charts
+   - Container logs viewer
+
+3. **CLI Docker Commands** - Command-line service management
+   - `nexus service deploy <template> --nodes <ids>`
+   - `nexus service list [--node <id>]`
+   - `nexus service logs <service> --node <id>`
+   - `nexus service start/stop/restart <service>`
+
+**Medium Priority - Dashboard Completion (Phase 6.4):**
+- Log Viewer UI with filtering and search
+- Alerting system with notifications
+- User authentication and access control
 
 **Optional (Parked) - Vigil Legacy:**
 - Scriptor Module (OCR) - Image text extraction
@@ -830,4 +1009,7 @@ All foundation, mesh, metrics, logging, and job execution work complete:
 
 ---
 
-**System is production-ready for CLI-based fleet management! Dashboard is the next logical enhancement.**
+**System Status:**
+- ✅ **Production-ready:** CLI-based fleet management and monitoring
+- ✅ **Web dashboard:** Real-time metrics, node details, job management
+- 🚀 **Next step:** Docker orchestration for service deployment across fleet

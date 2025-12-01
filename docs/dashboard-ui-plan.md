@@ -39,6 +39,7 @@ The Nexus dashboard draws inspiration from Ubiquiti's UniFi Controller:
 │              │                                              │
 │   • Overview │                                              │
 │   • Nodes    │                                              │
+│   • Services │                                              │
 │   • Jobs     │                                              │
 │   • Logs     │                                              │
 │   • Settings │                                              │
@@ -451,6 +452,138 @@ Click job → Detail modal:
    - Core server status
    - Database stats
    - Log retention settings
+
+---
+
+### Page 6: Services (Docker Orchestration) - Phase 7
+
+**Purpose:** Deploy and manage Docker containers across the fleet
+
+**Layout:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Services                           [+ Deploy Service]       │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ┌─ Service Catalog ──────────────────────────────────────┐ │
+│  │                                                          │ │
+│  │  Popular Services:                                       │ │
+│  │  ┌───────────┐ ┌───────────┐ ┌───────────┐             │ │
+│  │  │ 🐳 Pi-hole│ │ 🏠 Home   │ │ 📊 Prom   │             │ │
+│  │  │  DNS      │ │  Assistant│ │  etheus   │             │ │
+│  │  │  v5.18    │ │  v2024.11 │ │  v2.48    │             │ │
+│  │  │           │ │           │ │           │             │ │
+│  │  │  0/2 ●    │ │  1/2 ●    │ │  0/2 ●    │             │ │
+│  │  │ [Deploy]  │ │ [Manage]  │ │ [Deploy]  │             │ │
+│  │  └───────────┘ └───────────┘ └───────────┘             │ │
+│  │                                                          │ │
+│  │  ┌───────────┐ ┌───────────┐ ┌───────────┐             │ │
+│  │  │ 📈 Grafana│ │ 🔍 Portain│ │ ⚙️  Custom │             │ │
+│  │  │  Analytics│ │  er       │ │  Compose  │             │ │
+│  │  │  v10.2    │ │  v2.19    │ │           │             │ │
+│  │  │           │ │           │ │           │             │ │
+│  │  │  0/2 ●    │ │  2/2 ●    │ │  Upload   │             │ │
+│  │  │ [Deploy]  │ │ [Manage]  │ │ [YAML]    │             │ │
+│  │  └───────────┘ └───────────┘ └───────────┘             │ │
+│  └──────────────────────────────────────────────────────────┘ │
+│                                                               │
+│  ┌─ Deployed Services ──────────────────────────────────────┐│
+│  │ Service      Nodes     Status    CPU    RAM    Actions   ││
+│  ├──────────────────────────────────────────────────────────┤│
+│  │ Home Assist  moria-pi  🟢 Running 12%    340MB  [●●●]    ││
+│  │ Portainer    all (2)   🟢 Running  2%    120MB  [●●●]    ││
+│  │                                                           ││
+│  └──────────────────────────────────────────────────────────┘│
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+When clicking "Deploy" button:
+
+┌─────────────────────────────────────┐
+│ Deploy Pi-hole                      │
+│                            [X Close]│
+├─────────────────────────────────────┤
+│ Service: Pi-hole DNS Server         │
+│ Version: v5.18                      │
+│                                     │
+│ ┌─ Configuration ─────────────────┐│
+│ │ Service Name: pihole            ││
+│ │                                 ││
+│ │ Deploy to:                      ││
+│ │ ○ Single node                   ││
+│ │ ● Multiple nodes                ││
+│ │ ○ All nodes                     ││
+│ │                                 ││
+│ │ Select Nodes:                   ││
+│ │ ☑ moria-pi (10.243.14.179)     ││
+│ │ ☐ default-agent (10.243.29.55) ││
+│ │                                 ││
+│ │ Environment Variables:          ││
+│ │ TZ: [Europe/London        ]     ││
+│ │ WEBPASSWORD: [**********  ]     ││
+│ │                                 ││
+│ │ Ports:                          ││
+│ │ 80:80 (HTTP)  ☑                ││
+│ │ 53:53 (DNS)   ☑                ││
+│ │                                 ││
+│ │ [Advanced Options ▼]            ││
+│ └─────────────────────────────────┘│
+│                                     │
+│ [Cancel]              [Deploy Now] │
+└─────────────────────────────────────┘
+```
+
+**Key Features:**
+- **Service Catalog** - Pre-built templates for popular services
+  - Pi-hole (DNS ad-blocker)
+  - Home Assistant (home automation)
+  - Prometheus (metrics collection)
+  - Grafana (visualization)
+  - Portainer (Docker management UI)
+  - Custom Docker Compose uploads
+
+- **Deployment Status** - Visual overview of what's running where
+  - Service name and nodes deployed to
+  - Running status (green = healthy, amber = degraded, red = failed)
+  - Resource usage (CPU, RAM per service)
+  - Quick actions menu (view logs, restart, stop, update, remove)
+
+- **Deployment Wizard** - Step-by-step service deployment
+  - Select service template or upload custom compose file
+  - Choose target nodes (single, multiple, or all)
+  - Configure environment variables and ports
+  - Advanced options (volumes, networks, restart policies)
+  - One-click deployment
+
+- **Service Management** - Per-service control panel
+  - Container status and health
+  - Resource usage charts
+  - Live logs streaming
+  - Quick actions (start/stop/restart/update/remove)
+  - Container shell access (future)
+
+**CLI Integration:**
+All actions show equivalent commands in CLI view:
+```
+$ nexus service deploy pihole --node moria-pi \
+    --env TZ=Europe/London \
+    --env WEBPASSWORD=secret \
+    --port 80:80 --port 53:53
+```
+
+**Technical Implementation:**
+- Uses Docker SDK for Python on agent side
+- Service definitions stored in Core database
+- Deployment state tracked per node
+- WebSocket updates for real-time status
+- Docker Compose YAML templates embedded or uploaded
+
+**Rationale:**
+- **Docker-First:** Makes service deployment the primary use case
+- **User-Friendly:** No need to SSH and manually run docker commands
+- **Fleet-Wide:** Deploy the same service to multiple nodes with one click
+- **Template-Based:** Common services pre-configured for quick deployment
+- **Extensible:** Custom Docker Compose support for any service
 
 ---
 

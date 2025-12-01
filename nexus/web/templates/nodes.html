@@ -1,22 +1,616 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="space-y-6">
-    <div>
-        <h1 class="text-3xl font-bold">Nodes</h1>
-        <p class="text-gray-400 mt-1">Fleet management and node details</p>
+<div class="h-full flex gap-6" x-data="nodesPage()">
+    <!-- Left Panel: Nodes List -->
+    <div class="w-80 flex-shrink-0 space-y-4">
+        <div>
+            <h1 class="text-2xl font-bold">Nodes</h1>
+            <p class="text-gray-400 text-sm mt-1">Fleet management</p>
+        </div>
+
+        <!-- Nodes List -->
+        <div class="space-y-2">
+            <template x-for="node in nodes" :key="node.id">
+                <button @click="selectNode(node.id)"
+                        :class="selectedNodeId === node.id ? 'bg-purple-600/20 border-purple-500' : 'bg-gray-800 border-gray-700 hover:border-gray-600'"
+                        class="w-full text-left p-4 rounded-lg border transition-all">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-semibold" x-text="node.name"></span>
+                        <span :class="{
+                            'bg-green-500/20 text-green-400': node.status === 'online',
+                            'bg-red-500/20 text-red-400': node.status === 'offline',
+                            'bg-gray-500/20 text-gray-400': node.status === 'unknown'
+                        }" class="text-xs px-2 py-1 rounded-full" x-text="node.status"></span>
+                    </div>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <div x-text="node.ip_address"></div>
+                        <div x-text="'Last seen: ' + formatLastSeen(node.last_seen)"></div>
+                    </div>
+                </button>
+            </template>
+
+            <template x-if="nodes.length === 0">
+                <div class="text-gray-500 text-center py-8 text-sm">
+                    No nodes registered yet
+                </div>
+            </template>
+        </div>
     </div>
 
-    <div class="card">
-        <div class="card-body">
-            <div class="text-center py-12 text-gray-500">
+    <!-- Right Panel: Node Details -->
+    <div class="flex-1 overflow-y-auto space-y-6">
+        <template x-if="!selectedNode">
+            <div class="text-center py-20 text-gray-500">
                 <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
                 </svg>
-                <p class="font-semibold">Nodes page coming in Phase 6.2</p>
-                <p class="text-sm mt-2">Will show sortable node table with details panel</p>
+                <p class="font-semibold text-lg">Select a node to view details</p>
+                <p class="text-sm mt-2">Choose a node from the list on the left</p>
             </div>
-        </div>
+        </template>
+
+        <template x-if="selectedNode">
+            <div class="space-y-6">
+                <!-- Node Header -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold" x-text="selectedNode.name"></h2>
+                        <p class="text-gray-400 text-sm mt-1" x-text="selectedNode.id"></p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span :class="{
+                            'bg-green-500/20 text-green-400 border-green-500/50': selectedNode.status === 'online',
+                            'bg-red-500/20 text-red-400 border-red-500/50': selectedNode.status === 'offline',
+                            'bg-gray-500/20 text-gray-400 border-gray-500/50': selectedNode.status === 'unknown'
+                        }" class="px-3 py-1 rounded-full border text-sm font-semibold" x-text="selectedNode.status.toUpperCase()"></span>
+                    </div>
+                </div>
+
+                <!-- Node Info Cards -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-sm text-gray-400 mb-1">IP Address</div>
+                            <div class="text-lg font-semibold" x-text="selectedNode.ip_address"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-sm text-gray-400 mb-1">Last Seen</div>
+                            <div class="text-lg font-semibold" x-text="formatLastSeen(selectedNode.last_seen)"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-sm text-gray-400 mb-1">Location</div>
+                            <div class="text-lg font-semibold" x-text="selectedNode.metadata?.location || 'Not set'"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health Status -->
+                <div class="card" x-show="healthStatus">
+                    <div class="card-body">
+                        <h3 class="text-lg font-semibold mb-4">Health Status</h3>
+                        <div class="grid grid-cols-4 gap-4">
+                            <div class="text-center">
+                                <div :class="{
+                                    'text-green-400': healthStatus?.overall_health === 'HEALTHY',
+                                    'text-amber-400': healthStatus?.overall_health === 'WARNING',
+                                    'text-red-400': healthStatus?.overall_health === 'CRITICAL',
+                                    'text-gray-400': healthStatus?.overall_health === 'UNKNOWN'
+                                }" class="text-3xl font-bold mb-1" x-text="healthStatus?.overall_health || 'N/A'"></div>
+                                <div class="text-xs text-gray-400">Overall</div>
+                            </div>
+                            <div class="text-center">
+                                <div :class="{
+                                    'text-green-400': healthStatus?.cpu === 'HEALTHY',
+                                    'text-amber-400': healthStatus?.cpu === 'WARNING',
+                                    'text-red-400': healthStatus?.cpu === 'CRITICAL'
+                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.cpu || 'N/A'"></div>
+                                <div class="text-xs text-gray-400">CPU</div>
+                            </div>
+                            <div class="text-center">
+                                <div :class="{
+                                    'text-green-400': healthStatus?.memory === 'HEALTHY',
+                                    'text-amber-400': healthStatus?.memory === 'WARNING',
+                                    'text-red-400': healthStatus?.memory === 'CRITICAL'
+                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.memory || 'N/A'"></div>
+                                <div class="text-xs text-gray-400">Memory</div>
+                            </div>
+                            <div class="text-center">
+                                <div :class="{
+                                    'text-green-400': healthStatus?.disk === 'HEALTHY',
+                                    'text-amber-400': healthStatus?.disk === 'WARNING',
+                                    'text-red-400': healthStatus?.disk === 'CRITICAL'
+                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.disk || 'N/A'"></div>
+                                <div class="text-xs text-gray-400">Disk</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metrics Charts -->
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="text-lg font-semibold mb-4">Real-time Metrics (Last 50 readings)</h3>
+
+                        <template x-if="!latestMetrics || latestMetrics.length === 0">
+                            <div class="text-center py-12 text-gray-500">
+                                <p>Loading metrics...</p>
+                            </div>
+                        </template>
+
+                        <template x-if="latestMetrics && latestMetrics.length > 0">
+                            <div class="grid grid-cols-2 gap-6">
+                                <!-- CPU Chart -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h4 class="text-sm font-semibold text-gray-400">CPU Usage</h4>
+                                        <span class="text-2xl font-bold text-purple-400" x-text="latestMetrics[0]?.cpu_percent.toFixed(1) + '%'"></span>
+                                    </div>
+                                    <canvas :id="'chart-cpu-' + selectedNode.id"></canvas>
+                                </div>
+
+                                <!-- Memory Chart -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h4 class="text-sm font-semibold text-gray-400">Memory Usage</h4>
+                                        <span class="text-2xl font-bold text-blue-400" x-text="latestMetrics[0]?.memory_percent.toFixed(1) + '%'"></span>
+                                    </div>
+                                    <canvas :id="'chart-memory-' + selectedNode.id"></canvas>
+                                </div>
+
+                                <!-- Disk Chart -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h4 class="text-sm font-semibold text-gray-400">Disk Usage</h4>
+                                        <span class="text-2xl font-bold text-green-400" x-text="latestMetrics[0]?.disk_percent.toFixed(1) + '%'"></span>
+                                    </div>
+                                    <canvas :id="'chart-disk-' + selectedNode.id"></canvas>
+                                </div>
+
+                                <!-- Temperature Chart -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h4 class="text-sm font-semibold text-gray-400">Temperature</h4>
+                                        <span class="text-2xl font-bold text-amber-400" x-text="latestMetrics[0]?.temperature ? latestMetrics[0].temperature.toFixed(1) + '°C' : 'N/A'"></span>
+                                    </div>
+                                    <canvas :id="'chart-temp-' + selectedNode.id"></canvas>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Running Services -->
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="text-lg font-semibold mb-4">Agent Services</h3>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                                    <span class="font-medium">Metrics Collector</span>
+                                </div>
+                                <span class="text-sm text-gray-400">Running (30s interval)</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                                    <span class="font-medium">Log Collector</span>
+                                </div>
+                                <span class="text-sm text-gray-400">Running</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                                    <span class="font-medium">Job Dispatcher</span>
+                                </div>
+                                <span class="text-sm text-gray-400">Running</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Jobs -->
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="text-lg font-semibold mb-4">Recent Jobs</h3>
+                        <div class="space-y-2">
+                            <template x-for="job in recentJobs" :key="job.id">
+                                <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                                    <div>
+                                        <div class="font-medium" x-text="job.type"></div>
+                                        <div class="text-xs text-gray-400" x-text="job.id.substr(0, 8)"></div>
+                                    </div>
+                                    <span :class="{
+                                        'bg-green-500/20 text-green-400': job.status === 'completed',
+                                        'bg-blue-500/20 text-blue-400': job.status === 'running',
+                                        'bg-amber-500/20 text-amber-400': job.status === 'pending',
+                                        'bg-red-500/20 text-red-400': job.status === 'failed'
+                                    }" class="text-xs px-2 py-1 rounded-full" x-text="job.status"></span>
+                                </div>
+                            </template>
+                            <template x-if="recentJobs.length === 0">
+                                <div class="text-gray-500 text-center py-4 text-sm">
+                                    No recent jobs
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Logs -->
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="text-lg font-semibold mb-4">Recent Logs</h3>
+                        <div class="space-y-1 font-mono text-xs max-h-64 overflow-y-auto">
+                            <template x-for="log in recentLogs" :key="log.id">
+                                <div class="p-2 bg-gray-800 rounded">
+                                    <span :class="{
+                                        'text-red-400': log.level === 'ERROR' || log.level === 'CRITICAL',
+                                        'text-amber-400': log.level === 'WARNING',
+                                        'text-blue-400': log.level === 'INFO',
+                                        'text-gray-400': log.level === 'DEBUG'
+                                    }" x-text="log.level"></span>
+                                    <span class="text-gray-500" x-text="' | ' + new Date(log.timestamp).toLocaleTimeString()"></span>
+                                    <span class="text-gray-300" x-text="' | ' + log.message"></span>
+                                </div>
+                            </template>
+                            <template x-if="recentLogs.length === 0">
+                                <div class="text-gray-500 text-center py-4">
+                                    No recent logs
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
     </div>
 </div>
+
+<script>
+function nodesPage() {
+    return {
+        nodes: [],
+        selectedNodeId: null,
+        selectedNode: null,
+        healthStatus: null,
+        recentJobs: [],
+        recentLogs: [],
+        latestMetrics: [],
+        charts: {},
+        refreshInterval: null,
+
+        async init() {
+            await this.loadNodes();
+            // Auto-select first node if available
+            if (this.nodes.length > 0) {
+                await this.selectNode(this.nodes[0].id);
+            }
+
+            // Setup WebSocket listeners for real-time updates
+            this.setupWebSocket();
+        },
+
+        setupWebSocket() {
+            // Handle metric updates
+            window.nexusWS.on('metric_update', (data) => {
+                // If this is for the selected node, refresh its data
+                if (data.node_id === this.selectedNodeId) {
+                    console.log('[Nodes] Metric update for selected node');
+                    this.refreshNodeData(this.selectedNodeId);
+                }
+                // Also refresh node list to update last_seen times
+                this.loadNodes();
+            });
+
+            // Handle WebSocket fallback to polling
+            window.nexusWS.on('fallback_to_polling', () => {
+                console.log('[Nodes] Enabling polling fallback');
+                this.enablePolling();
+            });
+
+            // Re-disable polling if WebSocket reconnects
+            window.nexusWS.on('connected', () => {
+                console.log('[Nodes] WebSocket reconnected, disabling polling');
+                this.disablePolling();
+            });
+        },
+
+        enablePolling() {
+            if (!this.refreshInterval) {
+                this.refreshInterval = setInterval(() => {
+                    this.loadNodes();
+                    if (this.selectedNodeId) {
+                        this.refreshNodeData(this.selectedNodeId);
+                    }
+                }, 30000);
+            }
+        },
+
+        disablePolling() {
+            if (this.refreshInterval) {
+                clearInterval(this.refreshInterval);
+                this.refreshInterval = null;
+            }
+        },
+
+        async loadNodes() {
+            try {
+                const response = await fetch('/api/nodes');
+                const data = await response.json();
+                this.nodes = data.nodes || [];
+            } catch (error) {
+                console.error('Failed to load nodes:', error);
+            }
+        },
+
+        async selectNode(nodeId) {
+            this.selectedNodeId = nodeId;
+            this.selectedNode = this.nodes.find(n => n.id === nodeId);
+
+            // Clear old charts when switching nodes
+            Object.values(this.charts).forEach(chart => chart.destroy());
+            this.charts = {};
+
+            await this.loadNodeDetails(nodeId);
+        },
+
+        async loadNodeDetails(nodeId) {
+            try {
+                // Load health status
+                const healthResponse = await fetch(`/api/nodes/${nodeId}/health`);
+                this.healthStatus = await healthResponse.json();
+
+                // Load metrics and create charts
+                const metricsResponse = await fetch(`/api/metrics/${nodeId}?limit=50`);
+                const metricsData = await metricsResponse.json();
+                this.latestMetrics = (metricsData.metrics || []).reverse(); // Newest first
+                this.createCharts(this.latestMetrics);
+
+                // Load recent jobs
+                const jobsResponse = await fetch(`/api/jobs?node_id=${nodeId}&limit=5`);
+                const jobsData = await jobsResponse.json();
+                this.recentJobs = jobsData.jobs || [];
+
+                // Load recent logs
+                const logsResponse = await fetch(`/api/logs/${nodeId}?limit=20`);
+                const logsData = await logsResponse.json();
+                this.recentLogs = logsData.logs || [];
+            } catch (error) {
+                console.error('Failed to load node details:', error);
+            }
+        },
+
+        async refreshNodeData(nodeId) {
+            try {
+                // Refresh metrics and update charts
+                const metricsResponse = await fetch(`/api/metrics/${nodeId}?limit=50`);
+                const metricsData = await metricsResponse.json();
+                this.latestMetrics = (metricsData.metrics || []).reverse(); // Newest first
+                this.updateChartData(this.latestMetrics);
+
+                // Refresh health status
+                const healthResponse = await fetch(`/api/nodes/${nodeId}/health`);
+                this.healthStatus = await healthResponse.json();
+            } catch (error) {
+                console.error('Failed to refresh node data:', error);
+            }
+        },
+
+        createCharts(metrics) {
+            if (!metrics || metrics.length === 0) return;
+
+            const nodeId = this.selectedNodeId;
+            const times = metrics.map(m => new Date(m.timestamp)).reverse();
+            const cpuData = metrics.map(m => m.cpu_percent).reverse();
+            const memData = metrics.map(m => m.memory_percent).reverse();
+            const diskData = metrics.map(m => m.disk_percent).reverse();
+            const tempData = metrics.map(m => m.temperature).reverse();
+
+            this.$nextTick(() => {
+                const commonOptions = {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2.5,
+                    animation: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            titleColor: '#9ca3af',
+                            bodyColor: '#fff',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#374151' },
+                            ticks: { color: '#9ca3af', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { color: '#374151' },
+                            type: 'time',
+                            time: {
+                                unit: 'minute',
+                                displayFormats: { minute: 'HH:mm' }
+                            },
+                            ticks: { color: '#9ca3af', font: { size: 11 }, maxRotation: 0 }
+                        }
+                    }
+                };
+
+                const cpuEl = document.getElementById(`chart-cpu-${nodeId}`);
+                if (cpuEl && !this.charts.cpu) {
+                    this.charts.cpu = new Chart(cpuEl, {
+                        type: 'line',
+                        data: {
+                            labels: times,
+                            datasets: [{
+                                label: 'CPU %',
+                                data: cpuData,
+                                borderColor: '#a855f7',
+                                backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                pointHoverRadius: 4
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            scales: {
+                                ...commonOptions.scales,
+                                y: { ...commonOptions.scales.y, max: 100, ticks: { ...commonOptions.scales.y.ticks, callback: (value) => value + '%' } }
+                            }
+                        }
+                    });
+                }
+
+                const memEl = document.getElementById(`chart-memory-${nodeId}`);
+                if (memEl && !this.charts.memory) {
+                    this.charts.memory = new Chart(memEl, {
+                        type: 'line',
+                        data: {
+                            labels: times,
+                            datasets: [{
+                                label: 'Memory %',
+                                data: memData,
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                pointHoverRadius: 4
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            scales: {
+                                ...commonOptions.scales,
+                                y: { ...commonOptions.scales.y, max: 100, ticks: { ...commonOptions.scales.y.ticks, callback: (value) => value + '%' } }
+                            }
+                        }
+                    });
+                }
+
+                const diskEl = document.getElementById(`chart-disk-${nodeId}`);
+                if (diskEl && !this.charts.disk) {
+                    this.charts.disk = new Chart(diskEl, {
+                        type: 'line',
+                        data: {
+                            labels: times,
+                            datasets: [{
+                                label: 'Disk %',
+                                data: diskData,
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                pointHoverRadius: 4
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            scales: {
+                                ...commonOptions.scales,
+                                y: { ...commonOptions.scales.y, max: 100, ticks: { ...commonOptions.scales.y.ticks, callback: (value) => value + '%' } }
+                            }
+                        }
+                    });
+                }
+
+                const tempEl = document.getElementById(`chart-temp-${nodeId}`);
+                if (tempEl && !this.charts.temp) {
+                    this.charts.temp = new Chart(tempEl, {
+                        type: 'line',
+                        data: {
+                            labels: times,
+                            datasets: [{
+                                label: 'Temperature',
+                                data: tempData,
+                                borderColor: '#f59e0b',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                pointHoverRadius: 4
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            scales: {
+                                ...commonOptions.scales,
+                                y: { ...commonOptions.scales.y, min: 30, max: 80, ticks: { ...commonOptions.scales.y.ticks, callback: (value) => value + '°C' } }
+                            }
+                        }
+                    });
+                }
+            });
+        },
+
+        updateChartData(metrics) {
+            if (!metrics || metrics.length === 0 || Object.keys(this.charts).length === 0) return;
+
+            const times = metrics.map(m => new Date(m.timestamp)).reverse();
+            const cpuData = metrics.map(m => m.cpu_percent).reverse();
+            const memData = metrics.map(m => m.memory_percent).reverse();
+            const diskData = metrics.map(m => m.disk_percent).reverse();
+            const tempData = metrics.map(m => m.temperature).reverse();
+
+            if (this.charts.cpu) {
+                this.charts.cpu.data.labels = times;
+                this.charts.cpu.data.datasets[0].data = cpuData;
+                this.charts.cpu.update('none');
+            }
+
+            if (this.charts.memory) {
+                this.charts.memory.data.labels = times;
+                this.charts.memory.data.datasets[0].data = memData;
+                this.charts.memory.update('none');
+            }
+
+            if (this.charts.disk) {
+                this.charts.disk.data.labels = times;
+                this.charts.disk.data.datasets[0].data = diskData;
+                this.charts.disk.update('none');
+            }
+
+            if (this.charts.temp) {
+                this.charts.temp.data.labels = times;
+                this.charts.temp.data.datasets[0].data = tempData;
+                this.charts.temp.update('none');
+            }
+        },
+
+        formatLastSeen(timestamp) {
+            if (!timestamp) return 'Never';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSecs = Math.floor(diffMs / 1000);
+            const diffMins = Math.floor(diffSecs / 60);
+            const diffHours = Math.floor(diffMins / 60);
+
+            if (diffSecs < 60) return `${diffSecs}s ago`;
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            return date.toLocaleDateString();
+        }
+    };
+}
+</script>
 {% endblock %}
