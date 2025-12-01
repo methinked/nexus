@@ -204,13 +204,16 @@ nexus fleet update
 - [x] **WebSocket Real-time Updates** - Instant updates replacing 30s polling. ✅
 - [x] **Phase 6.3: Jobs Management UI** - Full job submission, monitoring, and review interface. ✅
 - [x] **Modules Preview** - Stub page for future module deployment system (Phase 7). ✅
-- [ ] **Phase 6.4: Log Viewer UI** - Web-based log viewer with filtering and search.
-- [ ] **Phase 7: Docker Orchestration** - Deploy and manage Docker services across fleet.
-  - [ ] Docker module API (deploy, start, stop, update containers)
-  - [ ] Service templates (Pi-hole, Home Assistant, Prometheus, Grafana, etc.)
-  - [ ] Docker Compose support for complex multi-container services
+- [x] **Phase 6.4: Log Viewer UI** - Web-based log viewer with filtering and search. ✅
+- [x] **Phase 7.1: Docker Orchestration API** - Core service management and deployment API. ✅
+- [ ] **Phase 7.2: Agent Docker Module** - Docker container management on agents.
+  - [ ] Docker SDK for Python integration
+  - [ ] Container lifecycle operations (deploy, start, stop, restart, remove)
   - [ ] Container health monitoring and resource tracking
+- [ ] **Phase 7.3+: Docker Service Templates** - Pre-built service templates and web UI.
+  - [ ] Service templates (Pi-hole, Home Assistant, Prometheus, Grafana, etc.)
   - [ ] Web UI for service deployment and management
+  - [ ] Docker Compose support for multi-container services
 
 ## 🔒 Security
 
