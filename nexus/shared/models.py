@@ -574,6 +574,68 @@ class ContainerStatus(BaseModel):
 
 
 # ============================================================================
+# Multi-Disk Storage Models (Phase 6.5)
+# ============================================================================
+
+
+class DiskType(str, Enum):
+    """Disk device types for storage classification."""
+
+    SD_CARD = "sd_card"
+    EXTERNAL_SSD = "external_ssd"
+    EXTERNAL_HDD = "external_hdd"
+    NVME = "nvme"
+    USB_FLASH = "usb_flash"
+    UNKNOWN = "unknown"
+
+
+class DiskInfo(BaseModel):
+    """Information about a single disk/partition."""
+
+    # Device identification
+    device: str = Field(..., description="Device path (e.g., /dev/sda1)")
+    mount_point: str = Field(..., description="Mount point (e.g., /mnt/external)")
+    type: DiskType = Field(..., description="Disk device type")
+    filesystem: str = Field(..., description="Filesystem type (e.g., ext4, vfat)")
+
+    # Size information
+    total_bytes: int = Field(..., description="Total disk space in bytes")
+    used_bytes: int = Field(..., description="Used disk space in bytes")
+    free_bytes: int = Field(..., description="Free disk space in bytes")
+    usage_percent: float = Field(..., description="Usage percentage (0-100)")
+
+    # Status flags
+    read_only: bool = Field(default=False, description="Whether disk is mounted read-only")
+    is_system: bool = Field(default=False, description="Whether this is the root filesystem")
+    is_docker_data: bool = Field(default=False, description="Whether Docker data is on this disk")
+    is_nexus_data: bool = Field(default=False, description="Whether Nexus data/logs are on this disk")
+
+    # Optional metadata
+    label: Optional[str] = Field(None, description="Disk label/name")
+    uuid: Optional[str] = Field(None, description="Filesystem UUID")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "device": "/dev/sda1",
+                "mount_point": "/mnt/external",
+                "type": "external_ssd",
+                "filesystem": "ext4",
+                "total_bytes": 537696485376,
+                "used_bytes": 243186032640,
+                "free_bytes": 294510452736,
+                "usage_percent": 45.2,
+                "read_only": False,
+                "is_system": False,
+                "is_docker_data": True,
+                "is_nexus_data": True,
+                "label": "External SSD",
+                "uuid": "abc123-def456"
+            }
+        }
+
+
+# ============================================================================
 # Health Check Models
 # ============================================================================
 

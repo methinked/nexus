@@ -25,6 +25,8 @@ from nexus.shared.models import (
     DeploymentStatus,
     DeploymentUpdate,
     DeploymentWithDetails,
+    DiskInfo,
+    DiskType,
     ErrorResponse,
     HealthResponse,
     HealthThresholds,
@@ -121,6 +123,9 @@ __all__ = [
     "DeploymentConfig",
     "DeploymentWithDetails",
     "ContainerStatus",
+    # Models - Disk Storage (Phase 6.5 - Multi-Disk Support)
+    "DiskInfo",
+    "DiskType",
     # Models - Auth
     "Token",
     "TokenData",
