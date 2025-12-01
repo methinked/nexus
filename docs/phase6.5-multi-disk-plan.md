@@ -1,8 +1,8 @@
 # Phase 6.5: Multi-Disk Storage Support - Implementation Plan
 
-**Version:** 1.0
+**Version:** 1.1
 **Date:** 2025-12-01
-**Status:** Planning Phase
+**Status:** In Progress (Phase 6.5.1 Complete ✅)
 
 ---
 
@@ -125,9 +125,11 @@ class NodeMetricsWithDisks(BaseModel):
 
 ## 🔧 Implementation Tasks
 
-### Phase 6.5.1: Agent Disk Detection (2-3 hours)
+### Phase 6.5.1: Agent Disk Detection ✅ COMPLETE (2025-12-01)
 
 **Goal:** Detect all mounted disks and identify their types
+
+**Status:** ✅ COMPLETE - Tested on both development machine and Raspberry Pi hardware
 
 **Tasks:**
 1. **Disk enumeration:**

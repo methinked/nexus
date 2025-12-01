@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-12-01 (Evening Session - Starting Phase 6.5 Multi-Disk Support)
-**Current Phase:** Phase 6.5 - Multi-Disk Storage Support (In Progress)
+**Last Updated:** 2025-12-01 (Evening Session - Phase 6.5.1 Complete)
+**Current Phase:** Phase 6.5 - Multi-Disk Storage Support (Phase 6.5.1 Complete)
 
 ---
 
@@ -611,9 +611,99 @@ The core CLI-based fleet management is complete. The next logical step is a web-
 
 ---
 
+#### Phase 6.5.1: Multi-Disk Detection (Agent) (2025-12-01 Evening)
+
+**Status:** ✅ COMPLETE
+
+**Goal:** Implement comprehensive disk detection and analysis on agents to support smart storage placement for Docker and logs.
+
+**Completed Features:**
+- ✅ **Pydantic Models** (nexus/shared/models.py):
+  - DiskType enum: SD_CARD, EXTERNAL_SSD, EXTERNAL_HDD, NVME, USB_FLASH, UNKNOWN
+  - DiskInfo model: Complete disk information with 16 fields
+  - Exported from nexus.shared for agent usage
+
+- ✅ **Disk Detection Module** (nexus/agent/services/storage.py - 304 lines):
+  - `detect_disk_type()`: Smart disk type detection using /sys/block/* kernel interface
+  - `get_all_disks()`: Comprehensive disk enumeration with psutil
+  - `check_docker_data_path()`: Detect if Docker data is on this disk
+  - `check_nexus_data_path()`: Detect if Nexus data/logs are on this disk
+  - `get_filesystem_label()`: Read disk labels from /dev/disk/by-label
+  - `get_filesystem_uuid()`: Read UUIDs from /dev/disk/by-uuid
+  - `find_best_storage_disk()`: Smart recommendation (prefer SSD > HDD > root)
+  - `format_disk_size()`: Human-readable size formatting
+
+- ✅ **Disk Type Detection Logic:**
+  - SD cards: mmcblk* devices → DiskType.SD_CARD
+  - NVMe SSDs: nvme* devices → DiskType.NVME
+  - SATA/USB devices (sd*):
+    - Read /sys/block/{device}/queue/rotational flag
+    - rotational=0 → EXTERNAL_SSD
+    - rotational=1 → EXTERNAL_HDD
+  - Fallback: DiskType.UNKNOWN
+
+- ✅ **MetricsCollector Integration** (nexus/agent/services/metrics.py):
+  - Import get_all_disks() from storage module
+  - Collect all disk info during metrics collection
+  - Log detected disks for debugging (mount, type, usage, flags)
+  - Maintain backward compatibility: disk_percent uses root filesystem
+  - Graceful fallback if disk detection fails
+
+- ✅ **Testing on Development Machine:**
+  - Detected 5 disks correctly (btrfs subvolumes, NVMe boot)
+  - Correctly identified Nexus data location
+  - Type detection working for all disk types
+
+- ✅ **Testing on Raspberry Pi (moria-pi):**
+  - **Detected 3 disks:**
+    1. Root SD card (/dev/mmcblk0p2): 28.7 GB, 14.4% used, Nexus data ✓
+    2. Boot SD card (/dev/mmcblk0p1): 510 MB boot partition ✓
+    3. External HDD (/dev/sda1 at /mnt/data): 465.8 GB, nearly empty ✓
+  - **Type detection verified:**
+    - mmcblk devices correctly identified as SD_CARD
+    - sda device with rotational=1 correctly identified as EXTERNAL_HDD
+  - **Smart storage recommendation:**
+    - Correctly recommended /mnt/data (external HDD) for Docker/logs
+    - Meets minimum free space requirements (465.2 GB free)
+  - **Metrics flowing to Core:**
+    - Disk percentage: 14.4% (root filesystem) ✓
+    - Backward compatibility maintained ✓
+    - Agent running successfully with new code ✓
+
+**Technical Implementation:**
+- Uses psutil.disk_partitions() for disk enumeration
+- Reads Linux kernel /sys/block/* for device properties
+- Filters virtual filesystems (tmpfs, devtmpfs, squashfs, overlay)
+- Detects data location by checking file paths
+- Sorts disks: root filesystem first, then alphabetically
+
+**Files Created/Modified:**
+- nexus/shared/models.py (+67 lines): DiskInfo and DiskType models
+- nexus/shared/__init__.py: Export new models
+- nexus/agent/services/storage.py (new file, 304 lines): Disk detection module
+- nexus/agent/services/metrics.py (+25 lines): Integration with MetricsCollector
+
+**What's Next (Phase 6.5.2):**
+- Database schema extension (add disks_json column to metrics table)
+- Update MetricCreate to include disk array
+- Store multi-disk data in Core database
+- API endpoints for disk information queries
+
+**Phase 6.5.1 COMPLETE!** ✓ - Agent disk detection operational on real hardware
+
+---
+
 ## 🎯 Future Features (Planned)
 
-#### Phase 6.5: Advanced Dashboard Features
+#### Phase 6.5: Multi-Disk Storage Support (IN PROGRESS)
+- ✅ Phase 6.5.1: Agent disk detection - COMPLETE
+- 🚧 Phase 6.5.2: Database schema and metrics storage
+- 🚧 Phase 6.5.3: Smart storage placement (auto-configure Docker to external disk)
+- 🚧 Phase 6.5.4: Dashboard multi-disk UI
+- 🚧 Phase 6.5.5: Alerts and documentation
+- **Estimated Effort:** 2 weeks total (6 days remaining)
+
+#### Phase 6.6: Advanced Dashboard Features
 - Terminal in browser (xterm.js)
 - Alerting system with notifications
 - User authentication and access control
