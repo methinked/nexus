@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-12-01 (Morning Session - Phase 6.3 Jobs Management UI Complete)
-**Current Phase:** Phase 6 - The Dashboard (6.1 ✓ + 6.2 ✓ + 6.3 Jobs UI ✓ + Modules Preview)
+**Last Updated:** 2025-12-01 (Evening Session - Phase 7.1 Docker Orchestration API Complete)
+**Current Phase:** Phase 7 - Docker Orchestration (7.1 Core API ✓)
 
 ---
 
@@ -462,6 +462,83 @@ The core CLI-based fleet management is complete. The next logical step is a web-
 - ✅ Error handling and user feedback
 
 **Phase 6.3 COMPLETE!** ✓ - Full-featured job management via web UI
+
+---
+
+#### Phase 7.1: Core Service Management API - Docker Orchestration (2025-12-01 Evening)
+
+**Status:** ✅ COMPLETE
+
+**Goal:** Build the foundational database layer and API for Docker service orchestration.
+
+**Completed Tasks:**
+- ✅ **Database Models:**
+  - ServiceModel: Docker service templates with compose YAML
+  - DeploymentModel: Service deployment instances per node
+  - DeploymentStatus enum (DEPLOYING, RUNNING, STOPPED, FAILED, REMOVING)
+
+- ✅ **Pydantic Models** (12 new models):
+  - Service, ServiceCreate, ServiceUpdate, ServiceList
+  - Deployment, DeploymentCreate, DeploymentUpdate, DeploymentList
+  - DeploymentConfig, DeploymentWithDetails, ContainerStatus
+
+- ✅ **Database Migration:**
+  - services table with indexes and unique constraints
+  - deployments table with foreign keys (CASCADE delete)
+  - Alembic migration successfully applied
+
+- ✅ **CRUD Operations** (28 functions):
+  - Services: create, get, get_by_name, list, count, update, delete
+  - Deployments: create, get, list, count, update, update_status, delete
+  - Full filtering support (category, node, service, status)
+  - Pagination support
+
+- ✅ **API Endpoints** (13 RESTful endpoints):
+  - **Services API** (/api/services):
+    - GET /api/services - List service templates
+    - GET /api/services/{id} - Get service details
+    - POST /api/services - Create custom service template
+    - PUT /api/services/{id} - Update service template
+    - DELETE /api/services/{id} - Delete service template
+
+  - **Deployments API** (/api/deployments):
+    - GET /api/deployments - List deployments
+    - GET /api/deployments/{id} - Get deployment details
+    - POST /api/deployments - Deploy service to node
+    - PUT /api/deployments/{id} - Update deployment config
+    - POST /api/deployments/{id}/start - Start stopped deployment
+    - POST /api/deployments/{id}/stop - Stop running deployment
+    - POST /api/deployments/{id}/restart - Restart deployment
+    - DELETE /api/deployments/{id} - Remove deployment
+
+- ✅ **Validation:**
+  - Service name uniqueness enforced
+  - Node must be ONLINE to accept deployments
+  - Service and node existence validated before deployment
+
+- ✅ **Integration:**
+  - Routers registered in main FastAPI app
+  - All imports and exports wired correctly
+  - Server starts successfully with new endpoints
+  - OpenAPI documentation auto-generated
+
+**Technical Debt:**
+- TODO markers added for Phase 7.4 (deployment workflow)
+- Agent-side Docker operations not yet implemented
+
+**Files Changed:**
+- 10 files modified/created
+- 1000+ lines of code added
+- 3 new files: services.py, deployments.py, migration
+
+**What's Next (Phase 7.2):**
+- Agent Docker module (docker SDK for Python)
+- Container lifecycle management on agents
+- Real Docker operations
+
+**Phase 7.1 COMPLETE!** ✓ - Foundation ready for Docker orchestration
+
+---
 
 #### Phase 6.4: Log Viewer UI
 - Centralized log viewer with filters
