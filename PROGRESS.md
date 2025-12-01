@@ -536,7 +536,29 @@ The core CLI-based fleet management is complete. The next logical step is a web-
 - Container lifecycle management on agents
 - Real Docker operations
 
+**Deployment and Testing:**
+- ✅ **Git Workflow:**
+  - All work committed to dev branch
+  - Merged dev → main (26 files, 3958 lines added)
+  - Pushed to origin/main
+  - Switched back to dev for continued work
+
+- ✅ **Pi Agent Deployment:**
+  - Deployed latest code to moria-pi (10.243.14.179) via ZeroTier
+  - Fixed port conflict: Old agent process blocking port 8001
+  - Killed old process (PID 128696), restarted agent
+  - Verified production mode: No watchfiles/reload
+  - Confirmed metrics flowing every 30s
+
+- ✅ **Fleet Verification:**
+  - 2 nodes online: default-agent (laptop) + moria-pi (Pi)
+  - Real-time metrics: CPU 8.1%, Memory 25.9%, Disk 14.4%, Temp 45.1°C
+  - Health endpoint responding correctly
+  - WebSocket updates working across fleet
+  - All 13 new API endpoints operational
+
 **Phase 7.1 COMPLETE!** ✓ - Foundation ready for Docker orchestration
+**System Status:** Production-ready on real hardware (laptop + Raspberry Pi)
 
 ---
 

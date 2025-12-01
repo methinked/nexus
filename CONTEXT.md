@@ -1,8 +1,8 @@
 # Nexus Development Context
 
-**Last Session:** 2025-11-30 (Late Night - WebSocket Real-time Updates Complete)
-**Current Branch:** dev
-**Current Phase:** Phase 6 - The Dashboard (6.1 ✓ + 6.2 ✓ + WebSocket ✓ + Modules Preview)
+**Last Session:** 2025-12-01 (Evening - Phase 7.1 Docker Orchestration API Complete)
+**Current Branch:** dev (merged to main)
+**Current Phase:** Phase 7 - Docker Orchestration (7.1 ✓ Foundation API Complete)
 
 ---
 
@@ -1012,4 +1012,82 @@ Nexus is shifting from a monitoring-focused platform to a **full fleet orchestra
 **System Status:**
 - ✅ **Production-ready:** CLI-based fleet management and monitoring
 - ✅ **Web dashboard:** Real-time metrics, node details, job management
-- 🚀 **Next step:** Docker orchestration for service deployment across fleet
+- ✅ **Phase 7.1 Complete:** Docker orchestration foundation API
+- 🚀 **Next step:** Phase 7.2 - Agent Docker Module
+
+---
+
+**Session 2025-12-01 (Evening - Phase 7.1 Docker Orchestration Foundation):**
+- **Strategic pivot to Docker-First architecture:**
+  - Updated all documentation (README, architecture, CONTEXT) to reflect Debian-based fleet focus
+  - Repositioned Nexus from "Pi management" to "Debian fleet orchestration platform"
+  - Created comprehensive Phase 7 implementation plan (docs/phase7-docker-plan.md)
+  - Documented Docker-first service deployment strategy
+- **Phase 7.1 Implementation - Core Service Management API:**
+  - Pydantic models (nexus/shared/models.py):
+    * Added DeploymentStatus enum (deploying, running, stopped, failed, removing)
+    * Created 12 new models: Service, ServiceCreate, ServiceUpdate, ServiceList, Deployment, DeploymentCreate, DeploymentUpdate, DeploymentList, DeploymentConfig, DeploymentWithDetails, ContainerStatus
+    * Full validation with Field constraints
+  - Database models (nexus/core/db/models.py):
+    * ServiceModel - Service templates with docker_compose YAML, default_env, categories
+    * DeploymentModel - Deployment instances linking services to nodes
+    * Foreign keys with CASCADE delete, comprehensive indexes
+  - Alembic migration:
+    * Created migration for services and deployments tables
+    * Migration: 20251201_2049_add_services_and_deployments_tables
+  - CRUD operations (nexus/core/db/crud.py):
+    * 14 service functions: create, get, get_by_name, list, count, update, delete
+    * 14 deployment functions: create, get, list, count, update, update_status, delete
+    * Filtering support: by category, node_id, service_id, status
+    * Pagination with skip/limit
+  - API endpoints:
+    * Services API (nexus/core/api/services.py):
+      - GET /api/services - List with category filter
+      - GET /api/services/{id} - Get details
+      - POST /api/services - Create template
+      - PUT /api/services/{id} - Update template
+      - DELETE /api/services/{id} - Delete template
+    * Deployments API (nexus/core/api/deployments.py):
+      - GET /api/deployments - List with filters (node, service, status)
+      - GET /api/deployments/{id} - Get details
+      - POST /api/deployments - Create deployment
+      - POST /api/deployments/{id}/start - Start container (stub)
+      - POST /api/deployments/{id}/stop - Stop container (stub)
+      - POST /api/deployments/{id}/restart - Restart container (stub)
+      - DELETE /api/deployments/{id} - Remove deployment (stub)
+    * Both routers registered in core/main.py
+  - Exports and integration:
+    * Updated nexus/core/db/__init__.py to export all new CRUD functions
+    * Updated nexus/shared/__init__.py to export all new models
+  - Testing and validation:
+    * All 13 endpoints tested with curl
+    * Database properly migrated (used alembic stamp head for pre-existing tables)
+    * Server running without errors
+- **Git workflow:**
+  - All work committed to dev branch
+  - Merged dev → main successfully (26 files, 3958 lines)
+  - Pushed to origin/main
+  - Switched back to dev for continued work
+- **Pi Agent Deployment and Debugging:**
+  - Deployed latest code to moria-pi (10.243.14.179) via ZeroTier
+  - Fixed port conflict issue:
+    * Old agent process (PID 128696) was blocking port 8001
+    * Killed old process with `kill -9`
+    * Restarted agent successfully
+  - Verified production mode working:
+    * Agent running with NEXUS_ENV=production
+    * No watchfiles/reload behavior
+    * Metrics flowing every 30 seconds
+    * Logs being centralized
+  - Fleet status verified:
+    * 2 nodes online: default-agent (laptop) + moria-pi (Pi)
+    * Real-time metrics: CPU 8.1%, Memory 25.9%, Disk 14.4%, Temp 45.1°C
+    * Health endpoint responding correctly
+    * WebSocket updates working
+- **Phase 7.1 COMPLETE!** ✓
+  - Full Docker orchestration foundation in place
+  - 13 new API endpoints operational
+  - 2 new database tables with proper relationships
+  - 28 CRUD functions with filtering and pagination
+  - All code merged to main and tested on real hardware
+  - Ready for Phase 7.2: Agent Docker Module
