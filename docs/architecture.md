@@ -2,7 +2,9 @@
 
 ## Overview
 
-Nexus is a distributed system for managing Raspberry Pi nodes, built with a CLI-first philosophy. The architecture consists of two main components: **Core** and **Agent**.
+Nexus is a distributed fleet orchestration platform for Debian-based machines, built with a **CLI-first** and **Docker-first** philosophy. The architecture consists of two main components: **Core** (control plane) and **Agent** (data plane), with Docker serving as the primary mechanism for deploying and managing services across the fleet.
+
+**Supported Systems:** Raspberry Pi OS, Ubuntu, Debian, and any Debian-derivative Linux distribution.
 
 ## Components
 
@@ -30,23 +32,26 @@ The Core is the central management server that orchestrates the fleet.
 
 ### Agent (Data Plane)
 
-The Agent runs on each managed Raspberry Pi node.
+The Agent runs on each managed node (Raspberry Pi, Ubuntu server, Debian machine, etc.).
 
 **Responsibilities:**
 - Register with Core on startup
-- Execute jobs assigned by Core
-- Collect and report system metrics
-- Provide remote shell access
-- Run modular workers (OCR, sync, etc.)
+- Execute jobs assigned by Core (shell commands, Docker operations)
+- Collect and report system metrics (CPU, RAM, disk, temperature)
+- Manage Docker containers and services
+- Provide remote shell access (WebSocket-based)
+- Monitor Docker container health and resource usage
 
 **Technology:**
 - FastAPI for agent API
-- psutil for system metrics
-- Module-specific libraries (Tesseract, etc.)
+- psutil for system metrics (cross-platform)
+- Docker SDK for Python for container management
+- Platform-specific monitoring (vcgencmd for Pi, lm-sensors for others)
 
 **Deployment:**
-- Runs as a systemd service on each Pi
-- Dockerized for consistency
+- Runs as a systemd service on each node
+- Python virtual environment for isolation
+- Dockerized deployment optional (for Core compatibility)
 
 ---
 
@@ -184,6 +189,81 @@ System health metrics from a node.
 
 ---
 
+## Docker Service Orchestration (Phase 7)
+
+Nexus uses Docker as the foundational technology for deploying and managing services across the fleet.
+
+### Architecture
+
+```
+┌──────────────┐
+│  Nexus Core  │ ─── Service Template ─── Docker Compose YAML
+└──────┬───────┘
+       │
+       │ Deploy Command (via API/CLI)
+       │
+       v
+┌─────────────────┐
+│  Agent Node     │
+│  ┌───────────┐  │
+│  │ Docker    │  │
+│  │ Daemon    │  │
+│  └─────┬─────┘  │
+│        │        │
+│  ┌─────v──────┐ │
+│  │ Container  │ │
+│  │ (Pi-hole)  │ │
+│  └────────────┘ │
+└─────────────────┘
+```
+
+### Service Lifecycle Management
+
+**1. Service Templates**
+- Pre-defined Docker Compose configurations for common services
+- Templates for: Pi-hole, Home Assistant, Prometheus, Grafana, etc.
+- Custom templates supported via YAML upload
+
+**2. Deployment Process**
+```
+User → CLI/Web → Core API → Agent API → Docker SDK → Container Running
+```
+
+**3. Supported Operations**
+- **deploy**: Pull image and start container
+- **start/stop/restart**: Control running containers
+- **update**: Pull new image version and restart
+- **remove**: Stop and remove container
+- **logs**: Stream container logs
+- **inspect**: Get container status and configuration
+
+**4. Health Monitoring**
+- Container status (running, stopped, exited)
+- Resource usage (CPU, memory per container)
+- Docker daemon health
+- Automatic restart policies
+
+### Multi-Node Deployments
+
+Services can be deployed to:
+- Single node (e.g., Pi-hole on gateway Pi)
+- Multiple nodes (e.g., distributed Prometheus exporters)
+- All nodes (e.g., monitoring agents)
+
+### Docker API Integration
+
+**Agent-side:**
+- Uses Docker SDK for Python (`docker-py`)
+- Communicates with local Docker daemon via socket
+- Translates Nexus commands to Docker API calls
+
+**Core-side:**
+- Stores service definitions and deployment state
+- Tracks which services are running on which nodes
+- Provides unified view of fleet-wide services
+
+---
+
 ## Network Topology
 
 ### Local Network (Default)
@@ -273,7 +353,16 @@ systemctl start nexus-agent
 
 ## Future Enhancements
 
-- **Service Discovery:** Implement mDNS for zero-config setup
-- **HA Core:** Multiple Core replicas with leader election
-- **Edge Intelligence:** Agents can execute jobs locally when Core offline
-- **Plugin System:** Dynamic module loading for custom workflows
+### Near-term (Phase 7)
+- **Docker Orchestration:** Full Docker service deployment and management
+- **Service Templates:** Pre-built configurations for common services
+- **Container Monitoring:** Resource usage and health tracking per container
+- **Docker Compose Support:** Multi-container application deployments
+
+### Long-term
+- **Service Discovery:** Implement mDNS for zero-config setup on local networks
+- **HA Core:** Multiple Core replicas with leader election for reliability
+- **Edge Intelligence:** Agents can execute jobs locally when Core is offline
+- **Plugin System:** Dynamic module loading for custom workflows and integrations
+- **Kubernetes Support:** Optional K8s orchestration for larger deployments
+- **Container Registry:** Private Docker registry for custom images

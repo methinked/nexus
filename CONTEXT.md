@@ -8,11 +8,13 @@
 
 ## 🎯 Project Overview
 
-Nexus is a distributed Raspberry Pi management system with a **CLI-first** philosophy. It allows you to manage a fleet of Raspberry Pis from the command line, with an optional web dashboard.
+Nexus is a distributed fleet orchestration platform for Debian-based machines with a **CLI-first** and **Docker-first** philosophy. It manages fleets of Raspberry Pis, Ubuntu servers, Debian machines, and any Debian-derivative Linux systems from the command line, with an optional web dashboard. The core focus is on Docker-based service orchestration across the fleet.
 
 **Target Hardware:**
 - Development: Linux laptop (x86_64)
-- Testing: Raspberry Pi 3 Model B (ARMv7/v8, 1GB RAM)
+- Production: Raspberry Pi (ARMv7/v8), Ubuntu servers (x86_64/ARM), Debian machines
+- Tested: Raspberry Pi 3 Model B (ARMv7/v8, 1GB RAM) - "moria-pi"
+- Compatible: Any Debian-based Linux distribution
 
 ---
 
@@ -196,23 +198,36 @@ The next logical enhancement is a web-based dashboard for real-time monitoring:
    - Native WebSocket support
    - Built-in OpenAPI docs
 
-2. **Local Network First:** Designed for LAN, VPN optional
+2. **Docker-First Service Management:** Docker is the foundational orchestration technology
+   - Services deployed as containers across the fleet
+   - Consistent deployments regardless of underlying hardware
+   - Service templates for common applications (Pi-hole, Home Assistant, etc.)
+   - Docker SDK for Python for container management
+
+3. **Debian-Based Platform:** Supports any Debian-derivative Linux distribution
+   - Raspberry Pi OS (primary target)
+   - Ubuntu Server (x86_64 and ARM)
+   - Debian (stable and testing)
+   - Platform-specific optimizations (vcgencmd for Pi, lm-sensors for others)
+
+4. **Local Network First:** Designed for LAN, VPN optional
    - Works without ZeroTier/Tailscale
    - VPN is an enhancement, not a requirement
+   - Tested with ZeroTier for remote Pi management
 
-3. **SQLite for Core:** Simple, file-based database
+5. **SQLite for Core:** Simple, file-based database
    - Sufficient for small-to-medium fleets
    - Easy backup and migration
 
-4. **CLI-First Development:** Every feature gets a CLI command first
+6. **CLI-First Development:** Every feature gets a CLI command first
    - Web dashboard is optional
    - Automation-friendly from day one
 
-5. **Pydantic for Everything:** All models use Pydantic v2
+7. **Pydantic for Everything:** All models use Pydantic v2
    - Validation at API boundaries
    - Type-safe throughout
 
-6. **JWT Authentication:** Token-based auth for agents
+8. **JWT Authentication:** Token-based auth for agents
    - Shared secret for initial registration
    - JWT tokens for ongoing requests
 
@@ -957,24 +972,36 @@ All foundation, mesh, metrics, logging, and job execution work complete:
 18. ✅ Shell command execution working end-to-end
 19. ✅ Job result reporting to Core
 
-## 🚀 Next Priority: Web Dashboard (Phase 6)
+## 🚀 Next Priority: Docker Orchestration (Phase 7)
 
-**High Priority - Fleet Visualization:**
-1. **Web Dashboard** - Real-time monitoring and control
-   - Live metrics charts (CPU, memory, disk, temp)
-   - Health status overview for all nodes
-   - Centralized log viewer with search
-   - Job submission and monitoring UI
-   - System topology visualization
+**Strategic Direction:**
+Nexus is shifting from a monitoring-focused platform to a **full fleet orchestration system** with Docker as the foundational technology for deploying and managing services across Debian-based machines.
 
-2. **Alerting System** - Proactive monitoring
-   - Health threshold alerts
-   - Email/webhook notifications
+**High Priority - Docker Service Management (Phase 7):**
+1. **Docker Module System** - Container deployment and lifecycle management
+   - Deploy Docker containers to individual nodes or entire fleet
+   - Service templates (Pi-hole, Home Assistant, Prometheus, Grafana, etc.)
+   - Container lifecycle operations (deploy, start, stop, restart, update, remove)
+   - Docker Compose support for multi-container applications
+   - Container health monitoring and resource tracking
 
-**Medium Priority - Advanced Features:**
-3. **Job Scheduling** - Cron-like recurring jobs
-4. **Terminal CLI Client** - WebSocket-based remote shell
-5. **Job Templates** - Pre-configured common tasks
+2. **Web UI for Docker Management** - Extend existing dashboard
+   - Service catalog with available templates
+   - Deployment wizard (select service → select nodes → deploy)
+   - Container status dashboard (running/stopped/failed)
+   - Per-container resource usage charts
+   - Container logs viewer
+
+3. **CLI Docker Commands** - Command-line service management
+   - `nexus service deploy <template> --nodes <ids>`
+   - `nexus service list [--node <id>]`
+   - `nexus service logs <service> --node <id>`
+   - `nexus service start/stop/restart <service>`
+
+**Medium Priority - Dashboard Completion (Phase 6.4):**
+- Log Viewer UI with filtering and search
+- Alerting system with notifications
+- User authentication and access control
 
 **Optional (Parked) - Vigil Legacy:**
 - Scriptor Module (OCR) - Image text extraction
@@ -982,4 +1009,7 @@ All foundation, mesh, metrics, logging, and job execution work complete:
 
 ---
 
-**System is production-ready for CLI-based fleet management! Dashboard is the next logical enhancement.**
+**System Status:**
+- ✅ **Production-ready:** CLI-based fleet management and monitoring
+- ✅ **Web dashboard:** Real-time metrics, node details, job management
+- 🚀 **Next step:** Docker orchestration for service deployment across fleet
