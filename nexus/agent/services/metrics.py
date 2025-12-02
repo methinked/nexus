@@ -81,10 +81,6 @@ class MetricsCollector:
 
     async def _collect_and_send(self):
         """Collect metrics and send to Core."""
-        # TODO: Use psutil to collect actual metrics
-        # TODO: Use vcgencmd for Pi temperature (if available)
-        # TODO: Send metrics to Core via HTTP POST
-
         metrics = self._collect_metrics()
         await self._send_metrics(metrics)
 

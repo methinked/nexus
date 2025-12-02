@@ -74,7 +74,7 @@ async def submit_metrics(
         "temperature": metric.temperature,
     }))
 
-    # TODO: Check for alerts/thresholds (Phase 3)
+    # Note: Health threshold checking is available via GET /api/nodes/{node_id}/health
 
     return BaseResponse(message="Metrics received")
 

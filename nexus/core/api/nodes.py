@@ -76,7 +76,7 @@ async def list_nodes(
         }
         nodes.append(Node.model_validate(node_dict))
 
-    # TODO: Implement tag filtering if needed
+    # Filter by tag if provided
     if tag:
         nodes = [n for n in nodes if tag in n.metadata.tags]
         total = len(nodes)

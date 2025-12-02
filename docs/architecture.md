@@ -162,10 +162,56 @@ System health metrics from a node.
 
 ### Speculum (Metrics Collection)
 
+**Core Functionality:**
 - Runs on Agent
 - Collects CPU, RAM, disk, temperature every 30s
 - Pushes metrics to Core via `POST /api/metrics`
 - Core stores in SQLite for historical analysis
+
+**Multi-Disk Detection (Phase 6.5.1):**
+
+Nexus automatically detects and categorizes all storage devices on each node:
+
+**Detection Process:**
+1. **Physical Disk Enumeration**
+   - Scans all block devices using `psutil.disk_partitions()`
+   - Identifies physical disks vs. partitions
+   - Categorizes by type: HDD, SSD, NVMe, SD Card, USB, Network (NFS/CIFS)
+
+2. **Primary Storage Identification**
+   - Detects boot partitions (e.g., `/boot`, `/boot/efi`)
+   - Identifies root filesystem (`/`)
+   - Finds largest available disk
+   - Provides smart recommendations for primary storage
+
+3. **Disk Metadata Collection**
+   ```python
+   {
+       "path": "/dev/sda1",
+       "mountpoint": "/",
+       "type": "SSD",
+       "is_physical": True,
+       "fstype": "ext4",
+       "total_bytes": 500000000000,
+       "used_bytes": 250000000000,
+       "free_bytes": 250000000000,
+       "usage_percent": 50.0
+   }
+   ```
+
+**Storage Type Classification:**
+- **HDD:** Rotational drives (detected via `/sys/block/*/queue/rotational`)
+- **SSD:** Solid-state drives
+- **NVMe:** PCIe NVMe devices (identified by `nvme` in device name)
+- **SD Card:** SD/MMC devices (identified by `mmcblk` in device name)
+- **USB:** USB-attached storage
+- **Network:** NFS, CIFS, SMB mounts
+
+**Benefits:**
+- Accurate disk usage tracking across multiple storage devices
+- Smart primary storage recommendations for data-intensive applications
+- Support for complex storage configurations (multi-disk Pis, NAS-backed nodes)
+- Foundation for future storage-aware workload placement
 
 ### Imperium (Remote Terminal)
 
@@ -189,59 +235,139 @@ System health metrics from a node.
 
 ---
 
-## Docker Service Orchestration (Phase 7)
+## Docker Service Orchestration
 
 Nexus uses Docker as the foundational technology for deploying and managing services across the fleet.
 
 ### Architecture
 
 ```
-┌──────────────┐
-│  Nexus Core  │ ─── Service Template ─── Docker Compose YAML
-└──────┬───────┘
-       │
-       │ Deploy Command (via API/CLI)
-       │
-       v
-┌─────────────────┐
-│  Agent Node     │
-│  ┌───────────┐  │
-│  │ Docker    │  │
-│  │ Daemon    │  │
-│  └─────┬─────┘  │
-│        │        │
-│  ┌─────v──────┐ │
-│  │ Container  │ │
-│  │ (Pi-hole)  │ │
-│  └────────────┘ │
-└─────────────────┘
+┌──────────────────────────────────────────┐
+│           Nexus Core                     │
+│  ┌────────────────┐  ┌────────────────┐ │
+│  │ Services API   │  │ Deployments    │ │
+│  │ (Templates)    │  │ API            │ │
+│  └────────┬───────┘  └────────┬───────┘ │
+└───────────┼──────────────────┼─────────┘
+            │                  │
+            │ REST API         │ REST API
+            │                  │
+            v                  v
+┌─────────────────────────────────────────┐
+│         Agent Node (Phase 7.2+)         │
+│  ┌───────────────┐                      │
+│  │ Docker SDK    │                      │
+│  │ Integration   │                      │
+│  └───────┬───────┘                      │
+│          │                              │
+│  ┌───────v────────┐                     │
+│  │ Docker Daemon  │                     │
+│  └───────┬────────┘                     │
+│          │                              │
+│  ┌───────v──────┐  ┌──────────┐        │
+│  │ Container 1  │  │Container2│        │
+│  │  (Pi-hole)   │  │(Grafana) │        │
+│  └──────────────┘  └──────────┘        │
+└─────────────────────────────────────────┘
 ```
 
-### Service Lifecycle Management
+### Phase 7.1: Core API (✅ COMPLETE)
 
-**1. Service Templates**
-- Pre-defined Docker Compose configurations for common services
-- Templates for: Pi-hole, Home Assistant, Prometheus, Grafana, etc.
-- Custom templates supported via YAML upload
+**Service Templates Management:**
 
-**2. Deployment Process**
+Core provides a full REST API for managing service templates:
+
+- `POST /api/services` - Create service template
+- `GET /api/services` - List all templates
+- `GET /api/services/{id}` - Get template details
+- `PUT /api/services/{id}` - Update template
+- `DELETE /api/services/{id}` - Delete template
+
+**Service Template Model:**
+```python
+{
+    "id": "uuid",
+    "name": "pihole",
+    "image": "pihole/pihole:latest",
+    "description": "Network-wide ad blocking",
+    "ports": [
+        {"host": 80, "container": 80},
+        {"host": 53, "container": 53, "protocol": "udp"}
+    ],
+    "volumes": [
+        {"host": "/data/pihole/config", "container": "/etc/pihole"},
+        {"host": "/data/pihole/dnsmasq", "container": "/etc/dnsmasq.d"}
+    ],
+    "environment": {
+        "TZ": "America/New_York",
+        "WEBPASSWORD": "admin"
+    }
+}
 ```
-User → CLI/Web → Core API → Agent API → Docker SDK → Container Running
+
+**Deployment Management:**
+
+Full REST API for deployment lifecycle:
+
+- `POST /api/deployments` - Create deployment
+- `GET /api/deployments` - List deployments (with node/status filtering)
+- `GET /api/deployments/{id}` - Get deployment details
+- `PUT /api/deployments/{id}` - Update deployment config
+- `POST /api/deployments/{id}/start` - Start deployment
+- `POST /api/deployments/{id}/stop` - Stop deployment
+- `POST /api/deployments/{id}/restart` - Restart deployment
+- `DELETE /api/deployments/{id}` - Delete deployment
+
+**Deployment Model:**
+```python
+{
+    "id": "uuid",
+    "service_id": "uuid",
+    "node_id": "uuid",
+    "status": "pending|running|stopped|failed",
+    "config": {
+        # Override service template values
+        "environment": {"WEBPASSWORD": "custom-password"}
+    },
+    "created_at": "timestamp",
+    "started_at": "timestamp"
+}
 ```
 
-**3. Supported Operations**
+**Database Schema:**
+- `services` table - Stores service templates
+- `deployments` table - Tracks deployment instances
+- SQLAlchemy models with full CRUD operations
+
+**API Features:**
+- Service template versioning
+- Multi-node deployment support
+- Deployment status tracking
+- Configuration overrides per deployment
+- Filtering and querying capabilities
+
+### Phase 7.2+: Agent Integration (Planned)
+
+**Docker SDK Integration on Agents:**
+- Agent receives deployment commands from Core
+- Uses Docker SDK for Python to interact with local Docker daemon
+- Manages container lifecycle (pull, create, start, stop, remove)
+- Reports container status back to Core
+
+**Supported Operations:**
 - **deploy**: Pull image and start container
 - **start/stop/restart**: Control running containers
 - **update**: Pull new image version and restart
 - **remove**: Stop and remove container
-- **logs**: Stream container logs
+- **logs**: Stream container logs to Core
 - **inspect**: Get container status and configuration
 
-**4. Health Monitoring**
+**Health Monitoring:**
 - Container status (running, stopped, exited)
 - Resource usage (CPU, memory per container)
-- Docker daemon health
+- Docker daemon health checks
 - Automatic restart policies
+- Integration with Speculum metrics
 
 ### Multi-Node Deployments
 
@@ -353,11 +479,12 @@ systemctl start nexus-agent
 
 ## Future Enhancements
 
-### Near-term (Phase 7)
-- **Docker Orchestration:** Full Docker service deployment and management
-- **Service Templates:** Pre-built configurations for common services
-- **Container Monitoring:** Resource usage and health tracking per container
+### Near-term (Phase 7.2-7.3)
+- **Agent Docker Module:** Docker SDK integration on agents for actual container execution
+- **Pre-built Service Templates:** Ready-to-deploy configurations for Pi-hole, Home Assistant, Prometheus, Grafana
+- **Container Monitoring:** Real-time resource usage and health tracking per container
 - **Docker Compose Support:** Multi-container application deployments
+- **Web UI for Docker:** Service deployment and management through dashboard
 
 ### Long-term
 - **Service Discovery:** Implement mDNS for zero-config setup on local networks
