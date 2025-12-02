@@ -214,6 +214,66 @@
                     </div>
                 </div>
 
+                <!-- Storage Devices -->
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="text-lg font-semibold mb-4">Storage Devices</h3>
+                        <div class="space-y-3">
+                            <template x-for="disk in disks" :key="disk.device">
+                                <div class="p-3 bg-gray-800 rounded-lg">
+                                    <!-- Header with disk type and mount point -->
+                                    <div class="flex items-start justify-between mb-2">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <span class="font-semibold" x-text="disk.mount_point"></span>
+                                                <span :class="{
+                                                    'bg-amber-500/20 text-amber-400': disk.type === 'sd_card',
+                                                    'bg-purple-500/20 text-purple-400': disk.type === 'external_ssd',
+                                                    'bg-blue-500/20 text-blue-400': disk.type === 'external_hdd',
+                                                    'bg-pink-500/20 text-pink-400': disk.type === 'nvme',
+                                                    'bg-cyan-500/20 text-cyan-400': disk.type === 'usb_flash',
+                                                    'bg-gray-500/20 text-gray-400': disk.type === 'unknown'
+                                                }" class="text-xs px-2 py-0.5 rounded-full font-medium" x-text="formatDiskType(disk.type)"></span>
+                                            </div>
+                                            <div class="text-xs text-gray-500" x-text="disk.device + ' • ' + disk.filesystem"></div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div :class="{
+                                                'text-green-400': disk.usage_percent < 80,
+                                                'text-amber-400': disk.usage_percent >= 80 && disk.usage_percent < 95,
+                                                'text-red-400': disk.usage_percent >= 95
+                                            }" class="text-lg font-bold" x-text="disk.usage_percent.toFixed(1) + '%'"></div>
+                                            <div class="text-xs text-gray-500" x-text="formatBytes(disk.free_bytes) + ' free'"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Progress bar -->
+                                    <div class="w-full bg-gray-700 rounded-full h-2 mb-2">
+                                        <div :class="{
+                                            'bg-green-500': disk.usage_percent < 80,
+                                            'bg-amber-500': disk.usage_percent >= 80 && disk.usage_percent < 95,
+                                            'bg-red-500': disk.usage_percent >= 95
+                                        }" class="h-2 rounded-full transition-all" :style="`width: ${disk.usage_percent}%`"></div>
+                                    </div>
+
+                                    <!-- Badges -->
+                                    <div class="flex flex-wrap gap-1">
+                                        <span x-show="disk.is_system" class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">System</span>
+                                        <span x-show="disk.is_docker_data" class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400">Docker Data</span>
+                                        <span x-show="disk.is_nexus_data" class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">Nexus Data</span>
+                                        <span x-show="disk.read_only" class="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">Read-Only</span>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="disks.length === 0">
+                                <div class="text-gray-500 text-center py-4 text-sm">
+                                    Loading disk information...
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Recent Jobs -->
                 <div class="card">
                     <div class="card-body">
@@ -279,6 +339,7 @@ function nodesPage() {
         selectedNodeId: null,
         selectedNode: null,
         healthStatus: null,
+        disks: [],
         recentJobs: [],
         recentLogs: [],
         latestMetrics: [],
@@ -381,6 +442,15 @@ function nodesPage() {
                 const logsResponse = await fetch(`/api/logs/${nodeId}?limit=20`);
                 const logsData = await logsResponse.json();
                 this.recentLogs = logsData.logs || [];
+
+                // Load disk information
+                try {
+                    const disksResponse = await fetch(`/api/nodes/${nodeId}/disks`);
+                    this.disks = await disksResponse.json();
+                } catch (error) {
+                    console.warn('Failed to load disk information:', error);
+                    this.disks = [];
+                }
             } catch (error) {
                 console.error('Failed to load node details:', error);
             }
@@ -609,6 +679,26 @@ function nodesPage() {
             if (diffMins < 60) return `${diffMins}m ago`;
             if (diffHours < 24) return `${diffHours}h ago`;
             return date.toLocaleDateString();
+        },
+
+        formatDiskType(type) {
+            const typeMap = {
+                'sd_card': 'SD Card',
+                'external_ssd': 'External SSD',
+                'external_hdd': 'External HDD',
+                'nvme': 'NVMe',
+                'usb_flash': 'USB Flash',
+                'unknown': 'Unknown'
+            };
+            return typeMap[type] || type;
+        },
+
+        formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         }
     };
 }

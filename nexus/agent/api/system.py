@@ -9,7 +9,8 @@ import platform
 import psutil
 from fastapi import APIRouter
 
-from nexus.shared import SystemInfo
+from nexus.agent.services.storage import get_all_disks
+from nexus.shared import DiskInfo, SystemInfo
 
 router = APIRouter()
 
@@ -33,3 +34,18 @@ async def get_system_info():
     )
 
     return info
+
+
+@router.get("/disks", response_model=list[DiskInfo])
+async def get_disk_info():
+    """
+    Get information about all mounted disks.
+
+    Returns detailed information about each disk including:
+    - Device path and mount point
+    - Disk type (SD card, SSD, HDD, etc.)
+    - Filesystem and usage statistics
+    - Special flags (system, Docker data, Nexus data, read-only)
+    """
+    disks = get_all_disks()
+    return disks

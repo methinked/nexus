@@ -177,6 +177,58 @@ Deregister a node.
 
 ---
 
+#### `GET /api/nodes/{node_id}/disks`
+
+Get disk information from a node (Phase 6.5.1 - Multi-disk support).
+
+**Response:**
+```json
+[
+  {
+    "device": "/dev/mmcblk0p2",
+    "mount_point": "/",
+    "type": "sd_card",
+    "filesystem": "ext4",
+    "total_bytes": 31914983424,
+    "used_bytes": 12345678900,
+    "free_bytes": 19569304524,
+    "usage_percent": 38.7,
+    "read_only": false,
+    "is_system": true,
+    "is_docker_data": false,
+    "is_nexus_data": false,
+    "label": null,
+    "uuid": "abc-123-def"
+  },
+  {
+    "device": "/dev/sda1",
+    "mount_point": "/mnt/storage",
+    "type": "external_ssd",
+    "filesystem": "ext4",
+    "total_bytes": 256060514304,
+    "used_bytes": 89478485409,
+    "free_bytes": 166582028895,
+    "usage_percent": 34.9,
+    "read_only": false,
+    "is_system": false,
+    "is_docker_data": true,
+    "is_nexus_data": true,
+    "label": "external-ssd",
+    "uuid": "xyz-456-uvw"
+  }
+]
+```
+
+**Disk Types:**
+- `sd_card` - SD Card (typically root filesystem on Raspberry Pi)
+- `external_ssd` - External SSD drive
+- `external_hdd` - External HDD drive
+- `nvme` - NVMe drive
+- `usb_flash` - USB flash drive
+- `unknown` - Unknown disk type
+
+---
+
 ### Job Management
 
 #### `POST /api/jobs`

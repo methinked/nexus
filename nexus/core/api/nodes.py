@@ -7,6 +7,7 @@ Handles node management, status, and queries.
 from typing import Optional
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -22,6 +23,7 @@ from nexus.core.db import (
 from nexus.core.db.database import get_db
 from nexus.core.services.health import calculate_node_health
 from nexus.shared import (
+    DiskInfo,
     HealthThresholds,
     JobStatus,
     Metric,
@@ -263,6 +265,61 @@ async def get_node_health(
     )
 
     return health_status
+
+
+@router.get("/{node_id}/disks", response_model=list[DiskInfo])
+async def get_node_disks(
+    node_id: UUID,
+    db: Session = Depends(get_db),
+):
+    """
+    Get disk information from a node.
+
+    Fetches detailed information about all mounted disks on the node including:
+    - Device path and mount point
+    - Disk type (SD card, SSD, HDD, NVMe, USB flash, etc.)
+    - Filesystem type and usage statistics
+    - Special flags (system disk, Docker data, Nexus data, read-only)
+
+    Args:
+        node_id: UUID of the node
+
+    Returns:
+        List of disk information
+
+    Raises:
+        404: Node not found
+        503: Cannot communicate with agent
+    """
+    # Validate node exists
+    db_node = get_node(db, str(node_id))
+    if not db_node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Node {node_id} not found",
+        )
+
+    # Fetch disk info from agent
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                f"http://{db_node.ip_address}:8001/api/system/disks"
+            )
+            response.raise_for_status()
+            disks_data = response.json()
+
+            # Validate and return as DiskInfo models
+            return [DiskInfo.model_validate(disk) for disk in disks_data]
+    except httpx.HTTPError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Cannot communicate with agent: {str(e)}",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch disk information: {str(e)}",
+        )
 
 
 @router.delete("/{node_id}", status_code=status.HTTP_204_NO_CONTENT)
