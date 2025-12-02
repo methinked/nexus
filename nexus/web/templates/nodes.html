@@ -96,42 +96,42 @@
                         <div class="grid grid-cols-5 gap-4">
                             <div class="text-center">
                                 <div :class="{
-                                    'text-green-400': healthStatus?.overall_health === 'HEALTHY',
-                                    'text-amber-400': healthStatus?.overall_health === 'WARNING',
-                                    'text-red-400': healthStatus?.overall_health === 'CRITICAL',
-                                    'text-gray-400': healthStatus?.overall_health === 'UNKNOWN'
-                                }" class="text-3xl font-bold mb-1" x-text="healthStatus?.overall_health || 'N/A'"></div>
+                                    'text-green-400': healthStatus?.overall_health === 'healthy',
+                                    'text-amber-400': healthStatus?.overall_health === 'warning',
+                                    'text-red-400': healthStatus?.overall_health === 'critical',
+                                    'text-gray-400': healthStatus?.overall_health === 'unknown'
+                                }" class="text-3xl font-bold mb-1" x-text="healthStatus?.overall_health ? healthStatus.overall_health.toUpperCase() : 'N/A'"></div>
                                 <div class="text-xs text-gray-400">Overall</div>
                             </div>
                             <div class="text-center">
                                 <div :class="{
-                                    'text-green-400': healthStatus?.cpu_health === 'HEALTHY',
-                                    'text-amber-400': healthStatus?.cpu_health === 'WARNING',
-                                    'text-red-400': healthStatus?.cpu_health === 'CRITICAL'
+                                    'text-green-400': healthStatus?.cpu_health === 'healthy',
+                                    'text-amber-400': healthStatus?.cpu_health === 'warning',
+                                    'text-red-400': healthStatus?.cpu_health === 'critical'
                                 }" class="text-xl font-semibold mb-1" x-text="healthStatus?.latest_metrics?.cpu_percent ? healthStatus.latest_metrics.cpu_percent.toFixed(1) + '%' : 'N/A'"></div>
                                 <div class="text-xs text-gray-400">CPU</div>
                             </div>
                             <div class="text-center">
                                 <div :class="{
-                                    'text-green-400': healthStatus?.memory_health === 'HEALTHY',
-                                    'text-amber-400': healthStatus?.memory_health === 'WARNING',
-                                    'text-red-400': healthStatus?.memory_health === 'CRITICAL'
+                                    'text-green-400': healthStatus?.memory_health === 'healthy',
+                                    'text-amber-400': healthStatus?.memory_health === 'warning',
+                                    'text-red-400': healthStatus?.memory_health === 'critical'
                                 }" class="text-xl font-semibold mb-1" x-text="healthStatus?.latest_metrics?.memory_percent ? healthStatus.latest_metrics.memory_percent.toFixed(1) + '%' : 'N/A'"></div>
                                 <div class="text-xs text-gray-400">Memory</div>
                             </div>
                             <div class="text-center">
                                 <div :class="{
-                                    'text-green-400': healthStatus?.disk_health === 'HEALTHY',
-                                    'text-amber-400': healthStatus?.disk_health === 'WARNING',
-                                    'text-red-400': healthStatus?.disk_health === 'CRITICAL'
+                                    'text-green-400': healthStatus?.disk_health === 'healthy',
+                                    'text-amber-400': healthStatus?.disk_health === 'warning',
+                                    'text-red-400': healthStatus?.disk_health === 'critical'
                                 }" class="text-xl font-semibold mb-1" x-text="healthStatus?.latest_metrics?.disk_percent ? healthStatus.latest_metrics.disk_percent.toFixed(1) + '%' : 'N/A'"></div>
                                 <div class="text-xs text-gray-400">Disk</div>
                             </div>
                             <div class="text-center">
                                 <div :class="{
-                                    'text-green-400': healthStatus?.temperature_health === 'HEALTHY',
-                                    'text-amber-400': healthStatus?.temperature_health === 'WARNING',
-                                    'text-red-400': healthStatus?.temperature_health === 'CRITICAL',
+                                    'text-green-400': healthStatus?.temperature_health === 'healthy',
+                                    'text-amber-400': healthStatus?.temperature_health === 'warning',
+                                    'text-red-400': healthStatus?.temperature_health === 'critical',
                                     'text-gray-400': !healthStatus?.latest_metrics?.temperature
                                 }" class="text-xl font-semibold mb-1" x-text="healthStatus?.latest_metrics?.temperature ? healthStatus.latest_metrics.temperature.toFixed(1) + '°C' : 'N/A'"></div>
                                 <div class="text-xs text-gray-400">Temp</div>
