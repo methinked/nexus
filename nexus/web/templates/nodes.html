@@ -228,53 +228,62 @@
                     <div class="card-body">
                         <h3 class="text-lg font-semibold mb-4">Storage Devices</h3>
                         <div class="space-y-3">
-                            <template x-for="disk in disks" :key="disk.device">
-                                <div class="p-3 bg-gray-800 rounded-lg">
-                                    <!-- Header with disk type and mount point -->
-                                    <div class="flex items-start justify-between mb-2">
-                                        <div class="flex-1">
-                                            <div class="flex items-center gap-2 mb-1">
-                                                <span class="font-semibold" x-text="disk.mount_point"></span>
-                                                <span :class="{
-                                                    'bg-amber-500/20 text-amber-400': disk.type === 'sd_card',
-                                                    'bg-purple-500/20 text-purple-400': disk.type === 'external_ssd',
-                                                    'bg-blue-500/20 text-blue-400': disk.type === 'external_hdd',
-                                                    'bg-pink-500/20 text-pink-400': disk.type === 'nvme',
-                                                    'bg-cyan-500/20 text-cyan-400': disk.type === 'usb_flash',
-                                                    'bg-gray-500/20 text-gray-400': disk.type === 'unknown'
-                                                }" class="text-xs px-2 py-0.5 rounded-full font-medium" x-text="formatDiskType(disk.type)"></span>
-                                            </div>
-                                            <div class="text-xs text-gray-500" x-text="disk.device + ' • ' + disk.filesystem"></div>
-                                        </div>
-                                        <div class="text-right">
-                                            <div :class="{
-                                                'text-green-400': disk.usage_percent < 80,
-                                                'text-amber-400': disk.usage_percent >= 80 && disk.usage_percent < 95,
-                                                'text-red-400': disk.usage_percent >= 95
-                                            }" class="text-lg font-bold" x-text="disk.usage_percent.toFixed(1) + '%'"></div>
-                                            <div class="text-xs text-gray-500" x-text="formatBytes(disk.free_bytes) + ' free'"></div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Progress bar -->
-                                    <div class="w-full bg-gray-700 rounded-full h-2 mb-2">
-                                        <div :class="{
-                                            'bg-green-500': disk.usage_percent < 80,
-                                            'bg-amber-500': disk.usage_percent >= 80 && disk.usage_percent < 95,
-                                            'bg-red-500': disk.usage_percent >= 95
-                                        }" class="h-2 rounded-full transition-all" :style="`width: ${disk.usage_percent}%`"></div>
-                                    </div>
-
-                                    <!-- Badges -->
-                                    <div class="flex flex-wrap gap-1">
-                                        <span x-show="disk.is_system" class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">System</span>
-                                        <span x-show="disk.is_docker_data" class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400">Docker Data</span>
-                                        <span x-show="disk.is_nexus_data" class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">Nexus Data</span>
-                                        <span x-show="disk.read_only" class="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">Read-Only</span>
-                                    </div>
+                            <template x-if="disksError">
+                                <div class="text-center py-8">
+                                    <div class="text-amber-400 mb-2">⚠️ Storage information unavailable</div>
+                                    <div class="text-xs text-gray-500">Agent needs to be updated with new storage detection feature.</div>
+                                    <div class="text-xs text-gray-500 mt-1">Run: <code class="bg-gray-800 px-2 py-1 rounded">./scripts/update-agent.sh</code></div>
                                 </div>
                             </template>
-                            <template x-if="disks.length === 0">
+                            <template x-if="!disksError && disks && disks.length > 0">
+                                <template x-for="disk in disks" :key="disk.device">
+                                    <div class="p-3 bg-gray-800 rounded-lg">
+                                        <!-- Header with disk type and mount point -->
+                                        <div class="flex items-start justify-between mb-2">
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <span class="font-semibold" x-text="disk.mount_point"></span>
+                                                    <span :class="{
+                                                        'bg-amber-500/20 text-amber-400': disk.type === 'sd_card',
+                                                        'bg-purple-500/20 text-purple-400': disk.type === 'external_ssd',
+                                                        'bg-blue-500/20 text-blue-400': disk.type === 'external_hdd',
+                                                        'bg-pink-500/20 text-pink-400': disk.type === 'nvme',
+                                                        'bg-cyan-500/20 text-cyan-400': disk.type === 'usb_flash',
+                                                        'bg-gray-500/20 text-gray-400': disk.type === 'unknown'
+                                                    }" class="text-xs px-2 py-0.5 rounded-full font-medium" x-text="formatDiskType(disk.type)"></span>
+                                                </div>
+                                                <div class="text-xs text-gray-500" x-text="disk.device + ' • ' + disk.filesystem"></div>
+                                            </div>
+                                            <div class="text-right">
+                                                <div :class="{
+                                                    'text-green-400': disk.usage_percent < 80,
+                                                    'text-amber-400': disk.usage_percent >= 80 && disk.usage_percent < 95,
+                                                    'text-red-400': disk.usage_percent >= 95
+                                                }" class="text-lg font-bold" x-text="disk.usage_percent.toFixed(1) + '%'"></div>
+                                                <div class="text-xs text-gray-500" x-text="formatBytes(disk.free_bytes) + ' free'"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Progress bar -->
+                                        <div class="w-full bg-gray-700 rounded-full h-2 mb-2">
+                                            <div :class="{
+                                                'bg-green-500': disk.usage_percent < 80,
+                                                'bg-amber-500': disk.usage_percent >= 80 && disk.usage_percent < 95,
+                                                'bg-red-500': disk.usage_percent >= 95
+                                            }" class="h-2 rounded-full transition-all" :style="`width: ${disk.usage_percent}%`"></div>
+                                        </div>
+
+                                        <!-- Badges -->
+                                        <div class="flex flex-wrap gap-1">
+                                            <span x-show="disk.is_system" class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">System</span>
+                                            <span x-show="disk.is_docker_data" class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400">Docker Data</span>
+                                            <span x-show="disk.is_nexus_data" class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">Nexus Data</span>
+                                            <span x-show="disk.read_only" class="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">Read-Only</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                            <template x-if="!disksError && (!disks || disks.length === 0)">
                                 <div class="text-gray-500 text-center py-4 text-sm">
                                     Loading disk information...
                                 </div>
@@ -349,6 +358,7 @@ function nodesPage() {
         selectedNode: null,
         healthStatus: null,
         disks: [],
+        disksError: false,
         recentJobs: [],
         recentLogs: [],
         latestMetrics: [],
@@ -455,10 +465,18 @@ function nodesPage() {
                 // Load disk information
                 try {
                     const disksResponse = await fetch(`/api/nodes/${nodeId}/disks`);
-                    this.disks = await disksResponse.json();
+                    if (disksResponse.ok) {
+                        this.disks = await disksResponse.json();
+                        this.disksError = false;
+                    } else {
+                        console.warn('Failed to load disk information:', disksResponse.status);
+                        this.disks = [];
+                        this.disksError = true;
+                    }
                 } catch (error) {
                     console.warn('Failed to load disk information:', error);
                     this.disks = [];
+                    this.disksError = true;
                 }
             } catch (error) {
                 console.error('Failed to load node details:', error);
