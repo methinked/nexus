@@ -93,7 +93,7 @@
                 <div class="card" x-show="healthStatus">
                     <div class="card-body">
                         <h3 class="text-lg font-semibold mb-4">Health Status</h3>
-                        <div class="grid grid-cols-4 gap-4">
+                        <div class="grid grid-cols-5 gap-4">
                             <div class="text-center">
                                 <div :class="{
                                     'text-green-400': healthStatus?.overall_health === 'HEALTHY',
@@ -126,6 +126,15 @@
                                     'text-red-400': healthStatus?.disk_health === 'CRITICAL'
                                 }" class="text-xl font-semibold mb-1" x-text="healthStatus?.latest_metrics?.disk_percent ? healthStatus.latest_metrics.disk_percent.toFixed(1) + '%' : 'N/A'"></div>
                                 <div class="text-xs text-gray-400">Disk</div>
+                            </div>
+                            <div class="text-center">
+                                <div :class="{
+                                    'text-green-400': healthStatus?.temperature_health === 'HEALTHY',
+                                    'text-amber-400': healthStatus?.temperature_health === 'WARNING',
+                                    'text-red-400': healthStatus?.temperature_health === 'CRITICAL',
+                                    'text-gray-400': !healthStatus?.latest_metrics?.temperature
+                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.latest_metrics?.temperature ? healthStatus.latest_metrics.temperature.toFixed(1) + '°C' : 'N/A'"></div>
+                                <div class="text-xs text-gray-400">Temp</div>
                             </div>
                         </div>
                     </div>
