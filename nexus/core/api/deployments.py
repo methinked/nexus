@@ -4,9 +4,11 @@ Deployments API routes for Nexus Core (Phase 7 - Docker Orchestration).
 Handles Docker service deployment lifecycle management.
 """
 
+import logging
 from typing import Optional
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -32,6 +34,79 @@ from nexus.shared import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+
+async def send_deploy_to_agent(node_ip: str, deployment_id: str, service_config: dict) -> Optional[str]:
+    """
+    Send deployment request to agent.
+
+    Returns:
+        Container ID if successful, None otherwise
+    """
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                f"http://{node_ip}:8001/api/docker/deploy",
+                json={
+                    "deployment_id": deployment_id,
+                    "image": service_config.get("image"),
+                    "name": f"nexus-{deployment_id[:8]}",
+                    "ports": service_config.get("ports"),
+                    "volumes": service_config.get("volumes"),
+                    "environment": service_config.get("environment")
+                }
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data.get("id")
+    except Exception as e:
+        logger.error(f"Failed to deploy to agent {node_ip}: {e}")
+        return None
+
+
+async def send_container_command(node_ip: str, container_id: str, command: str) -> bool:
+    """
+    Send container lifecycle command to agent.
+
+    Args:
+        node_ip: Agent IP address
+        container_id: Docker container ID
+        command: Command to execute (start, stop, restart)
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                f"http://{node_ip}:8001/api/docker/{container_id}/{command}"
+            )
+            response.raise_for_status()
+            return True
+    except Exception as e:
+        logger.error(f"Failed to {command} container on agent {node_ip}: {e}")
+        return False
+
+
+async def delete_container_on_agent(node_ip: str, container_id: str) -> bool:
+    """
+    Delete container on agent.
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.delete(
+                f"http://{node_ip}:8001/api/docker/{container_id}",
+                params={"force": True}
+            )
+            response.raise_for_status()
+            return True
+    except Exception as e:
+        logger.error(f"Failed to delete container on agent {node_ip}: {e}")
+        return False
 
 
 @router.get("", response_model=DeploymentList)
@@ -131,11 +206,33 @@ async def create_new_deployment(
             detail=f"Node {node.name} is {node.status.value}, must be online to deploy",
         )
 
-    # Create deployment
+    # Create deployment in pending status
     db_deployment = create_deployment(db, deployment)
+    deployment_id = str(db_deployment.id)
 
-    # TODO (Phase 7.4): Send deployment job to agent
-    # This will be implemented in the deployment workflow phase
+    # Merge service config with deployment config
+    service_config = {
+        "image": service.image,
+        "ports": deployment.config.get("ports") if deployment.config else service.ports,
+        "volumes": deployment.config.get("volumes") if deployment.config else service.volumes,
+        "environment": {
+            **(service.environment or {}),
+            **(deployment.config.get("environment", {}) if deployment.config else {})
+        }
+    }
+
+    # Send deployment to agent
+    container_id = await send_deploy_to_agent(node.ip_address, deployment_id, service_config)
+
+    if container_id:
+        # Update deployment with container_id and set status to running
+        db_deployment.container_id = container_id
+        update_deployment_status(db, deployment_id, DeploymentStatus.RUNNING)
+        db.refresh(db_deployment)
+    else:
+        # Deployment failed
+        update_deployment_status(db, deployment_id, DeploymentStatus.FAILED)
+        db.refresh(db_deployment)
 
     return Deployment.model_validate(db_deployment)
 
@@ -185,9 +282,30 @@ async def start_deployment(
             detail="Deployment is already running",
         )
 
-    # TODO (Phase 7.4): Send start command to agent
-    # For now, just update status to deploying
-    db_deployment = update_deployment_status(db, str(deployment_id), DeploymentStatus.DEPLOYING)
+    if not deployment.container_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Deployment has no container ID, cannot start",
+        )
+
+    # Get node to find IP address
+    node = get_node(db, str(deployment.node_id))
+    if not node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Node not found",
+        )
+
+    # Send start command to agent
+    success = await send_container_command(node.ip_address, deployment.container_id, "start")
+
+    if success:
+        db_deployment = update_deployment_status(db, str(deployment_id), DeploymentStatus.RUNNING)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to start container on agent",
+        )
 
     return Deployment.model_validate(db_deployment)
 
@@ -215,9 +333,30 @@ async def stop_deployment(
             detail="Deployment is already stopped",
         )
 
-    # TODO (Phase 7.4): Send stop command to agent
-    # For now, just update status
-    db_deployment = update_deployment_status(db, str(deployment_id), DeploymentStatus.STOPPED)
+    if not deployment.container_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Deployment has no container ID, cannot stop",
+        )
+
+    # Get node to find IP address
+    node = get_node(db, str(deployment.node_id))
+    if not node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Node not found",
+        )
+
+    # Send stop command to agent
+    success = await send_container_command(node.ip_address, deployment.container_id, "stop")
+
+    if success:
+        db_deployment = update_deployment_status(db, str(deployment_id), DeploymentStatus.STOPPED)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to stop container on agent",
+        )
 
     return Deployment.model_validate(db_deployment)
 
@@ -239,9 +378,30 @@ async def restart_deployment(
             detail=f"Deployment {deployment_id} not found",
         )
 
-    # TODO (Phase 7.4): Send restart command to agent
-    # For now, just update status to deploying
-    db_deployment = update_deployment_status(db, str(deployment_id), DeploymentStatus.DEPLOYING)
+    if not deployment.container_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Deployment has no container ID, cannot restart",
+        )
+
+    # Get node to find IP address
+    node = get_node(db, str(deployment.node_id))
+    if not node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Node not found",
+        )
+
+    # Send restart command to agent
+    success = await send_container_command(node.ip_address, deployment.container_id, "restart")
+
+    if success:
+        db_deployment = update_deployment_status(db, str(deployment_id), DeploymentStatus.RUNNING)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to restart container on agent",
+        )
 
     return Deployment.model_validate(db_deployment)
 
@@ -268,7 +428,12 @@ async def remove_deployment(
             detail=f"Deployment {deployment_id} not found",
         )
 
-    # TODO (Phase 7.4): Send remove command to agent
+    # Send remove command to agent if container exists
+    if deployment.container_id:
+        node = get_node(db, str(deployment.node_id))
+        if node:
+            # Attempt to delete container on agent (best effort)
+            await delete_container_on_agent(node.ip_address, deployment.container_id)
 
     # Delete from database
     success = delete_deployment(db, str(deployment_id))

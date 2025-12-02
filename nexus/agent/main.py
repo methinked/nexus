@@ -241,11 +241,12 @@ async def health_check():
 # API Routers
 # ============================================================================
 
-from nexus.agent.api import jobs, system, terminal
+from nexus.agent.api import docker, jobs, system, terminal
 
 app.include_router(system.router, prefix="/api/system", tags=["system"])
 app.include_router(jobs.router, prefix="/api/jobs", tags=["jobs"])
 app.include_router(terminal.router, prefix="/api", tags=["terminal"])
+app.include_router(docker.router, prefix="/api/docker", tags=["docker"])
 
 
 # ============================================================================
