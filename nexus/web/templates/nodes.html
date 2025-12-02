@@ -105,26 +105,26 @@
                             </div>
                             <div class="text-center">
                                 <div :class="{
-                                    'text-green-400': healthStatus?.cpu === 'HEALTHY',
-                                    'text-amber-400': healthStatus?.cpu === 'WARNING',
-                                    'text-red-400': healthStatus?.cpu === 'CRITICAL'
-                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.cpu || 'N/A'"></div>
+                                    'text-green-400': healthStatus?.cpu_health === 'HEALTHY',
+                                    'text-amber-400': healthStatus?.cpu_health === 'WARNING',
+                                    'text-red-400': healthStatus?.cpu_health === 'CRITICAL'
+                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.latest_metrics?.cpu_percent ? healthStatus.latest_metrics.cpu_percent.toFixed(1) + '%' : 'N/A'"></div>
                                 <div class="text-xs text-gray-400">CPU</div>
                             </div>
                             <div class="text-center">
                                 <div :class="{
-                                    'text-green-400': healthStatus?.memory === 'HEALTHY',
-                                    'text-amber-400': healthStatus?.memory === 'WARNING',
-                                    'text-red-400': healthStatus?.memory === 'CRITICAL'
-                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.memory || 'N/A'"></div>
+                                    'text-green-400': healthStatus?.memory_health === 'HEALTHY',
+                                    'text-amber-400': healthStatus?.memory_health === 'WARNING',
+                                    'text-red-400': healthStatus?.memory_health === 'CRITICAL'
+                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.latest_metrics?.memory_percent ? healthStatus.latest_metrics.memory_percent.toFixed(1) + '%' : 'N/A'"></div>
                                 <div class="text-xs text-gray-400">Memory</div>
                             </div>
                             <div class="text-center">
                                 <div :class="{
-                                    'text-green-400': healthStatus?.disk === 'HEALTHY',
-                                    'text-amber-400': healthStatus?.disk === 'WARNING',
-                                    'text-red-400': healthStatus?.disk === 'CRITICAL'
-                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.disk || 'N/A'"></div>
+                                    'text-green-400': healthStatus?.disk_health === 'HEALTHY',
+                                    'text-amber-400': healthStatus?.disk_health === 'WARNING',
+                                    'text-red-400': healthStatus?.disk_health === 'CRITICAL'
+                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.latest_metrics?.disk_percent ? healthStatus.latest_metrics.disk_percent.toFixed(1) + '%' : 'N/A'"></div>
                                 <div class="text-xs text-gray-400">Disk</div>
                             </div>
                         </div>
