@@ -328,6 +328,7 @@ All documentation is up-to-date and reflects the current implementation:
 - **README.md** - Core features, CLI usage, and getting started guide
 - **docs/api.md** - Complete REST API reference with all endpoints
 - **docs/architecture.md** - System architecture including multi-disk detection and Docker orchestration
+- **docs/CONTRIBUTING.md** - Development guidelines and **error handling best practices**
 - **PROGRESS.md** - Development progress and phase completion tracking
 - **CONTEXT.md** - Project context and implementation details
 
