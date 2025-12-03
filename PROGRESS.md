@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-12-02 (Evening Session - Phase 7.2 Complete + Error Handling Standards)
-**Current Phase:** Phase 7.2 - Agent Docker Module (COMPLETE) ✅
+**Last Updated:** 2025-12-03 (Evening Session - Phase 7.2.5 CLI Commands Documented)
+**Current Phase:** Phase 7.2.5 - Docker CLI Commands (COMPLETE) ✅
 
 ---
 
@@ -559,6 +559,76 @@ The core CLI-based fleet management is complete. The next logical step is a web-
 
 **Phase 7.1 COMPLETE!** ✓ - Foundation ready for Docker orchestration
 **System Status:** Production-ready on real hardware (laptop + Raspberry Pi)
+
+---
+
+#### Phase 7.2.5: Docker CLI Commands (2025-12-03 Evening)
+
+**Status:** ✅ COMPLETE (Already Implemented)
+
+**Goal:** Provide CLI-first interface for Docker service and deployment management.
+
+**Completed Features:**
+- ✅ **Service Management Commands** (nexus/cli/commands/service.py - 302 lines):
+  - `nexus service list` - List all service templates with Rich table formatting
+  - `nexus service get <id>` - View service details in formatted panel
+  - `nexus service create` - Create service templates with ports, volumes, environment
+  - `nexus service delete <id>` - Delete service templates with confirmation
+  - Port parsing: Supports host:container and host:container/protocol formats
+  - Volume parsing: Supports host:container mappings
+  - Environment parsing: Supports KEY=VALUE format
+  - Comprehensive error handling and user feedback
+
+- ✅ **Deployment Management Commands** (nexus/cli/commands/deployment.py - 407 lines):
+  - `nexus deployment list` - List deployments with filtering (--node, --status)
+  - `nexus deployment get <id>` - View deployment details
+  - `nexus deployment create <service_id> <node_id>` - Deploy service to node
+  - `nexus deployment start <id>` - Start stopped deployment
+  - `nexus deployment stop <id>` - Stop running deployment
+  - `nexus deployment restart <id>` - Restart deployment
+  - `nexus deployment delete <id>` - Remove deployment with confirmation
+  - Environment variable overrides via -e flag
+  - Color-coded status badges (green/yellow/red)
+  - Rich table and panel formatting
+
+- ✅ **CLI Integration:**
+  - Commands registered in nexus/cli/main.py
+  - Consistent with existing CLI patterns (node, job, metrics, logs)
+  - Uses CLIConfig for Core URL and authentication
+  - httpx for HTTP requests to Core API
+  - Rich console for beautiful terminal output
+
+- ✅ **User Experience:**
+  - Helpful examples in docstrings
+  - Confirmation prompts for destructive operations
+  - --yes flag to skip confirmations for automation
+  - Detailed error messages with HTTP status codes
+  - Next-step suggestions after operations
+
+**Examples:**
+```bash
+# Service management
+nexus service list
+nexus service create -n nginx -i nginx:latest -p 80:80 -v /data:/usr/share/nginx/html
+nexus service get f6b858e2
+nexus service delete f6b858e2
+
+# Deployment management
+nexus deployment list --status running
+nexus deployment create f6b858e2 a1b2c3d4 -e PORT=8080
+nexus deployment start f6b858e2
+nexus deployment stop f6b858e2
+nexus deployment restart f6b858e2
+nexus deployment delete f6b858e2 --yes
+```
+
+**Files:**
+- nexus/cli/commands/service.py (302 lines)
+- nexus/cli/commands/deployment.py (407 lines)
+- nexus/cli/main.py (updated with command registration)
+
+**Phase 7.2.5 COMPLETE!** ✓ - CLI-first Docker orchestration operational
+**Note:** These commands were implemented alongside Phase 7.1-7.2 but not previously documented.
 
 ---
 

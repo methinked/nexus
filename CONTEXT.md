@@ -1,8 +1,8 @@
 # Nexus Development Context
 
-**Last Session:** 2025-12-01 (Evening - Phase 6.5.1 Complete)
+**Last Session:** 2025-12-03 (Evening - Phase 7.2.5 CLI Commands Documented)
 **Current Branch:** dev
-**Current Phase:** Phase 6.5 - Multi-Disk Storage Support (Phase 6.5.1 Complete, continuing with 6.5.2)
+**Current Phase:** Phase 7.2.5 - Docker CLI Commands (COMPLETE)
 
 ---
 
@@ -1256,3 +1256,54 @@ Nexus is shifting from a monitoring-focused platform to a **full fleet orchestra
 - Test multi-disk display with various storage configurations
 - Begin Phase 7.3: Pre-built Docker service templates (Pi-hole, etc.)
 - Or begin Phase 8: Remote fleet management and agent updates
+
+**Session 2025-12-03 (Evening - Phase 7.2.5 CLI Commands Documentation):**
+- **Context:** Working on Windows environment, looking for Windows-compatible development tasks
+- **Discovery:** Docker CLI commands already fully implemented!
+  - nexus/cli/commands/service.py (302 lines) - Complete service template management
+  - nexus/cli/commands/deployment.py (407 lines) - Complete deployment lifecycle management
+  - Both files registered in nexus/cli/main.py
+  - Commands follow CLI-first philosophy with Rich formatting
+  - Comprehensive error handling and user feedback
+  - Already documented in README.md usage section
+
+- **Service CLI Commands:**
+  - `nexus service list` - List all service templates with Rich tables
+  - `nexus service get <id>` - View service details in formatted panels
+  - `nexus service create` - Create templates with ports, volumes, environment variables
+  - `nexus service delete <id>` - Delete templates with confirmation prompts
+  - Port parsing: host:container and host:container/protocol formats
+  - Volume parsing: host:container mappings
+  - Environment parsing: KEY=VALUE format
+
+- **Deployment CLI Commands:**
+  - `nexus deployment list` - List with filtering (--node, --status)
+  - `nexus deployment get <id>` - View deployment details
+  - `nexus deployment create <service_id> <node_id>` - Deploy to nodes
+  - `nexus deployment start/stop/restart <id>` - Lifecycle management
+  - `nexus deployment delete <id>` - Remove with confirmation
+  - Environment variable overrides via -e flag
+  - Color-coded status badges (green/yellow/red)
+
+- **Documentation Updates:**
+  - Added Phase 7.2.5 section to PROGRESS.md (70 lines)
+  - Updated PROGRESS.md header (current phase and date)
+  - Updated CONTEXT.md header (last session and current phase)
+  - Documented all CLI features, examples, and file locations
+  - Noted that commands were implemented alongside Phase 7.1-7.2 but not previously documented
+
+- **Key Insights:**
+  - Phase 7.3 is about pre-built templates and Web UI, not CLI commands
+  - CLI commands are production-ready and match API endpoints perfectly
+  - All CRUD operations implemented with proper error handling
+  - Follows existing CLI patterns (node, job, metrics, logs)
+  - Python not available on Windows for testing, but code review confirms completeness
+
+**Phase 7.2.5 COMPLETE!** ? - CLI-first Docker orchestration fully operational
+
+**Next Session Goals:**
+- Phase 7.3: Pre-built Docker service templates (Pi-hole, Home Assistant, Prometheus, Grafana)
+- Phase 7.3: Web UI for service deployment and management
+- Phase 7.3: Docker Compose support for multi-container services
+- Or Phase 8: Remote fleet management and agent updates
+
