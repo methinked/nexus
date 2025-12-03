@@ -279,14 +279,22 @@ nexus fleet update
 - [x] **Phase 6.4: Log Viewer UI** - Web-based log viewer with filtering and search. ✅
 - [x] **Phase 6.5.1: Multi-Disk Detection** - Comprehensive disk detection and smart storage recommendations. ✅
 - [x] **Phase 7.1: Docker Orchestration API** - Core service management and deployment API. ✅
-- [ ] **Phase 7.2: Agent Docker Module** - Docker container management on agents.
-  - [ ] Docker SDK for Python integration
-  - [ ] Container lifecycle operations (deploy, start, stop, restart, remove)
-  - [ ] Container health monitoring and resource tracking
-- [ ] **Phase 7.3+: Docker Service Templates** - Pre-built service templates and web UI.
+- [x] **Phase 7.2: Agent Docker Module** - Docker container management on agents. ✅
+  - [x] Docker SDK for Python integration
+  - [x] Container lifecycle operations (deploy, start, stop, restart, remove)
+  - [x] Container health monitoring and resource tracking
+- [ ] **Phase 7.3: Docker Service Templates** - Pre-built service templates and web UI.
   - [ ] Service templates (Pi-hole, Home Assistant, Prometheus, Grafana, etc.)
   - [ ] Web UI for service deployment and management
   - [ ] Docker Compose support for multi-container services
+- [ ] **Phase 8: Fleet Management** - Centralized agent update and fleet-wide operations.
+  - [ ] Remote agent code updates from web dashboard (one-click agent updates)
+  - [ ] Remote agent code updates via CLI (`nexus fleet update`, `nexus node update <node_id>`)
+  - [ ] Agent version tracking and update availability notifications
+  - [ ] Fleet-wide configuration management
+  - [ ] Bulk operations across multiple nodes (update all, restart all, etc.)
+  - [ ] Update rollback mechanism for failed updates
+  - [ ] Zero-downtime agent updates with graceful restarts
 
 ## 🔒 Security
 
