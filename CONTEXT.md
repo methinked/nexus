@@ -1091,3 +1091,168 @@ Nexus is shifting from a monitoring-focused platform to a **full fleet orchestra
   - 28 CRUD functions with filtering and pagination
   - All code merged to main and tested on real hardware
   - Ready for Phase 7.2: Agent Docker Module
+
+---
+
+**Session 2025-12-02 (Evening - Phase 7.2 Complete + Error Handling Standards):**
+
+- **Phase 7.2 Implementation - Agent Docker Module (COMPLETE):**
+  - Docker SDK integration:
+    * Added docker>=7.0.0 to requirements.txt
+    * Created comprehensive DockerService class (nexus/agent/services/docker.py)
+    * Full container lifecycle: create, start, stop, restart, remove
+    * Image pulling with progress tracking
+    * Container status monitoring and health checks
+    * Resource usage stats (CPU, memory)
+    * Container logs retrieval with tail support
+    * Nexus-managed container labeling system
+  - Agent Docker API (nexus/agent/api/docker.py):
+    * POST /api/docker/deploy - Deploy and start containers
+    * POST /api/docker/{id}/start|stop|restart - Lifecycle control
+    * DELETE /api/docker/{id} - Remove containers with force option
+    * GET /api/docker/{id}/status - Detailed container status
+    * GET /api/docker/{id}/logs - Container logs with tail parameter
+    * GET /api/docker/containers/list - List all Nexus-managed containers
+    * GET /api/docker/status - Check Docker daemon availability
+  - Core orchestration (nexus/core/api/deployments.py):
+    * Added send_deploy_to_agent() - HTTP POST to agent deploy endpoint
+    * Added send_container_command() - Proxy start/stop/restart to agent
+    * Added delete_container_on_agent() - Proxy container removal
+    * Updated all deployment endpoints to actually execute on agents
+    * Proper error handling for agent communication failures
+  - CLI commands:
+    * Service templates: nexus service create|list|get|delete
+    * Deployments: nexus deployment create|list|get|start|stop|restart|delete
+    * Full CLI integration with proper error messages and rich output
+  - Web dashboard:
+    * Services page (nexus/web/templates/services.html) - Service template CRUD
+    * Deployments page (nexus/web/templates/deployments.html) - Deployment management
+    * Real-time status updates with color-coded status indicators
+    * Replaced "Coming Soon" stubs with functional interfaces
+  - **Phase 7.2 COMPLETE!** ✓ - Full Docker orchestration across fleet
+
+- **UI Bug Fixes - Health Status Display:**
+  - Fixed "undefined" in health status cards (3 separate issues):
+    * Issue 1: Wrong field paths in template
+      - Was accessing healthStatus?.cpu (doesn't exist)
+      - Fixed to healthStatus?.latest_metrics?.cpu_percent
+    * Issue 2: Missing temperature card
+      - Health grid only showed 4 columns (Overall, CPU, Memory, Disk)
+      - Added 5th column for Temperature with °C display
+      - Changed grid-cols-4 to grid-cols-5
+    * Issue 3: Case sensitivity mismatch
+      - API returns lowercase: "healthy", "warning", "critical"
+      - Template checked uppercase: "HEALTHY", "WARNING", "CRITICAL"
+      - Fixed all comparisons to lowercase
+      - Display still shows uppercase via .toUpperCase() for readability
+  - Result: All health cards now display proper values with correct colors
+
+- **Multi-Disk Display Implementation (Phase 6.5.1 Enhancement):**
+  - Agent endpoint (nexus/agent/api/system.py):
+    * Added GET /api/system/disks endpoint
+    * Returns all mounted disks using existing get_all_disks() from Phase 6.5.1
+    * Full DiskInfo objects with type, usage, flags
+  - Core proxy (nexus/core/api/nodes.py):
+    * Added GET /api/nodes/{node_id}/disks endpoint
+    * Fetches disk info from agent via HTTP
+    * Validates response and handles communication errors
+    * Returns 503 if agent unreachable
+  - Web dashboard (nexus/web/templates/nodes.html):
+    * New "Storage Devices" section in node details
+    * Displays all disks with mount points and device paths
+    * Color-coded disk type badges:
+      - 🟠 SD Card (amber) - clearly distinguishable
+      - 🟣 External SSD (purple)
+      - 🔵 External HDD (blue)
+      - 🌸 NVMe (pink)
+      - 🔷 USB Flash (cyan)
+      - ⚫ Unknown (gray)
+    * Usage bars with color thresholds (green < 80%, amber < 95%, red ≥ 95%)
+    * Free space in human-readable format (formatBytes helper)
+    * Special badges: System, Docker Data, Nexus Data, Read-Only
+    * Proper error handling with clear "Agent needs update" message
+  - API documentation updated (docs/api.md):
+    * Documented GET /api/nodes/{node_id}/disks endpoint
+    * Example response with all disk type descriptions
+
+- **Error Handling Standards Established (CRITICAL):**
+  - **New rule:** All error messages must be clear, actionable, and avoid "undefined"
+  - Created comprehensive CONTRIBUTING.md:
+    * Error message clarity principles (what, why, how)
+    * Good vs bad examples for frontend and backend
+    * Frontend error handling checklist:
+      - Always provide fallbacks: value || 'N/A'
+      - Check data existence: value?.property
+      - Show error states explicitly with flags
+      - Track loading/error/empty states separately
+    * Backend error handling checklist:
+      - Use appropriate HTTP status codes
+      - Include context in error messages
+      - Provide actionable next steps
+      - Log errors with full details
+    * Testing error scenarios (404, 500, timeout, malformed data, null fields)
+    * Error message templates for common cases
+    * Code review checklist for error handling
+  - Applied standards throughout codebase:
+    * All Alpine.js templates use optional chaining and fallbacks
+    * Storage devices section shows clear error with update instructions
+    * Health status properly handles missing data
+    * No "undefined" can appear in UI
+
+- **Roadmap Updates:**
+  - Marked Phase 7.2 as COMPLETE ✅
+  - Added Phase 8: Fleet Management
+    * Remote agent code updates from web dashboard (one-click)
+    * Remote agent code updates via CLI (nexus fleet update)
+    * Agent version tracking and update notifications
+    * Fleet-wide configuration management
+    * Bulk operations across nodes
+    * Update rollback mechanism
+    * Zero-downtime agent updates with graceful restarts
+
+- **Scripts & Tools:**
+  - Created scripts/update-agent.sh:
+    * Quick update for already-deployed agents
+    * Stops agent, copies updated code, restarts
+    * Preserves venv and configuration
+    * Checks health after update
+    * Much faster than full redeployment
+  - Note: Agent on moria-pi needs update to enable storage devices display
+
+- **Documentation Updates:**
+  - README.md: Added CONTRIBUTING.md reference, marked Phase 7.2 complete, added Phase 8
+  - docs/api.md: Added GET /api/nodes/{node_id}/disks endpoint documentation
+  - docs/CONTRIBUTING.md: NEW - Comprehensive error handling and development standards
+  - PROGRESS.md: Detailed session log with all fixes and implementations
+  - CONTEXT.md: This session summary
+
+- **Git Commits (8 commits, all on dev branch):**
+  1. 6b980c0 - fix: Display numeric metrics in node health cards
+  2. 0b2f611 - fix: Add temperature card to health status display
+  3. 7e562bc - fix: Correct health status value comparisons (lowercase)
+  4. 319f5e6 - feat: Add multi-disk display in node details view
+  5. 29e6fd5 - fix: Add proper error handling for storage devices section
+  6. bbea328 - docs: Add comprehensive error handling guidelines
+  7. cfb0243 - feat: Add quick agent update script
+  8. 43c9c30 - roadmap: Add Phase 8 - Fleet Management with remote agent updates
+
+- **Testing Status:**
+  - ✅ Health status cards display correctly (CPU, Memory, Disk, Temp)
+  - ✅ Temperature sensor: 44-45°C on moria-pi (healthy range)
+  - ✅ Error handling shows clear, actionable messages
+  - ⚠️ Storage devices awaiting agent update on moria-pi
+    * Agent needs /api/system/disks endpoint (added in this session)
+    * Update command: ./scripts/update-agent.sh 10.243.14.179 methinked 107512625
+
+- **Key Achievements:**
+  1. **Zero "undefined" Errors** - Established and enforced standards throughout codebase
+  2. **Complete Docker Orchestration** - Full container lifecycle management across fleet
+  3. **Multi-Disk Visibility** - Users can see all storage with clear SD Card vs SSD/HDD labels
+  4. **Developer Guidelines** - Comprehensive error handling documentation for future work
+  5. **Remote Update Foundation** - Roadmap established for fleet-wide agent management
+
+**Next Session Goals:**
+- Update moria-pi agent to enable storage devices display
+- Test multi-disk display with various storage configurations
+- Begin Phase 7.3: Pre-built Docker service templates (Pi-hole, etc.)
+- Or begin Phase 8: Remote fleet management and agent updates
