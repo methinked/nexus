@@ -1369,3 +1369,53 @@ Nexus is shifting from a monitoring-focused platform to a **full fleet orchestra
 - Commit Phase 7.3 work to git
 - Or begin Phase 8: Remote fleet management and agent updates
 
+**Session 2025-12-04 (Evening - Phase 7.3 Testing & Deployment):**
+- **Context:** Testing Phase 7.3 service templates with live Raspberry Pi agents
+- **Deployment:**
+  - Deployed agents to two Raspberry Pis via SSH (passwordless with SSH keys)
+  - moria-pi (10.243.14.179) - Clean redeployment after clearing old installation
+  - raspberrypi (10.243.151.228) - Fresh installation
+  - Both agents connected via ZeroTier network (10.243.x.x)
+  
+- **Core Server Testing:**
+  - Started Core server on Windows with venv
+  - **Service template seeding successful:** 7/7 templates loaded on startup
+    - Pi-hole, Home Assistant, Prometheus, Grafana, Portainer, Nginx Proxy Manager, Nextcloud
+  - Templates stored in database and accessible via API
+  - Dashboard running on http://localhost:8000
+  
+- **Agent Registration:**
+  - Both agents successfully registered with Core server
+  - moria-pi: node_id=bfe9c3a4-1bd6-4a38-a7c1-f38dafeb0cdd
+  - raspberrypi: node_id=e013c054-7900-401b-8819-22b30b459303
+  - Metrics flowing from both agents (HTTP 201 Created)
+  - Health endpoints responding on both Pis
+  
+- **Issues Resolved:**
+  - Fixed Windows line ending issues in start scripts (CRLF → LF)
+  - Resolved ZeroTier IP configuration (10.243.213.19)
+  - Cleared old agent state on moria-pi for clean registration
+  - Installed missing jinja2 dependency for web dashboard
+  
+- **Phase 8.5 Planning:**
+  - Created comprehensive auto-discovery design document
+  - UniFi-style agent adoption workflow planned
+  - mDNS/Avahi service discovery architecture
+  - Zero-configuration agent deployment vision
+  - User approved design (LGTM)
+  
+- **Testing Status:**
+  - ✅ Core server operational with service templates
+  - ✅ Both agents registered and sending metrics
+  - ✅ Web dashboard accessible
+  - ✅ API endpoints verified
+  - ⏳ Service deployment testing pending
+  
+**Phase 7.3 Testing COMPLETE!** ✓ - System operational with 2 live agents
+
+**Next Session Goals:**
+- Test deploying a service (Pi-hole) to one of the Pis
+- Verify Docker container management end-to-end
+- Begin Phase 8.5: Auto-discovery implementation
+- Or expand service template library
+
