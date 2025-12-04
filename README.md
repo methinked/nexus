@@ -283,10 +283,12 @@ nexus fleet update
   - [x] Docker SDK for Python integration
   - [x] Container lifecycle operations (deploy, start, stop, restart, remove)
   - [x] Container health monitoring and resource tracking
-- [ ] **Phase 7.3: Docker Service Templates** - Pre-built service templates and web UI.
-  - [ ] Service templates (Pi-hole, Home Assistant, Prometheus, Grafana, etc.)
-  - [ ] Web UI for service deployment and management
-  - [ ] Docker Compose support for multi-container services
+- [x] **Phase 7.3: Docker Service Templates** - Pre-built service templates and web UI. ✅
+  - [x] Service template library (7 pre-built templates: Pi-hole, Home Assistant, Prometheus, Grafana, Portainer, Nginx Proxy Manager, Nextcloud)
+  - [x] Automatic template seeding on Core startup
+  - [x] Enhanced web UI with category filtering and search
+  - [x] Separate modals for create, deploy, and view details
+  - [x] Docker Compose YAML support for all templates
 - [ ] **Phase 8: Fleet Management** - Centralized agent update and fleet-wide operations.
   - [ ] Remote agent code updates from web dashboard (one-click agent updates)
   - [ ] Remote agent code updates via CLI (`nexus fleet update`, `nexus node update <node_id>`)

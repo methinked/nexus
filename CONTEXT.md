@@ -1,13 +1,3 @@
-# Nexus Development Context
-
-**Last Session:** 2025-12-03 (Evening - Phase 7.2.5 CLI Commands Documented)
-**Current Branch:** dev
-**Current Phase:** Phase 7.2.5 - Docker CLI Commands (COMPLETE)
-
----
-
-## 🎯 Project Overview
-
 Nexus is a distributed fleet orchestration platform for Debian-based machines with a **CLI-first** and **Docker-first** philosophy. It manages fleets of Raspberry Pis, Ubuntu servers, Debian machines, and any Debian-derivative Linux systems from the command line, with an optional web dashboard. The core focus is on Docker-based service orchestration across the fleet.
 
 **Target Hardware:**
@@ -1299,11 +1289,83 @@ Nexus is shifting from a monitoring-focused platform to a **full fleet orchestra
   - Follows existing CLI patterns (node, job, metrics, logs)
   - Python not available on Windows for testing, but code review confirms completeness
 
-**Phase 7.2.5 COMPLETE!** ? - CLI-first Docker orchestration fully operational
+**Phase 7.2.5 COMPLETE!** ✓ - CLI-first Docker orchestration fully operational
+
+**Session 2025-12-04 (Evening - Phase 7.3 Pre-built Service Templates):**
+- **Context:** Working on Windows environment, implementing pre-built service templates
+- **Implementation - Service Template Library:**
+  - Created nexus/core/services/service_templates.py (220 lines)
+  - Defined 7 pre-built templates as Python dictionaries:
+    1. **Pi-hole** (pihole/pihole:latest) - Network-wide ad blocking
+       - Ports: 53/tcp, 53/udp, 80/tcp
+       - Category: networking
+    2. **Home Assistant** (ghcr.io/home-assistant/home-assistant:latest) - Home automation
+       - Port: 8123
+       - Category: automation
+       - Requires privileged mode and host networking
+    3. **Prometheus** (prom/prometheus:latest) - Monitoring system
+       - Port: 9090
+       - Category: monitoring
+    4. **Grafana** (grafana/grafana:latest) - Visualization platform
+       - Port: 3000
+       - Category: monitoring
+    5. **Portainer** (portainer/portainer-ce:latest) - Docker management UI
+       - Ports: 9000, 8000
+       - Category: management
+    6. **Nginx Proxy Manager** (jc21/nginx-proxy-manager:latest) - Reverse proxy
+       - Ports: 80, 81, 443
+       - Category: networking
+    7. **Nextcloud** (nextcloud:latest) - Cloud storage
+       - Port: 8080
+       - Category: storage
+  - Each template includes Docker Compose YAML, default env vars, icon URL
+  - Helper functions for retrieval and filtering
+
+- **Implementation - Automatic Template Seeding:**
+  - Created nexus/core/services/seed_templates.py (81 lines)
+  - Idempotent seeding function (checks for existing templates)
+  - Integrated into Core startup (nexus/core/main.py)
+  - Logs seeding results: created, skipped, errors
+  - Templates persist in database after first seed
+
+- **Implementation - Enhanced Web UI:**
+  - Updated nexus/web/templates/services.html (~200 lines modified)
+  - **New Features:**
+    - Category filtering with dynamic tabs
+    - Real-time search across name/description/category
+    - Separate modals for create, deploy, and details
+    - Service cards show display name, description, category badge
+    - Improved form validation and user experience
+  - **UI Improvements:**
+    - filteredServices computed property for instant filtering
+    - categories computed property for dynamic tab generation
+    - onlineNodes computed property for deployment target selection
+    - Better placeholder text and help messages
+
+- **Technical Details:**
+  - Templates stored as SERVICE_TEMPLATES list of dicts
+  - Docker Compose YAML as multi-line strings
+  - Category-based organization (networking, automation, monitoring, management, storage)
+  - Icon URLs for visual identification in UI
+  - Default environment variables for customization
+
+- **Files Created/Modified:**
+  - nexus/core/services/service_templates.py (NEW, 220 lines)
+  - nexus/core/services/seed_templates.py (NEW, 81 lines)
+  - nexus/core/main.py (MODIFIED, +15 lines)
+  - nexus/web/templates/services.html (MODIFIED, ~200 lines)
+
+- **Testing Status:**
+  - ⚠️ Code written but not yet tested end-to-end
+  - ⚠️ Not yet committed to git
+  - ⚠️ Template deployment flow needs verification
+
+**Phase 7.3 Status:** 🚧 Core implementation complete, testing and expansion remaining
 
 **Next Session Goals:**
-- Phase 7.3: Pre-built Docker service templates (Pi-hole, Home Assistant, Prometheus, Grafana)
-- Phase 7.3: Web UI for service deployment and management
-- Phase 7.3: Docker Compose support for multi-container services
-- Or Phase 8: Remote fleet management and agent updates
+- Test template seeding on Core startup
+- Verify template deployment end-to-end
+- Add more service templates (Jellyfin, Plex, Transmission, etc.)
+- Commit Phase 7.3 work to git
+- Or begin Phase 8: Remote fleet management and agent updates
 

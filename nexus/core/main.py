@@ -46,6 +46,21 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("Database initialized successfully")
 
+    # Seed service templates
+    from nexus.core.db.database import get_db
+    from nexus.core.services.seed_templates import seed_service_templates
+    
+    logger.info("Seeding service templates...")
+    db = next(get_db())
+    try:
+        results = await seed_service_templates(db)
+        if results["created"]:
+            logger.info(f"Seeded {len(results['created'])} new templates: {', '.join(results['created'])}")
+        if results["errors"]:
+            logger.warning(f"Failed to seed {len(results['errors'])} templates")
+    finally:
+        db.close()
+
     # Start background services
     from nexus.core.services.log_cleanup import LogCleanupService
 

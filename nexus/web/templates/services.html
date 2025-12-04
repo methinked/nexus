@@ -4,119 +4,258 @@
 <div class="space-y-6" x-data="servicesPage()">
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-3xl font-bold">Docker Services</h1>
-            <p class="text-gray-400 mt-1">Manage service templates for deployment across your fleet</p>
+            <h1 class="text-3xl font-bold">Service Catalog</h1>
+            <p class="text-gray-400 mt-1">Pre-built templates and custom services for your fleet</p>
         </div>
         <button @click="showCreateModal = true"
                 class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-colors">
             <svg class="w-5 h-5 inline-block mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
             </svg>
-            Create Service
+            Custom Service
         </button>
     </div>
 
-    <!-- Services List -->
-    <div class="card">
-        <div class="card-body">
-            <h2 class="text-xl font-semibold mb-4">Service Templates</h2>
+    <!-- Category Filter Tabs -->
+    <div class="flex items-center space-x-2 overflow-x-auto pb-2">
+        <button @click="selectedCategory = 'all'"
+                :class="selectedCategory === 'all' ? 'bg-purple-600' : 'bg-gray-800 hover:bg-gray-700'"
+                class="px-4 py-2 rounded-lg font-semibold transition-colors whitespace-nowrap">
+            All Services
+        </button>
+        <template x-for="category in categories" :key="category">
+            <button @click="selectedCategory = category"
+                    :class="selectedCategory === category ? 'bg-purple-600' : 'bg-gray-800 hover:bg-gray-700'"
+                    class="px-4 py-2 rounded-lg font-semibold transition-colors whitespace-nowrap capitalize"
+                    x-text="category"></button>
+        </template>
+    </div>
 
-            <!-- Loading State -->
-            <div x-show="loading" class="text-center py-12">
-                <svg class="animate-spin h-8 w-8 text-purple-500 mx-auto" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <p class="text-gray-400 mt-2">Loading services...</p>
+    <!-- Search Bar -->
+    <div class="relative">
+        <input type="text" x-model="searchQuery" placeholder="Search services..."
+               class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 pl-10 focus:outline-none focus:border-purple-500">
+        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+    </div>
+
+    <!-- Loading State -->
+    <div x-show="loading" class="text-center py-12">
+        <svg class="animate-spin h-8 w-8 text-purple-500 mx-auto" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="text-gray-400 mt-2">Loading services...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div x-show="!loading && filteredServices.length === 0" class="text-center py-12">
+        <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        </svg>
+        <p class="text-gray-400 text-lg mb-2">No services found</p>
+        <p class="text-gray-500 text-sm">Try adjusting your filters or search query</p>
+    </div>
+
+    <!-- Services Grid -->
+    <div x-show="!loading && filteredServices.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <template x-for="service in filteredServices" :key="service.id">
+            <div class="bg-gray-800 rounded-lg border border-gray-700 hover:border-purple-500 transition-all hover:shadow-lg hover:shadow-purple-500/20 overflow-hidden">
+                <!-- Service Header with Icon -->
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <img x-show="service.icon_url" :src="service.icon_url" :alt="service.display_name" 
+                                     class="w-8 h-8 object-contain" @error="$el.style.display='none'">
+                                <svg x-show="!service.icon_url" class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg" x-text="service.display_name || service.name"></h3>
+                                <span class="inline-block px-2 py-1 text-xs rounded-full bg-purple-600/20 text-purple-400 capitalize mt-1"
+                                      x-text="service.category"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="text-sm text-gray-400 mb-4 line-clamp-3" x-text="service.description || 'No description'"></p>
+
+                    <!-- Service Info -->
+                    <div class="space-y-1 text-xs text-gray-500 mb-4">
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                            </svg>
+                            <span x-text="service.version || 'latest'"></span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                        <button @click="viewServiceDetails(service)"
+                                class="text-sm text-gray-400 hover:text-gray-300 transition-colors">
+                            View Details
+                        </button>
+                        <button @click="deployService(service)"
+                                class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-semibold transition-colors">
+                            Deploy →
+                        </button>
+                    </div>
+                </div>
             </div>
+        </template>
+    </div>
 
-            <!-- Empty State -->
-            <div x-show="!loading && services.length === 0" class="text-center py-12">
-                <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+    <!-- Stats Footer -->
+    <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+        <div class="flex items-center justify-between">
+            <div class="flex items-start space-x-3">
+                <svg class="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
-                <p class="text-gray-400 text-lg mb-2">No service templates yet</p>
-                <p class="text-gray-500 text-sm mb-4">Create your first service template to deploy Docker containers across your fleet</p>
-                <button @click="showCreateModal = true"
-                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-colors">
-                    Create Service Template
+                <div class="flex-1">
+                    <p class="text-sm text-gray-300">
+                        <span class="font-semibold text-purple-400">CLI-First:</span> Manage services from the terminal
+                    </p>
+                    <code class="text-xs text-gray-400 block mt-1 font-mono">
+                        nexus service list | nexus deployment create &lt;service_id&gt; &lt;node_id&gt;
+                    </code>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-2xl font-bold text-purple-400" x-text="services.length"></p>
+                <p class="text-xs text-gray-500">Templates</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deploy Modal -->
+    <div x-show="showDeployModal"
+         @click.self="showDeployModal = false"
+         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+         x-cloak>
+        <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 border border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">
+                    Deploy <span x-text="selectedService?.display_name || selectedService?.name"></span>
+                </h3>
+                <button @click="showDeployModal = false" class="text-gray-400 hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
                 </button>
             </div>
 
-            <!-- Services Grid -->
-            <div x-show="!loading && services.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <template x-for="service in services" :key="service.id">
-                    <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-purple-500 transition-colors">
-                        <div class="flex items-start justify-between mb-3">
-                            <div>
-                                <h3 class="font-semibold text-lg" x-text="service.name"></h3>
-                                <p class="text-xs text-gray-400 mt-1" x-text="service.image"></p>
-                            </div>
-                            <button @click="deleteService(service.id, service.name)"
-                                    class="text-gray-400 hover:text-red-400 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <p class="text-sm text-gray-400 mb-3 line-clamp-2" x-text="service.description || 'No description'"></p>
+            <form @submit.prevent="createDeployment()" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Deployment Name</label>
+                    <input type="text" x-model="deployment.name" required
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500"
+                           :placeholder="(selectedService?.name || 'service') + '-main'">
+                </div>
 
-                        <!-- Service Details -->
-                        <div class="space-y-1 text-xs text-gray-500 mb-3">
-                            <div x-show="service.ports && service.ports.length > 0">
-                                <span class="font-semibold">Ports:</span>
-                                <span x-text="service.ports.map(p => `${p.host}:${p.container}`).join(', ')"></span>
-                            </div>
-                            <div x-show="service.volumes && service.volumes.length > 0">
-                                <span class="font-semibold">Volumes:</span>
-                                <span x-text="service.volumes.length + ' mount(s)'"></span>
-                            </div>
-                        </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Deploy to Node</label>
+                    <select x-model="deployment.node_id" required
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500">
+                        <option value="">Select a node...</option>
+                        <template x-for="node in onlineNodes" :key="node.id">
+                            <option :value="node.id" x-text="`${node.name} (${node.ip_address})`"></option>
+                        </template>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1" x-show="onlineNodes.length === 0">
+                        No online nodes available. Please ensure at least one node is connected.
+                    </p>
+                </div>
 
-                        <div class="flex items-center justify-between">
-                            <a :href="'/deployments?service=' + service.id"
-                               class="text-sm text-gray-400 hover:text-gray-300">
-                                View deployments
-                            </a>
-                            <button @click="selectedService = service; showCreateModal = true"
-                                    class="text-purple-400 hover:text-purple-300 text-sm font-semibold">
-                                Deploy →
-                            </button>
-                        </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" @click="showDeployModal = false"
+                            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            :disabled="!deployment.node_id"
+                            :class="deployment.node_id ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-600 cursor-not-allowed'"
+                            class="px-4 py-2 rounded-lg font-semibold transition-colors">
+                        Deploy Service
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Service Details Modal -->
+    <div x-show="showDetailsModal"
+         @click.self="showDetailsModal = false"
+         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+         x-cloak>
+        <div class="bg-gray-800 rounded-lg p-6 max-w-3xl w-full mx-4 border border-gray-700 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
+                        <img x-show="selectedService?.icon_url" :src="selectedService?.icon_url" :alt="selectedService?.display_name" 
+                             class="w-8 h-8 object-contain" @error="$el.style.display='none'">
                     </div>
-                </template>
+                    <div>
+                        <h3 class="text-xl font-semibold" x-text="selectedService?.display_name || selectedService?.name"></h3>
+                        <span class="inline-block px-2 py-1 text-xs rounded-full bg-purple-600/20 text-purple-400 capitalize"
+                              x-text="selectedService?.category"></span>
+                    </div>
+                </div>
+                <button @click="showDetailsModal = false" class="text-gray-400 hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-400 mb-2">Description</h4>
+                    <p class="text-gray-300" x-text="selectedService?.description"></p>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-400 mb-2">Docker Compose Configuration</h4>
+                    <pre class="bg-gray-900 rounded-lg p-4 text-xs text-gray-300 overflow-x-auto"><code x-text="selectedService?.docker_compose"></code></pre>
+                </div>
+
+                <div x-show="selectedService?.default_env && Object.keys(selectedService.default_env).length > 0">
+                    <h4 class="text-sm font-semibold text-gray-400 mb-2">Default Environment Variables</h4>
+                    <div class="bg-gray-900 rounded-lg p-4 space-y-1">
+                        <template x-for="(value, key) in selectedService?.default_env" :key="key">
+                            <div class="text-xs font-mono text-gray-300">
+                                <span class="text-purple-400" x-text="key"></span>=<span x-text="value"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button @click="showDetailsModal = false"
+                            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                        Close
+                    </button>
+                    <button @click="showDetailsModal = false; deployService(selectedService)"
+                            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-colors">
+                        Deploy This Service
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- CLI Command Hint -->
-    <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
-        <div class="flex items-start space-x-3">
-            <svg class="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-            <div class="flex-1">
-                <p class="text-sm text-gray-300">
-                    <span class="font-semibold text-purple-400">CLI-First:</span> Manage services from the terminal:
-                </p>
-                <code class="text-xs text-gray-400 block mt-1 font-mono">
-                    nexus service list &nbsp;|&nbsp; nexus service create --name pihole --image pihole/pihole:latest
-                </code>
-            </div>
-        </div>
-    </div>
-
-    <!-- Create Service Modal -->
+    <!-- Create Custom Service Modal -->
     <div x-show="showCreateModal"
          @click.self="showCreateModal = false"
          class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
          x-cloak>
         <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 border border-gray-700">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xl font-semibold">
-                    <span x-show="!selectedService">Create Service Template</span>
-                    <span x-show="selectedService">Deploy Service</span>
-                </h3>
+                <h3 class="text-xl font-semibold">Create Custom Service Template</h3>
                 <button @click="showCreateModal = false" class="text-gray-400 hover:text-gray-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -124,37 +263,33 @@
                 </button>
             </div>
 
-            <form @submit.prevent="selectedService ? createDeployment() : createService()" class="space-y-4">
-                <div x-show="!selectedService">
+            <form @submit.prevent="createService()" class="space-y-4">
+                <div>
                     <label class="block text-sm font-semibold mb-2">Service Name</label>
                     <input type="text" x-model="newService.name" required
                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500"
-                           placeholder="pihole">
+                           placeholder="my-custom-service">
                 </div>
 
-                <div x-show="!selectedService">
-                    <label class="block text-sm font-semibold mb-2">Docker Image</label>
-                    <input type="text" x-model="newService.image" required
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Display Name</label>
+                    <input type="text" x-model="newService.display_name" required
                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500"
-                           placeholder="pihole/pihole:latest">
+                           placeholder="My Custom Service">
                 </div>
 
-                <div x-show="!selectedService">
+                <div>
                     <label class="block text-sm font-semibold mb-2">Description</label>
-                    <textarea x-model="newService.description" rows="2"
+                    <textarea x-model="newService.description" rows="2" required
                               class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500"
-                              placeholder="Network-wide ad blocking"></textarea>
+                              placeholder="What does this service do?"></textarea>
                 </div>
 
-                <div x-show="selectedService">
-                    <label class="block text-sm font-semibold mb-2">Deploy to Node</label>
-                    <select x-model="deployment.node_id" required
-                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500">
-                        <option value="">Select a node...</option>
-                        <template x-for="node in nodes" :key="node.id">
-                            <option :value="node.id" x-text="node.name"></option>
-                        </template>
-                    </select>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Docker Compose YAML</label>
+                    <textarea x-model="newService.docker_compose" rows="8" required
+                              class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500 font-mono text-sm"
+                              placeholder="version: '3'&#10;services:&#10;  myservice:&#10;    image: nginx:latest&#10;    ports:&#10;      - '80:80'"></textarea>
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-4">
@@ -164,8 +299,7 @@
                     </button>
                     <button type="submit"
                             class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-colors">
-                        <span x-show="!selectedService">Create Template</span>
-                        <span x-show="selectedService">Deploy Service</span>
+                        Create Template
                     </button>
                 </div>
             </form>
@@ -179,15 +313,53 @@ function servicesPage() {
         loading: true,
         services: [],
         nodes: [],
+        selectedCategory: 'all',
+        searchQuery: '',
         showCreateModal: false,
+        showDeployModal: false,
+        showDetailsModal: false,
         selectedService: null,
         newService: {
             name: '',
-            image: '',
-            description: ''
+            display_name: '',
+            description: '',
+            version: 'latest',
+            category: 'general',
+            docker_compose: ''
         },
         deployment: {
+            name: '',
             node_id: ''
+        },
+
+        get categories() {
+            const cats = [...new Set(this.services.map(s => s.category))];
+            return cats.sort();
+        },
+
+        get filteredServices() {
+            let filtered = this.services;
+            
+            // Filter by category
+            if (this.selectedCategory !== 'all') {
+                filtered = filtered.filter(s => s.category === this.selectedCategory);
+            }
+            
+            // Filter by search query
+            if (this.searchQuery) {
+                const query = this.searchQuery.toLowerCase();
+                filtered = filtered.filter(s => 
+                    (s.display_name || s.name).toLowerCase().includes(query) ||
+                    (s.description || '').toLowerCase().includes(query) ||
+                    s.category.toLowerCase().includes(query)
+                );
+            }
+            
+            return filtered;
+        },
+
+        get onlineNodes() {
+            return this.nodes.filter(n => n.status === 'online');
         },
 
         async init() {
@@ -218,6 +390,17 @@ function servicesPage() {
             }
         },
 
+        viewServiceDetails(service) {
+            this.selectedService = service;
+            this.showDetailsModal = true;
+        },
+
+        deployService(service) {
+            this.selectedService = service;
+            this.deployment.name = service.name + '-main';
+            this.showDeployModal = true;
+        },
+
         async createService() {
             try {
                 const response = await fetch('/api/services', {
@@ -229,7 +412,14 @@ function servicesPage() {
                 if (response.ok) {
                     await this.loadServices();
                     this.showCreateModal = false;
-                    this.newService = { name: '', image: '', description: '' };
+                    this.newService = {
+                        name: '',
+                        display_name: '',
+                        description: '',
+                        version: 'latest',
+                        category: 'general',
+                        docker_compose: ''
+                    };
                 } else {
                     const error = await response.json();
                     alert('Failed to create service: ' + (error.detail || 'Unknown error'));
@@ -248,15 +438,16 @@ function servicesPage() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        name: this.deployment.name,
                         service_id: this.selectedService.id,
                         node_id: this.deployment.node_id
                     })
                 });
 
                 if (response.ok) {
-                    this.showCreateModal = false;
+                    this.showDeployModal = false;
                     this.selectedService = null;
-                    this.deployment = { node_id: '' };
+                    this.deployment = { name: '', node_id: '' };
                     window.location.href = '/deployments';
                 } else {
                     const error = await response.json();
@@ -266,26 +457,6 @@ function servicesPage() {
                 console.error('Failed to create deployment:', error);
                 alert('Failed to create deployment: ' + error.message);
             }
-        },
-
-        async deleteService(id, name) {
-            if (!confirm(`Are you sure you want to delete service "${name}"?`)) return;
-
-            try {
-                const response = await fetch(`/api/services/${id}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    await this.loadServices();
-                } else {
-                    const error = await response.json();
-                    alert('Failed to delete service: ' + (error.detail || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Failed to delete service:', error);
-                alert('Failed to delete service: ' + error.message);
-            }
         }
     };
 }
@@ -293,9 +464,9 @@ function servicesPage() {
 
 <style>
 [x-cloak] { display: none !important; }
-.line-clamp-2 {
+.line-clamp-3 {
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }

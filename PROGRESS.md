@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-12-03 (Evening Session - Phase 7.2.5 CLI Commands Documented)
-**Current Phase:** Phase 7.2.5 - Docker CLI Commands (COMPLETE) ✅
+**Last Updated:** 2025-12-04 (Evening Session - Phase 7.3 Service Templates)
+**Current Phase:** Phase 7.3 - Pre-built Docker Service Templates (IN PROGRESS) 🚧
 
 ---
 
@@ -629,6 +629,90 @@ nexus deployment delete f6b858e2 --yes
 
 **Phase 7.2.5 COMPLETE!** ✓ - CLI-first Docker orchestration operational
 **Note:** These commands were implemented alongside Phase 7.1-7.2 but not previously documented.
+
+---
+
+#### Phase 7.3: Pre-built Docker Service Templates (2025-12-04 Evening)
+
+**Status:** 🚧 IN PROGRESS
+
+**Goal:** Provide ready-to-deploy service templates for popular homelab applications.
+
+**Completed Features:**
+- ✅ **Service Template Library** (nexus/core/services/service_templates.py - 220 lines):
+  - 7 pre-built templates for popular services:
+    - **Pi-hole** - Network-wide ad blocking via DNS sinkhole
+    - **Home Assistant** - Open source home automation platform
+    - **Prometheus** - Monitoring system and time series database
+    - **Grafana** - Analytics and visualization platform
+    - **Portainer** - Docker container management UI
+    - **Nginx Proxy Manager** - Reverse proxy with SSL certificate management
+    - **Nextcloud** - Self-hosted cloud storage and collaboration
+  - Each template includes:
+    - Display name and description
+    - Docker Compose YAML configuration
+    - Default environment variables
+    - Icon URL for web UI
+    - Category classification (networking, automation, monitoring, management, storage)
+  - Helper functions: get_all_templates(), get_template_by_name(), get_templates_by_category(), get_categories()
+
+- ✅ **Automatic Template Seeding** (nexus/core/services/seed_templates.py - 81 lines):
+  - Idempotent seeding on Core startup
+  - Checks for existing templates to avoid duplicates
+  - Logs seeding results (created, skipped, errors)
+  - Integrated into Core lifespan management
+  - Database-backed template storage
+
+- ✅ **Enhanced Web UI** (nexus/web/templates/services.html):
+  - **Category Filtering:**
+    - Dynamic category tabs based on available templates
+    - "All" category shows everything
+    - Category counts displayed
+  - **Search Functionality:**
+    - Real-time search across name, description, and category
+    - Case-insensitive filtering
+    - Instant results without page reload
+  - **Improved Service Cards:**
+    - Display name and description
+    - Category badges with color coding
+    - Version information
+    - Deploy and view details buttons
+  - **Separate Modals:**
+    - Create Template Modal - For custom service templates
+    - Deploy Modal - For deploying existing templates to nodes
+    - Details Modal - For viewing full template configuration
+  - **Better Form Validation:**
+    - Required fields enforced
+    - Docker Compose YAML textarea with monospace font
+    - Category selection dropdown
+    - Display name vs internal name distinction
+
+- ✅ **Core Integration:**
+  - Template seeding runs automatically on Core startup
+  - Logs seeding summary (e.g., "Seeded 7 new templates: pihole, homeassistant, ...")
+  - Templates stored in database for persistence
+  - No duplicate templates created on restart
+
+**Technical Implementation:**
+- Service templates defined as Python dictionaries
+- Docker Compose YAML stored as multi-line strings
+- Category-based organization for UI filtering
+- Icon URLs for visual identification
+- Default environment variables for easy customization
+
+**Files Created/Modified:**
+- nexus/core/services/service_templates.py (new file, 220 lines)
+- nexus/core/services/seed_templates.py (new file, 81 lines)
+- nexus/core/main.py (+15 lines): Template seeding integration
+- nexus/web/templates/services.html (~200 lines modified): Enhanced UI
+
+**What's Next (Phase 7.3 Remaining):**
+- [ ] Test template deployment end-to-end
+- [ ] Add more service templates (Jellyfin, Plex, Transmission, etc.)
+- [ ] Template versioning and updates
+- [ ] Template marketplace/sharing (future)
+
+**Phase 7.3 Status:** 🚧 Core functionality complete, testing and expansion remaining
 
 ---
 
