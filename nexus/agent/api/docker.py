@@ -281,15 +281,20 @@ async def get_container_logs(container_id: str, tail: int = 100):
 
 
 @router.get("/containers/list")
-async def list_containers() -> List[Dict[str, Any]]:
-    """List all Nexus-managed containers."""
+async def list_containers(show_all: bool = False) -> List[Dict[str, Any]]:
+    """
+    List containers on this agent.
+    
+    Args:
+        show_all: If true, show all containers. If false, only show Nexus-managed ones.
+    """
     if not docker_service.is_available():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Docker is not available"
         )
 
-    containers = docker_service.list_nexus_containers()
+    containers = docker_service.list_containers(all_containers=show_all)
 
     return {
         "containers": containers,

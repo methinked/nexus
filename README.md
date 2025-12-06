@@ -288,7 +288,13 @@ nexus fleet update
   - [x] Automatic template seeding on Core startup
   - [x] Enhanced web UI with category filtering and search
   - [x] Separate modals for create, deploy, and view details
+  - [x] Separate modals for create, deploy, and view details
   - [x] Docker Compose YAML support for all templates
+- [x] **Phase 6.6: UI Polish & UX Improvements**
+  - [x] Global Toast Notification System (replaces alerts)
+  - [x] Loading states for buttons (refresh, submit)
+  - [x] Consistent status badges and colors
+  - [x] Improved empty states for lists
 - [ ] **Phase 8: Fleet Management** - Centralized agent update and fleet-wide operations.
   - [ ] Remote agent code updates from web dashboard (one-click agent updates)
   - [ ] Remote agent code updates via CLI (`nexus fleet update`, `nexus node update <node_id>`)

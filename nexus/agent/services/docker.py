@@ -269,9 +269,12 @@ class DockerService:
             logger.error(f"Failed to get container status: {e}")
             return None
 
-    def list_nexus_containers(self) -> List[Dict[str, Any]]:
+    def list_containers(self, all_containers: bool = False) -> List[Dict[str, Any]]:
         """
-        List all Nexus-managed containers.
+        List containers.
+
+        Args:
+            all_containers: If True, list all containers. If False, list only Nexus-managed.
 
         Returns:
             List of container status dicts
@@ -280,9 +283,13 @@ class DockerService:
             return []
 
         try:
+            filters = {}
+            if not all_containers:
+                filters = {'label': 'nexus.managed=true'}
+
             containers = self.client.containers.list(
                 all=True,
-                filters={'label': 'nexus.managed=true'}
+                filters=filters
             )
 
             return [
@@ -290,9 +297,10 @@ class DockerService:
                     'id': c.id,
                     'name': c.name,
                     'status': c.status,
-                    'image': c.image.tags[0] if c.image.tags else c.image.id,
+                    'image': c.image.tags[0] if c.image.tags else (c.image.id if c.image else "unknown"),
                     'deployment_id': c.labels.get('nexus.deployment_id'),
-                    'created_at': c.labels.get('nexus.created_at')
+                    'managed': c.labels.get('nexus.managed') == 'true',
+                    'created_at': c.attrs['Created']
                 }
                 for c in containers
             ]

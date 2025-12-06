@@ -13,8 +13,8 @@
         <div class="space-y-2">
             <template x-for="node in nodes" :key="node.id">
                 <button @click="selectNode(node.id)"
-                        :class="selectedNodeId === node.id ? 'bg-purple-600/20 border-purple-500' : 'bg-gray-800 border-gray-700 hover:border-gray-600'"
-                        class="w-full text-left p-4 rounded-lg border transition-all">
+                    :class="selectedNodeId === node.id ? 'bg-purple-600/20 border-purple-500 ring-1 ring-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.3)]' : 'glass-panel hover:bg-white/5 hover:border-white/10'"
+                    class="w-full text-left p-4 rounded-lg border transition-all duration-200">
                     <div class="flex items-center justify-between mb-2">
                         <span class="font-semibold" x-text="node.name"></span>
                         <span :class="{
@@ -43,7 +43,8 @@
         <template x-if="!selectedNode">
             <div class="text-center py-20 text-gray-500">
                 <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
                 </svg>
                 <p class="font-semibold text-lg">Select a node to view details</p>
                 <p class="text-sm mt-2">Choose a node from the list on the left</p>
@@ -63,7 +64,8 @@
                             'bg-green-500/20 text-green-400 border-green-500/50': selectedNode.status === 'online',
                             'bg-red-500/20 text-red-400 border-red-500/50': selectedNode.status === 'offline',
                             'bg-gray-500/20 text-gray-400 border-gray-500/50': selectedNode.status === 'unknown'
-                        }" class="px-3 py-1 rounded-full border text-sm font-semibold" x-text="selectedNode.status.toUpperCase()"></span>
+                        }" class="px-3 py-1 rounded-full border text-sm font-semibold"
+                            x-text="selectedNode.status.toUpperCase()"></span>
                     </div>
                 </div>
 
@@ -84,7 +86,8 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="text-sm text-gray-400 mb-1">Location</div>
-                            <div class="text-lg font-semibold" x-text="selectedNode.metadata?.location || 'Not set'"></div>
+                            <div class="text-lg font-semibold" x-text="selectedNode.metadata?.location || 'Not set'">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -95,35 +98,50 @@
                         <div x-show="disk.is_docker_data">
                             <div class="card-body">
                                 <div class="flex items-start gap-3">
-                                    <div x-show="disk.type === 'sd_card'" class="flex-shrink-0 text-amber-400 text-2xl">⚠️</div>
-                                    <div x-show="disk.type !== 'sd_card'" class="flex-shrink-0 text-green-400 text-2xl">✓</div>
+                                    <div x-show="disk.type === 'sd_card'" class="flex-shrink-0 text-amber-400 text-2xl">
+                                        ⚠️</div>
+                                    <div x-show="disk.type !== 'sd_card'" class="flex-shrink-0 text-green-400 text-2xl">
+                                        ✓</div>
                                     <div class="flex-1">
                                         <h3 class="text-lg font-semibold mb-1">Docker Storage</h3>
                                         <template x-if="disk.type === 'sd_card'">
                                             <div>
-                                                <div class="text-amber-400 font-semibold mb-2">⚠️ Warning: Docker running on SD Card</div>
+                                                <div class="text-amber-400 font-semibold mb-2">⚠️ Warning: Docker
+                                                    running on SD Card</div>
                                                 <div class="text-sm text-gray-300 mb-2">
-                                                    Docker is currently using the SD card for storage. This will cause premature SD card failure due to excessive writes.
+                                                    Docker is currently using the SD card for storage. This will cause
+                                                    premature SD card failure due to excessive writes.
                                                 </div>
                                                 <div class="text-xs text-gray-400">
-                                                    <span class="font-semibold">Location:</span> <span x-text="disk.mount_point"></span> •
-                                                    <span class="font-semibold">Free:</span> <span x-text="formatBytes(disk.free_bytes)"></span>
+                                                    <span class="font-semibold">Location:</span> <span
+                                                        x-text="disk.mount_point"></span> •
+                                                    <span class="font-semibold">Free:</span> <span
+                                                        x-text="formatBytes(disk.free_bytes)"></span>
                                                 </div>
-                                                <div class="mt-2 text-xs bg-amber-500/10 text-amber-300 rounded px-3 py-2 border border-amber-500/20">
-                                                    <span class="font-semibold">Recommendation:</span> Connect a USB drive or SSD and restart the agent to auto-configure external storage
+                                                <div
+                                                    class="mt-2 text-xs bg-amber-500/10 text-amber-300 rounded px-3 py-2 border border-amber-500/20">
+                                                    <span class="font-semibold">Recommendation:</span> Connect a USB
+                                                    drive or SSD and restart the agent to auto-configure external
+                                                    storage
                                                 </div>
                                             </div>
                                         </template>
                                         <template x-if="disk.type !== 'sd_card'">
                                             <div>
-                                                <div class="text-green-400 font-semibold mb-2">Docker Storage Optimized</div>
+                                                <div class="text-green-400 font-semibold mb-2">Docker Storage Optimized
+                                                </div>
                                                 <div class="text-sm text-gray-300 mb-2">
-                                                    Docker is using <span x-text="formatDiskType(disk.type).toLowerCase()"></span> storage, protecting the SD card from excessive writes.
+                                                    Docker is using <span
+                                                        x-text="formatDiskType(disk.type).toLowerCase()"></span>
+                                                    storage, protecting the SD card from excessive writes.
                                                 </div>
                                                 <div class="text-xs text-gray-400">
-                                                    <span class="font-semibold">Type:</span> <span x-text="formatDiskType(disk.type)"></span> •
-                                                    <span class="font-semibold">Location:</span> <span x-text="disk.mount_point"></span> •
-                                                    <span class="font-semibold">Free:</span> <span x-text="formatBytes(disk.free_bytes)"></span>
+                                                    <span class="font-semibold">Type:</span> <span
+                                                        x-text="formatDiskType(disk.type)"></span> •
+                                                    <span class="font-semibold">Location:</span> <span
+                                                        x-text="disk.mount_point"></span> •
+                                                    <span class="font-semibold">Free:</span> <span
+                                                        x-text="formatBytes(disk.free_bytes)"></span>
                                                 </div>
                                             </div>
                                         </template>
@@ -145,7 +163,9 @@
                                     'text-amber-400': healthStatus?.overall_health === 'warning',
                                     'text-red-400': healthStatus?.overall_health === 'critical',
                                     'text-gray-400': healthStatus?.overall_health === 'unknown'
-                                }" class="text-3xl font-bold mb-1" x-text="healthStatus?.overall_health ? healthStatus.overall_health.toUpperCase() : 'N/A'"></div>
+                                }" class="text-3xl font-bold mb-1"
+                                    x-text="healthStatus?.overall_health ? healthStatus.overall_health.toUpperCase() : 'N/A'">
+                                </div>
                                 <div class="text-xs text-gray-400">Overall</div>
                             </div>
                             <div class="text-center">
@@ -153,7 +173,9 @@
                                     'text-green-400': healthStatus?.cpu_health === 'healthy',
                                     'text-amber-400': healthStatus?.cpu_health === 'warning',
                                     'text-red-400': healthStatus?.cpu_health === 'critical'
-                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.latest_metrics?.cpu_percent ? healthStatus.latest_metrics.cpu_percent.toFixed(1) + '%' : 'N/A'"></div>
+                                }" class="text-xl font-semibold mb-1"
+                                    x-text="healthStatus?.latest_metrics?.cpu_percent ? healthStatus.latest_metrics.cpu_percent.toFixed(1) + '%' : 'N/A'">
+                                </div>
                                 <div class="text-xs text-gray-400">CPU</div>
                             </div>
                             <div class="text-center">
@@ -161,7 +183,9 @@
                                     'text-green-400': healthStatus?.memory_health === 'healthy',
                                     'text-amber-400': healthStatus?.memory_health === 'warning',
                                     'text-red-400': healthStatus?.memory_health === 'critical'
-                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.latest_metrics?.memory_percent ? healthStatus.latest_metrics.memory_percent.toFixed(1) + '%' : 'N/A'"></div>
+                                }" class="text-xl font-semibold mb-1"
+                                    x-text="healthStatus?.latest_metrics?.memory_percent ? healthStatus.latest_metrics.memory_percent.toFixed(1) + '%' : 'N/A'">
+                                </div>
                                 <div class="text-xs text-gray-400">Memory</div>
                             </div>
                             <div class="text-center">
@@ -169,7 +193,9 @@
                                     'text-green-400': healthStatus?.disk_health === 'healthy',
                                     'text-amber-400': healthStatus?.disk_health === 'warning',
                                     'text-red-400': healthStatus?.disk_health === 'critical'
-                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.latest_metrics?.disk_percent ? healthStatus.latest_metrics.disk_percent.toFixed(1) + '%' : 'N/A'"></div>
+                                }" class="text-xl font-semibold mb-1"
+                                    x-text="healthStatus?.latest_metrics?.disk_percent ? healthStatus.latest_metrics.disk_percent.toFixed(1) + '%' : 'N/A'">
+                                </div>
                                 <div class="text-xs text-gray-400">Disk</div>
                             </div>
                             <div class="text-center">
@@ -178,7 +204,9 @@
                                     'text-amber-400': healthStatus?.temperature_health === 'warning',
                                     'text-red-400': healthStatus?.temperature_health === 'critical',
                                     'text-gray-400': !healthStatus?.latest_metrics?.temperature
-                                }" class="text-xl font-semibold mb-1" x-text="healthStatus?.latest_metrics?.temperature ? healthStatus.latest_metrics.temperature.toFixed(1) + '°C' : 'N/A'"></div>
+                                }" class="text-xl font-semibold mb-1"
+                                    x-text="healthStatus?.latest_metrics?.temperature ? healthStatus.latest_metrics.temperature.toFixed(1) + '°C' : 'N/A'">
+                                </div>
                                 <div class="text-xs text-gray-400">Temp</div>
                             </div>
                         </div>
@@ -199,71 +227,91 @@
                         <template x-if="latestMetrics && latestMetrics.length > 0">
                             <div class="grid grid-cols-2 gap-6">
                                 <!-- CPU Chart -->
-                                <div>
+                                <div class="relative h-48">
                                     <div class="flex items-center justify-between mb-2">
                                         <h4 class="text-sm font-semibold text-gray-400">CPU Usage</h4>
-                                        <span class="text-2xl font-bold text-purple-400" x-text="latestMetrics[0]?.cpu_percent.toFixed(1) + '%'"></span>
+                                        <span class="text-2xl font-bold text-purple-400"
+                                            x-text="latestMetrics[0]?.cpu_percent.toFixed(1) + '%'"></span>
                                     </div>
-                                    <canvas :id="'chart-cpu-' + selectedNode.id"></canvas>
+                                    <div class="absolute inset-0 top-8">
+                                        <canvas :id="'chart-cpu-' + selectedNode.id"></canvas>
+                                    </div>
                                 </div>
 
                                 <!-- Memory Chart -->
-                                <div>
+                                <div class="relative h-48">
                                     <div class="flex items-center justify-between mb-2">
                                         <h4 class="text-sm font-semibold text-gray-400">Memory Usage</h4>
-                                        <span class="text-2xl font-bold text-blue-400" x-text="latestMetrics[0]?.memory_percent.toFixed(1) + '%'"></span>
+                                        <span class="text-2xl font-bold text-blue-400"
+                                            x-text="latestMetrics[0]?.memory_percent.toFixed(1) + '%'"></span>
                                     </div>
-                                    <canvas :id="'chart-memory-' + selectedNode.id"></canvas>
+                                    <div class="absolute inset-0 top-8">
+                                        <canvas :id="'chart-memory-' + selectedNode.id"></canvas>
+                                    </div>
                                 </div>
 
                                 <!-- Disk Chart -->
-                                <div>
+                                <div class="relative h-48">
                                     <div class="flex items-center justify-between mb-2">
                                         <h4 class="text-sm font-semibold text-gray-400">Disk Usage</h4>
-                                        <span class="text-2xl font-bold text-green-400" x-text="latestMetrics[0]?.disk_percent.toFixed(1) + '%'"></span>
+                                        <span class="text-2xl font-bold text-green-400"
+                                            x-text="latestMetrics[0]?.disk_percent.toFixed(1) + '%'"></span>
                                     </div>
-                                    <canvas :id="'chart-disk-' + selectedNode.id"></canvas>
+                                    <div class="absolute inset-0 top-8">
+                                        <canvas :id="'chart-disk-' + selectedNode.id"></canvas>
+                                    </div>
                                 </div>
 
                                 <!-- Temperature Chart -->
-                                <div>
+                                <div class="relative h-48">
                                     <div class="flex items-center justify-between mb-2">
                                         <h4 class="text-sm font-semibold text-gray-400">Temperature</h4>
-                                        <span class="text-2xl font-bold text-amber-400" x-text="latestMetrics[0]?.temperature ? latestMetrics[0].temperature.toFixed(1) + '°C' : 'N/A'"></span>
+                                        <span class="text-2xl font-bold text-amber-400"
+                                            x-text="latestMetrics[0]?.temperature ? latestMetrics[0].temperature.toFixed(1) + '°C' : 'N/A'"></span>
                                     </div>
-                                    <canvas :id="'chart-temp-' + selectedNode.id"></canvas>
+                                    <div class="absolute inset-0 top-8">
+                                        <canvas :id="'chart-temp-' + selectedNode.id"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </template>
                     </div>
                 </div>
 
-                <!-- Running Services -->
+                <!-- Containers -->
                 <div class="card">
                     <div class="card-body">
-                        <h3 class="text-lg font-semibold mb-4">Agent Services</h3>
+                        <h3 class="text-lg font-semibold mb-4">Containers</h3>
                         <div class="space-y-2">
-                            <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-2 h-2 rounded-full bg-green-400"></div>
-                                    <span class="font-medium">Metrics Collector</span>
+                            <template x-if="!containers || containers.length === 0">
+                                <div class="text-gray-500 text-center py-4 text-sm">
+                                    No containers found
                                 </div>
-                                <span class="text-sm text-gray-400">Running (30s interval)</span>
-                            </div>
-                            <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-2 h-2 rounded-full bg-green-400"></div>
-                                    <span class="font-medium">Log Collector</span>
+                            </template>
+                            <template x-for="container in containers" :key="container.id">
+                                <div
+                                    class="flex items-center justify-between p-3 bg-gray-800/40 border border-white/5 rounded-lg hover:bg-gray-700/40 transition-colors">
+                                    <div class="flex items-center space-x-3">
+                                        <div :class="{
+                                            'bg-green-400': container.status === 'running',
+                                            'bg-red-400': container.status === 'exited' || container.status === 'dead',
+                                            'bg-amber-400': container.status === 'paused' || container.status === 'restarting',
+                                            'bg-gray-400': container.status === 'created'
+                                        }" class="w-2 h-2 rounded-full flex-shrink-0"></div>
+                                        <div class="overflow-hidden">
+                                            <div class="font-medium truncate"
+                                                x-text="container.name.replace(/^\//, '')"></div>
+                                            <div class="text-xs text-gray-500 truncate" x-text="container.image"
+                                                :title="container.image"></div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right flex-shrink-0 ml-2">
+                                        <span class="text-sm text-gray-400 capitalize" x-text="container.status"></span>
+                                        <div x-show="container.managed" class="text-xs text-purple-400">Nexus Managed
+                                        </div>
+                                    </div>
                                 </div>
-                                <span class="text-sm text-gray-400">Running</span>
-                            </div>
-                            <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-2 h-2 rounded-full bg-green-400"></div>
-                                    <span class="font-medium">Job Dispatcher</span>
-                                </div>
-                                <span class="text-sm text-gray-400">Running</span>
-                            </div>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -276,13 +324,15 @@
                             <template x-if="disksError">
                                 <div class="text-center py-8">
                                     <div class="text-amber-400 mb-2">⚠️ Storage information unavailable</div>
-                                    <div class="text-xs text-gray-500">Agent needs to be updated with new storage detection feature.</div>
-                                    <div class="text-xs text-gray-500 mt-1">Run: <code class="bg-gray-800 px-2 py-1 rounded">./scripts/update-agent.sh</code></div>
+                                    <div class="text-xs text-gray-500">Agent needs to be updated with new storage
+                                        detection feature.</div>
+                                    <div class="text-xs text-gray-500 mt-1">Run: <code
+                                            class="bg-gray-800 px-2 py-1 rounded">./scripts/update-agent.sh</code></div>
                                 </div>
                             </template>
                             <template x-if="!disksError && disks && disks.length > 0">
                                 <template x-for="disk in disks" :key="disk.device">
-                                    <div class="p-3 bg-gray-800 rounded-lg">
+                                    <div class="p-3 bg-gray-800/40 border border-white/5 rounded-lg">
                                         <!-- Header with disk type and mount point -->
                                         <div class="flex items-start justify-between mb-2">
                                             <div class="flex-1">
@@ -295,17 +345,21 @@
                                                         'bg-pink-500/20 text-pink-400': disk.type === 'nvme',
                                                         'bg-cyan-500/20 text-cyan-400': disk.type === 'usb_flash',
                                                         'bg-gray-500/20 text-gray-400': disk.type === 'unknown'
-                                                    }" class="text-xs px-2 py-0.5 rounded-full font-medium" x-text="formatDiskType(disk.type)"></span>
+                                                    }" class="text-xs px-2 py-0.5 rounded-full font-medium"
+                                                        x-text="formatDiskType(disk.type)"></span>
                                                 </div>
-                                                <div class="text-xs text-gray-500" x-text="disk.device + ' • ' + disk.filesystem"></div>
+                                                <div class="text-xs text-gray-500"
+                                                    x-text="disk.device + ' • ' + disk.filesystem"></div>
                                             </div>
                                             <div class="text-right">
                                                 <div :class="{
                                                     'text-green-400': disk.usage_percent < 80,
                                                     'text-amber-400': disk.usage_percent >= 80 && disk.usage_percent < 95,
                                                     'text-red-400': disk.usage_percent >= 95
-                                                }" class="text-lg font-bold" x-text="disk.usage_percent.toFixed(1) + '%'"></div>
-                                                <div class="text-xs text-gray-500" x-text="formatBytes(disk.free_bytes) + ' free'"></div>
+                                                }" class="text-lg font-bold"
+                                                    x-text="disk.usage_percent.toFixed(1) + '%'"></div>
+                                                <div class="text-xs text-gray-500"
+                                                    x-text="formatBytes(disk.free_bytes) + ' free'"></div>
                                             </div>
                                         </div>
 
@@ -315,15 +369,22 @@
                                                 'bg-green-500': disk.usage_percent < 80,
                                                 'bg-amber-500': disk.usage_percent >= 80 && disk.usage_percent < 95,
                                                 'bg-red-500': disk.usage_percent >= 95
-                                            }" class="h-2 rounded-full transition-all" :style="`width: ${disk.usage_percent}%`"></div>
+                                            }" class="h-2 rounded-full transition-all"
+                                                :style="`width: ${disk.usage_percent}%`"></div>
                                         </div>
 
                                         <!-- Badges -->
                                         <div class="flex flex-wrap gap-1">
-                                            <span x-show="disk.is_system" class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">System</span>
-                                            <span x-show="disk.is_docker_data" class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400">Docker Data</span>
-                                            <span x-show="disk.is_nexus_data" class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">Nexus Data</span>
-                                            <span x-show="disk.read_only" class="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">Read-Only</span>
+                                            <span x-show="disk.is_system"
+                                                class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">System</span>
+                                            <span x-show="disk.is_docker_data"
+                                                class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400">Docker
+                                                Data</span>
+                                            <span x-show="disk.is_nexus_data"
+                                                class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">Nexus
+                                                Data</span>
+                                            <span x-show="disk.read_only"
+                                                class="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">Read-Only</span>
                                         </div>
                                     </div>
                                 </template>
@@ -343,7 +404,8 @@
                         <h3 class="text-lg font-semibold mb-4">Recent Jobs</h3>
                         <div class="space-y-2">
                             <template x-for="job in recentJobs" :key="job.id">
-                                <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                                <div
+                                    class="flex items-center justify-between p-3 bg-gray-800/40 border border-white/5 rounded-lg">
                                     <div>
                                         <div class="font-medium" x-text="job.type"></div>
                                         <div class="text-xs text-gray-400" x-text="job.id.substr(0, 8)"></div>
@@ -371,14 +433,16 @@
                         <h3 class="text-lg font-semibold mb-4">Recent Logs</h3>
                         <div class="space-y-1 font-mono text-xs max-h-64 overflow-y-auto">
                             <template x-for="log in recentLogs" :key="log.id">
-                                <div class="p-2 bg-gray-800 rounded">
+                                <div
+                                    class="p-2 bg-gray-900/50 border border-white/5 rounded text-[10px] md:text-xs font-mono">
                                     <span :class="{
                                         'text-red-400': log.level === 'ERROR' || log.level === 'CRITICAL',
                                         'text-amber-400': log.level === 'WARNING',
                                         'text-blue-400': log.level === 'INFO',
                                         'text-gray-400': log.level === 'DEBUG'
                                     }" x-text="log.level"></span>
-                                    <span class="text-gray-500" x-text="' | ' + new Date(log.timestamp).toLocaleTimeString()"></span>
+                                    <span class="text-gray-500"
+                                        x-text="' | ' + new Date(log.timestamp).toLocaleTimeString()"></span>
                                     <span class="text-gray-300" x-text="' | ' + log.message"></span>
                                 </div>
                             </template>
@@ -396,383 +460,265 @@
 </div>
 
 <script>
-function nodesPage() {
-    return {
-        nodes: [],
-        selectedNodeId: null,
-        selectedNode: null,
-        healthStatus: null,
-        disks: [],
-        disksError: false,
-        recentJobs: [],
-        recentLogs: [],
-        latestMetrics: [],
-        charts: {},
-        refreshInterval: null,
+    function nodesPage() {
+        return {
+            nodes: [],
+            selectedNodeId: null,
+            selectedNode: null,
+            healthStatus: null,
+            containers: [],
+            disks: [],
+            disksError: false,
+            recentJobs: [],
+            recentLogs: [],
+            latestMetrics: [],
+            charts: {},
+            refreshInterval: null,
 
-        async init() {
-            await this.loadNodes();
-            // Auto-select first node if available
-            if (this.nodes.length > 0) {
-                await this.selectNode(this.nodes[0].id);
-            }
-
-            // Setup WebSocket listeners for real-time updates
-            this.setupWebSocket();
-        },
-
-        setupWebSocket() {
-            // Handle metric updates
-            window.nexusWS.on('metric_update', (data) => {
-                // If this is for the selected node, refresh its data
-                if (data.node_id === this.selectedNodeId) {
-                    console.log('[Nodes] Metric update for selected node');
-                    this.refreshNodeData(this.selectedNodeId);
+            async init() {
+                await this.loadNodes();
+                // Auto-select first node if available
+                if (this.nodes.length > 0) {
+                    await this.selectNode(this.nodes[0].id);
                 }
-                // Also refresh node list to update last_seen times
-                this.loadNodes();
-            });
 
-            // Handle WebSocket fallback to polling
-            window.nexusWS.on('fallback_to_polling', () => {
-                console.log('[Nodes] Enabling polling fallback');
-                this.enablePolling();
-            });
+                // Setup WebSocket listeners for real-time updates
+                this.setupWebSocket();
+            },
 
-            // Re-disable polling if WebSocket reconnects
-            window.nexusWS.on('connected', () => {
-                console.log('[Nodes] WebSocket reconnected, disabling polling');
-                this.disablePolling();
-            });
-        },
-
-        enablePolling() {
-            if (!this.refreshInterval) {
-                this.refreshInterval = setInterval(() => {
-                    this.loadNodes();
-                    if (this.selectedNodeId) {
+            setupWebSocket() {
+                // Handle metric updates
+                window.nexusWS.on('metric_update', (data) => {
+                    // If this is for the selected node, refresh its data
+                    if (data.node_id === this.selectedNodeId) {
+                        console.log('[Nodes] Metric update for selected node');
                         this.refreshNodeData(this.selectedNodeId);
                     }
-                }, 30000);
-            }
-        },
+                    // Also refresh node list to update last_seen times
+                    this.loadNodes();
+                });
 
-        disablePolling() {
-            if (this.refreshInterval) {
-                clearInterval(this.refreshInterval);
-                this.refreshInterval = null;
-            }
-        },
+                // Handle WebSocket fallback to polling
+                window.nexusWS.on('fallback_to_polling', () => {
+                    console.log('[Nodes] Enabling polling fallback');
+                    this.enablePolling();
+                });
 
-        async loadNodes() {
-            try {
-                const response = await fetch('/api/nodes');
-                const data = await response.json();
-                this.nodes = data.nodes || [];
-            } catch (error) {
-                console.error('Failed to load nodes:', error);
-            }
-        },
+                // Re-disable polling if WebSocket reconnects
+                window.nexusWS.on('connected', () => {
+                    console.log('[Nodes] WebSocket reconnected, disabling polling');
+                    this.disablePolling();
+                });
+            },
 
-        async selectNode(nodeId) {
-            this.selectedNodeId = nodeId;
-            this.selectedNode = this.nodes.find(n => n.id === nodeId);
+            enablePolling() {
+                if (!this.refreshInterval) {
+                    this.refreshInterval = setInterval(() => {
+                        this.loadNodes();
+                        if (this.selectedNodeId) {
+                            this.refreshNodeData(this.selectedNodeId);
+                        }
+                    }, 30000);
+                }
+            },
 
-            // Clear old charts when switching nodes
-            Object.values(this.charts).forEach(chart => chart.destroy());
-            this.charts = {};
+            disablePolling() {
+                if (this.refreshInterval) {
+                    clearInterval(this.refreshInterval);
+                    this.refreshInterval = null;
+                }
+            },
 
-            await this.loadNodeDetails(nodeId);
-        },
-
-        async loadNodeDetails(nodeId) {
-            try {
-                // Load health status
-                const healthResponse = await fetch(`/api/nodes/${nodeId}/health`);
-                this.healthStatus = await healthResponse.json();
-
-                // Load metrics and create charts
-                const metricsResponse = await fetch(`/api/metrics/${nodeId}?limit=50`);
-                const metricsData = await metricsResponse.json();
-                this.latestMetrics = (metricsData.metrics || []).reverse(); // Newest first
-                this.createCharts(this.latestMetrics);
-
-                // Load recent jobs
-                const jobsResponse = await fetch(`/api/jobs?node_id=${nodeId}&limit=5`);
-                const jobsData = await jobsResponse.json();
-                this.recentJobs = jobsData.jobs || [];
-
-                // Load recent logs
-                const logsResponse = await fetch(`/api/logs/${nodeId}?limit=20`);
-                const logsData = await logsResponse.json();
-                this.recentLogs = logsData.logs || [];
-
-                // Load disk information
+            async loadNodes() {
                 try {
-                    const disksResponse = await fetch(`/api/nodes/${nodeId}/disks`);
-                    if (disksResponse.ok) {
-                        this.disks = await disksResponse.json();
-                        this.disksError = false;
-                    } else {
-                        console.warn('Failed to load disk information:', disksResponse.status);
+                    const response = await fetch('/api/nodes');
+                    const data = await response.json();
+                    this.nodes = data.nodes || [];
+                } catch (error) {
+                    console.error('Failed to load nodes:', error);
+                }
+            },
+
+            async selectNode(nodeId) {
+                this.selectedNodeId = nodeId;
+                this.selectedNode = this.nodes.find(n => n.id === nodeId);
+
+                // Clear old charts when switching nodes
+                Object.values(this.charts).forEach(chart => chart.destroy());
+                this.charts = {};
+
+                await this.loadNodeDetails(nodeId);
+            },
+
+            async loadNodeDetails(nodeId) {
+                try {
+                    // Load health status
+                    const healthResponse = await fetch(`/api/nodes/${nodeId}/health`);
+                    this.healthStatus = await healthResponse.json();
+
+                    // Load metrics and create charts
+                    const metricsResponse = await fetch(`/api/metrics/${nodeId}?limit=50`);
+                    const metricsData = await metricsResponse.json();
+                    this.latestMetrics = (metricsData.metrics || []).reverse(); // Newest first
+                    this.createCharts(this.latestMetrics);
+
+                    // Load recent jobs
+                    const jobsResponse = await fetch(`/api/jobs?node_id=${nodeId}&limit=5`);
+                    const jobsData = await jobsResponse.json();
+                    this.recentJobs = jobsData.jobs || [];
+
+                    // Load recent logs
+                    const logsResponse = await fetch(`/api/logs/${nodeId}?limit=20`);
+                    const logsData = await logsResponse.json();
+                    this.recentLogs = logsData.logs || [];
+
+                    // Load disk information
+                    try {
+                        const disksResponse = await fetch(`/api/nodes/${nodeId}/disks`);
+                        if (disksResponse.ok) {
+                            this.disks = await disksResponse.json();
+                            this.disksError = false;
+                        } else {
+                            console.warn('Failed to load disk information:', disksResponse.status);
+                            this.disks = [];
+                            this.disksError = true;
+                        }
+                    } catch (error) {
+                        console.warn('Failed to load disk information:', error);
                         this.disks = [];
                         this.disksError = true;
                     }
-                } catch (error) {
-                    console.warn('Failed to load disk information:', error);
-                    this.disks = [];
-                    this.disksError = true;
-                }
-            } catch (error) {
-                console.error('Failed to load node details:', error);
-            }
-        },
 
-        async refreshNodeData(nodeId) {
-            try {
-                // Refresh metrics and update charts
-                const metricsResponse = await fetch(`/api/metrics/${nodeId}?limit=50`);
-                const metricsData = await metricsResponse.json();
-                this.latestMetrics = (metricsData.metrics || []).reverse(); // Newest first
-                this.updateChartData(this.latestMetrics);
-
-                // Refresh health status
-                const healthResponse = await fetch(`/api/nodes/${nodeId}/health`);
-                this.healthStatus = await healthResponse.json();
-            } catch (error) {
-                console.error('Failed to refresh node data:', error);
-            }
-        },
-
-        createCharts(metrics) {
-            if (!metrics || metrics.length === 0) return;
-
-            const nodeId = this.selectedNodeId;
-            const times = metrics.map(m => new Date(m.timestamp)).reverse();
-            const cpuData = metrics.map(m => m.cpu_percent).reverse();
-            const memData = metrics.map(m => m.memory_percent).reverse();
-            const diskData = metrics.map(m => m.disk_percent).reverse();
-            const tempData = metrics.map(m => m.temperature).reverse();
-
-            this.$nextTick(() => {
-                const commonOptions = {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: 2.5,
-                    animation: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                            titleColor: '#9ca3af',
-                            bodyColor: '#fff',
-                            borderColor: '#374151',
-                            borderWidth: 1,
-                            padding: 12,
-                            displayColors: false
+                    // Load containers
+                    try {
+                        const containersResponse = await fetch(`/api/nodes/${nodeId}/containers?show_all=true`);
+                        if (containersResponse.ok) {
+                            const data = await containersResponse.json();
+                            this.containers = data.containers || [];
+                        } else {
+                            this.containers = [];
                         }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#374151' },
-                            ticks: { color: '#9ca3af', font: { size: 11 } }
-                        },
-                        x: {
-                            grid: { color: '#374151' },
-                            type: 'time',
-                            time: {
-                                unit: 'minute',
-                                displayFormats: { minute: 'HH:mm' }
-                            },
-                            ticks: { color: '#9ca3af', font: { size: 11 }, maxRotation: 0 }
-                        }
+                    } catch (error) {
+                        console.warn('Failed to load containers:', error);
+                        this.containers = [];
                     }
+                } catch (error) {
+                    console.error('Failed to load node details:', error);
+                }
+            },
+
+            async refreshNodeData(nodeId) {
+                try {
+                    // Refresh metrics and update charts
+                    const metricsResponse = await fetch(`/api/metrics/${nodeId}?limit=50`);
+                    const metricsData = await metricsResponse.json();
+                    this.latestMetrics = (metricsData.metrics || []).reverse(); // Newest first
+                    this.updateChartData(this.latestMetrics);
+
+                    // Refresh health status
+                    const healthResponse = await fetch(`/api/nodes/${nodeId}/health`);
+                    this.healthStatus = await healthResponse.json();
+                } catch (error) {
+                    console.error('Failed to refresh node data:', error);
+                }
+            },
+
+            createCharts(metrics) {
+                if (!metrics || metrics.length === 0) return;
+
+                const nodeId = this.selectedNodeId;
+
+                // Wait for DOM
+                this.$nextTick(() => {
+                    const cpuEl = document.getElementById(`chart-cpu-${nodeId}`);
+                    if (cpuEl && !this.charts.cpu) {
+                        const ctx = cpuEl.getContext('2d');
+                        this.charts.cpu = NexusCharts.createTimeSeriesChart(ctx, 'CPU %', 'purple', {
+                            unit: '%',
+                            scales: { y: { max: 100 } }
+                        });
+                    }
+
+                    const memEl = document.getElementById(`chart-memory-${nodeId}`);
+                    if (memEl && !this.charts.memory) {
+                        const ctx = memEl.getContext('2d');
+                        this.charts.memory = NexusCharts.createTimeSeriesChart(ctx, 'Memory %', 'blue', {
+                            unit: '%',
+                            scales: { y: { max: 100 } }
+                        });
+                    }
+
+                    const diskEl = document.getElementById(`chart-disk-${nodeId}`);
+                    if (diskEl && !this.charts.disk) {
+                        const ctx = diskEl.getContext('2d');
+                        this.charts.disk = NexusCharts.createTimeSeriesChart(ctx, 'Disk %', 'green', {
+                            unit: '%',
+                            scales: { y: { max: 100 } }
+                        });
+                    }
+
+                    const tempEl = document.getElementById(`chart-temp-${nodeId}`);
+                    if (tempEl && !this.charts.temp) {
+                        const ctx = tempEl.getContext('2d');
+                        this.charts.temp = NexusCharts.createTimeSeriesChart(ctx, 'Temperature', 'amber', {
+                            unit: '°C',
+                            scales: { y: { min: 30, max: 80 } }
+                        });
+                    }
+
+                    // Populate initial data
+                    this.updateChartData(metrics);
+                });
+            },
+
+            updateChartData(metrics) {
+                if (!metrics || metrics.length === 0 || Object.keys(this.charts).length === 0) return;
+
+                // NexusCharts.updateChartData expects standard metric objects.
+                // Our metrics array is newest-first? buildCharts expects that but updateChartData sorts it.
+                // Let's pass it as is.
+
+                if (this.charts.cpu) NexusCharts.updateChartData(this.charts.cpu, metrics, 'cpu_percent');
+                if (this.charts.memory) NexusCharts.updateChartData(this.charts.memory, metrics, 'memory_percent');
+                if (this.charts.disk) NexusCharts.updateChartData(this.charts.disk, metrics, 'disk_percent');
+                if (this.charts.temp) NexusCharts.updateChartData(this.charts.temp, metrics, 'temperature');
+            },
+
+            formatLastSeen(timestamp) {
+                if (!timestamp) return 'Never';
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffSecs = Math.floor(diffMs / 1000);
+                const diffMins = Math.floor(diffSecs / 60);
+                const diffHours = Math.floor(diffMins / 60);
+
+                if (diffSecs < 60) return `${diffSecs}s ago`;
+                if (diffMins < 60) return `${diffMins}m ago`;
+                if (diffHours < 24) return `${diffHours}h ago`;
+                return date.toLocaleDateString();
+            },
+
+            formatDiskType(type) {
+                const typeMap = {
+                    'sd_card': 'SD Card',
+                    'external_ssd': 'External SSD',
+                    'external_hdd': 'External HDD',
+                    'nvme': 'NVMe',
+                    'usb_flash': 'USB Flash',
+                    'unknown': 'Unknown'
                 };
+                return typeMap[type] || type;
+            },
 
-                const cpuEl = document.getElementById(`chart-cpu-${nodeId}`);
-                if (cpuEl && !this.charts.cpu) {
-                    this.charts.cpu = new Chart(cpuEl, {
-                        type: 'line',
-                        data: {
-                            labels: times,
-                            datasets: [{
-                                label: 'CPU %',
-                                data: cpuData,
-                                borderColor: '#a855f7',
-                                backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                                fill: true,
-                                tension: 0.4,
-                                borderWidth: 2,
-                                pointRadius: 0,
-                                pointHoverRadius: 4
-                            }]
-                        },
-                        options: {
-                            ...commonOptions,
-                            scales: {
-                                ...commonOptions.scales,
-                                y: { ...commonOptions.scales.y, max: 100, ticks: { ...commonOptions.scales.y.ticks, callback: (value) => value + '%' } }
-                            }
-                        }
-                    });
-                }
-
-                const memEl = document.getElementById(`chart-memory-${nodeId}`);
-                if (memEl && !this.charts.memory) {
-                    this.charts.memory = new Chart(memEl, {
-                        type: 'line',
-                        data: {
-                            labels: times,
-                            datasets: [{
-                                label: 'Memory %',
-                                data: memData,
-                                borderColor: '#3b82f6',
-                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                fill: true,
-                                tension: 0.4,
-                                borderWidth: 2,
-                                pointRadius: 0,
-                                pointHoverRadius: 4
-                            }]
-                        },
-                        options: {
-                            ...commonOptions,
-                            scales: {
-                                ...commonOptions.scales,
-                                y: { ...commonOptions.scales.y, max: 100, ticks: { ...commonOptions.scales.y.ticks, callback: (value) => value + '%' } }
-                            }
-                        }
-                    });
-                }
-
-                const diskEl = document.getElementById(`chart-disk-${nodeId}`);
-                if (diskEl && !this.charts.disk) {
-                    this.charts.disk = new Chart(diskEl, {
-                        type: 'line',
-                        data: {
-                            labels: times,
-                            datasets: [{
-                                label: 'Disk %',
-                                data: diskData,
-                                borderColor: '#10b981',
-                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                fill: true,
-                                tension: 0.4,
-                                borderWidth: 2,
-                                pointRadius: 0,
-                                pointHoverRadius: 4
-                            }]
-                        },
-                        options: {
-                            ...commonOptions,
-                            scales: {
-                                ...commonOptions.scales,
-                                y: { ...commonOptions.scales.y, max: 100, ticks: { ...commonOptions.scales.y.ticks, callback: (value) => value + '%' } }
-                            }
-                        }
-                    });
-                }
-
-                const tempEl = document.getElementById(`chart-temp-${nodeId}`);
-                if (tempEl && !this.charts.temp) {
-                    this.charts.temp = new Chart(tempEl, {
-                        type: 'line',
-                        data: {
-                            labels: times,
-                            datasets: [{
-                                label: 'Temperature',
-                                data: tempData,
-                                borderColor: '#f59e0b',
-                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                                fill: true,
-                                tension: 0.4,
-                                borderWidth: 2,
-                                pointRadius: 0,
-                                pointHoverRadius: 4
-                            }]
-                        },
-                        options: {
-                            ...commonOptions,
-                            scales: {
-                                ...commonOptions.scales,
-                                y: { ...commonOptions.scales.y, min: 30, max: 80, ticks: { ...commonOptions.scales.y.ticks, callback: (value) => value + '°C' } }
-                            }
-                        }
-                    });
-                }
-            });
-        },
-
-        updateChartData(metrics) {
-            if (!metrics || metrics.length === 0 || Object.keys(this.charts).length === 0) return;
-
-            const times = metrics.map(m => new Date(m.timestamp)).reverse();
-            const cpuData = metrics.map(m => m.cpu_percent).reverse();
-            const memData = metrics.map(m => m.memory_percent).reverse();
-            const diskData = metrics.map(m => m.disk_percent).reverse();
-            const tempData = metrics.map(m => m.temperature).reverse();
-
-            if (this.charts.cpu) {
-                this.charts.cpu.data.labels = times;
-                this.charts.cpu.data.datasets[0].data = cpuData;
-                this.charts.cpu.update('none');
+            formatBytes(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
             }
-
-            if (this.charts.memory) {
-                this.charts.memory.data.labels = times;
-                this.charts.memory.data.datasets[0].data = memData;
-                this.charts.memory.update('none');
-            }
-
-            if (this.charts.disk) {
-                this.charts.disk.data.labels = times;
-                this.charts.disk.data.datasets[0].data = diskData;
-                this.charts.disk.update('none');
-            }
-
-            if (this.charts.temp) {
-                this.charts.temp.data.labels = times;
-                this.charts.temp.data.datasets[0].data = tempData;
-                this.charts.temp.update('none');
-            }
-        },
-
-        formatLastSeen(timestamp) {
-            if (!timestamp) return 'Never';
-            const date = new Date(timestamp);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffSecs = Math.floor(diffMs / 1000);
-            const diffMins = Math.floor(diffSecs / 60);
-            const diffHours = Math.floor(diffMins / 60);
-
-            if (diffSecs < 60) return `${diffSecs}s ago`;
-            if (diffMins < 60) return `${diffMins}m ago`;
-            if (diffHours < 24) return `${diffHours}h ago`;
-            return date.toLocaleDateString();
-        },
-
-        formatDiskType(type) {
-            const typeMap = {
-                'sd_card': 'SD Card',
-                'external_ssd': 'External SSD',
-                'external_hdd': 'External HDD',
-                'nvme': 'NVMe',
-                'usb_flash': 'USB Flash',
-                'unknown': 'Unknown'
-            };
-            return typeMap[type] || type;
-        },
-
-        formatBytes(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-        }
-    };
-}
+        };
+    }
 </script>
 {% endblock %}

@@ -321,6 +321,53 @@ async def get_node_disks(
             detail=f"Failed to fetch disk information: {str(e)}",
         )
 
+@router.get("/{node_id}/containers")
+async def get_node_containers(
+    node_id: UUID,
+    show_all: bool = Query(True),
+    db: Session = Depends(get_db),
+):
+    """
+    Get running containers from a node.
+
+    Args:
+        node_id: UUID of the node
+        show_all: If true, include non-Nexus containers
+
+    Returns:
+        List of container info
+
+    Raises:
+        404: Node not found
+        503: Cannot communicate with agent
+    """
+    # Validate node exists
+    db_node = get_node(db, str(node_id))
+    if not db_node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Node {node_id} not found",
+        )
+
+    # Fetch container info from agent
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                f"http://{db_node.ip_address}:8001/api/docker/containers/list",
+                params={"show_all": str(show_all).lower()}
+            )
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Cannot communicate with agent: {str(e)}",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch container information: {str(e)}",
+        )
 
 @router.delete("/{node_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def deregister_node(

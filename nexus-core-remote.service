@@ -1,0 +1,30 @@
+[Unit]
+Description=Nexus Core Server
+After=network.target
+
+[Service]
+Type=simple
+User=methinked
+Group=methinked
+WorkingDirectory=/home/methinked/Projects/nexus/nexus
+Environment="PATH=/home/methinked/Projects/nexus/nexus/venv/bin"
+EnvironmentFile=/home/methinked/Projects/nexus/nexus/.env
+ExecStart=/home/methinked/Projects/nexus/nexus/venv/bin/python -m nexus.core.main
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nexus-core
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+# ProtectHome=true -> Disabled for user home directory deployment
+# ProtectHome=false
+ReadWritePaths=/home/methinked/Projects/nexus/nexus/data
+
+[Install]
+WantedBy=multi-user.target

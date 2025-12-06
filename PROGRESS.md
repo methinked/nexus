@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-12-05 (Housekeeping Session)
-**Current Phase:** Housekeeping - State Verification & Documentation 🧹
+**Last Updated:** 2025-12-06
+**Current Phase:** Phase 2: Visual Polish (UI "Glow Up") 🎨
 
 ---
 
@@ -79,6 +79,39 @@ All components completed:
   - main.py: Database initialization on startup
 
 **Phase 1.5 Complete: 2025-11-30** 🎉
+
+#### Phase 8: Polish & Refinement - UI/UX & Visibility (Completed 2025-12-06) ✨
+
+All components completed:
+
+- [x] **Chart.js Refactoring**
+  - Consolidated all chart logic into `nexus-charts.js`
+  - Removed ~300 lines of duplicate code
+  - Fixed chart labels to "Real-time"
+  - Fixed critical infinite-resize bug with fixed-height containers
+
+- [x] **Service Visibility**
+  - Updated Agent (`docker.py`) to optionally list *all* containers (not just managed ones)
+  - Updated Core (`nodes.py`) to proxy these requests
+  - Updated `nodes.html` to display the dynamic list of containers
+  - **Result:** Pi-hole and other manually deployed containers are now visible in the UI
+
+- [x] **System Reliability**
+  - Fixed blocking calls in Agent metrics collection (`psutil.cpu_percent` interval=0)
+  - Improved CLI view JSON parsing robustness
+  - Added global Toast notification system
+  - Added loading states for buttons and UI elements
+
+**Phase 8 Complete: 2025-12-06** 🎉
+
+#### Phase 9: Visual Polish (Started 2025-12-06) 🎨
+
+- [x] **Glassmorphism & Cyber Theme (v0.2.4)**
+  - Implemented "Cyber" color palette (Neon Purple, Deep Void background)
+  - Added Glassmorphism effects (backdrop-blur) to Sidebar, Header, and Cards
+  - Updated `nodes.html` list items to be transparent/glassy
+  - Removed Tailwind `@apply` directives for better compatibility
+  - Refined scrollbars and shadows
 
 ---
 

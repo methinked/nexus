@@ -11,6 +11,9 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+# Application Version
+APP_VERSION = "0.2.4-visual-polish"
+
 class BaseConfig(BaseSettings):
     """Base configuration shared across components."""
 

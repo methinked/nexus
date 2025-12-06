@@ -91,8 +91,9 @@ class MetricsCollector:
         Returns:
             Metrics data
         """
-        # Collect CPU usage (averaged over 1 second for accuracy)
-        cpu_percent = psutil.cpu_percent(interval=1.0)
+        # Collect CPU usage (non-blocking, returns usage since last call)
+        # First call will return 0.0, subsequent calls return avg since last call
+        cpu_percent = psutil.cpu_percent(interval=0)
 
         # Collect memory usage
         memory = psutil.virtual_memory()

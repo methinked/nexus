@@ -19,6 +19,13 @@ STATIC_DIR = WEB_DIR / "static"
 # Setup templating
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
+# Import version
+from nexus.shared.config import APP_VERSION
+
+# Add global context
+templates.env.globals["app_version"] = APP_VERSION
+
+
 # Create router
 router = APIRouter()
 

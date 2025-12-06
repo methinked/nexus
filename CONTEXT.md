@@ -165,6 +165,10 @@ The next logical enhancement is a web-based dashboard for real-time monitoring:
      - Lightweight: FastAPI + htmx/Alpine.js
      - Full-featured: FastAPI + React/Vue
 
+3. **Container Visibility**
+    - List all running Docker containers (managed & unmanaged)
+    - Monitor container status (running, exited, etc.)
+
 2. **Alerting System** - Proactive notifications
    - Email/webhook alerts for node health issues
    - Configurable thresholds per node

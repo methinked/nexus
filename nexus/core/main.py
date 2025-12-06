@@ -22,8 +22,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+from nexus.shared.config import APP_VERSION
+
 # Load configuration
 config = CoreConfig()
+
 
 # Application startup time
 startup_time = datetime.utcnow()
@@ -83,9 +86,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Nexus Core",
     description="Central management server for Nexus distributed Pi fleet",
-    version="0.1.0",
+    version=APP_VERSION,
     lifespan=lifespan,
 )
+
 
 # Add CORS middleware (configure for production)
 app.add_middleware(
@@ -108,11 +112,12 @@ async def api_root():
     """API root endpoint with basic information."""
     return {
         "name": "Nexus Core API",
-        "version": "0.1.0",
+        "version": APP_VERSION,
         "status": "running",
         "docs": "/docs",
         "dashboard": "/",
     }
+
 
 
 @app.get("/health", response_model=HealthResponse, tags=["health"])
@@ -126,10 +131,11 @@ async def health_check():
 
     return HealthResponse(
         status="healthy",
-        version="0.1.0",
+        version=APP_VERSION,
         uptime=uptime,
         hostname=socket.gethostname(),
     )
+
 
 
 # ============================================================================

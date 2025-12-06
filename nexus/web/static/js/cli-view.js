@@ -5,7 +5,7 @@
  */
 
 // Global function to add actions to CLI view
-window.addCliAction = function(cliCommand, apiCall, response, summary) {
+window.addCliAction = function (cliCommand, apiCall, response, summary) {
     const action = {
         id: `action-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         timestamp: new Date().toISOString(),
@@ -48,10 +48,10 @@ window.addCliAction = function(cliCommand, apiCall, response, summary) {
 };
 
 // Intercept fetch requests to log API calls
-(function() {
+(function () {
     const originalFetch = window.fetch;
 
-    window.fetch = async function(...args) {
+    window.fetch = async function (...args) {
         const [url, options = {}] = args;
         const method = options.method || 'GET';
         const startTime = performance.now();
@@ -80,7 +80,7 @@ window.addCliAction = function(cliCommand, apiCall, response, summary) {
                         method: method,
                         endpoint: url.replace(window.location.origin, ''),
                         headers: options.headers || {},
-                        body: options.body ? JSON.parse(options.body) : null
+                        body: options.body ? parseJsonSafe(options.body) : null
                     },
                     {
                         status: response.status,
@@ -105,7 +105,7 @@ window.addCliAction = function(cliCommand, apiCall, response, summary) {
                         method: method,
                         endpoint: url.replace(window.location.origin, ''),
                         headers: options.headers || {},
-                        body: options.body ? JSON.parse(options.body) : null
+                        body: options.body ? parseJsonSafe(options.body) : null
                     },
                     {
                         status: 0,
@@ -216,3 +216,12 @@ function generateSummary(method, url, responseBody) {
 }
 
 console.log('[CLI View] Loaded successfully');
+
+// Helper to safely parse JSON
+function parseJsonSafe(str) {
+    try {
+        return JSON.parse(str);
+    } catch (e) {
+        return str; // Return original string if parse fails
+    }
+}
