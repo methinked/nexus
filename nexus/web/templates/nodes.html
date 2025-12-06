@@ -89,6 +89,51 @@
                     </div>
                 </div>
 
+                <!-- Docker Storage Warning -->
+                <div x-show="disks && disks.length > 0" class="card">
+                    <template x-for="disk in disks" :key="disk.device">
+                        <div x-show="disk.is_docker_data">
+                            <div class="card-body">
+                                <div class="flex items-start gap-3">
+                                    <div x-show="disk.type === 'sd_card'" class="flex-shrink-0 text-amber-400 text-2xl">⚠️</div>
+                                    <div x-show="disk.type !== 'sd_card'" class="flex-shrink-0 text-green-400 text-2xl">✓</div>
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-semibold mb-1">Docker Storage</h3>
+                                        <template x-if="disk.type === 'sd_card'">
+                                            <div>
+                                                <div class="text-amber-400 font-semibold mb-2">⚠️ Warning: Docker running on SD Card</div>
+                                                <div class="text-sm text-gray-300 mb-2">
+                                                    Docker is currently using the SD card for storage. This will cause premature SD card failure due to excessive writes.
+                                                </div>
+                                                <div class="text-xs text-gray-400">
+                                                    <span class="font-semibold">Location:</span> <span x-text="disk.mount_point"></span> •
+                                                    <span class="font-semibold">Free:</span> <span x-text="formatBytes(disk.free_bytes)"></span>
+                                                </div>
+                                                <div class="mt-2 text-xs bg-amber-500/10 text-amber-300 rounded px-3 py-2 border border-amber-500/20">
+                                                    <span class="font-semibold">Recommendation:</span> Connect a USB drive or SSD and restart the agent to auto-configure external storage
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template x-if="disk.type !== 'sd_card'">
+                                            <div>
+                                                <div class="text-green-400 font-semibold mb-2">Docker Storage Optimized</div>
+                                                <div class="text-sm text-gray-300 mb-2">
+                                                    Docker is using <span x-text="formatDiskType(disk.type).toLowerCase()"></span> storage, protecting the SD card from excessive writes.
+                                                </div>
+                                                <div class="text-xs text-gray-400">
+                                                    <span class="font-semibold">Type:</span> <span x-text="formatDiskType(disk.type)"></span> •
+                                                    <span class="font-semibold">Location:</span> <span x-text="disk.mount_point"></span> •
+                                                    <span class="font-semibold">Free:</span> <span x-text="formatBytes(disk.free_bytes)"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
                 <!-- Health Status -->
                 <div class="card" x-show="healthStatus">
                     <div class="card-body">

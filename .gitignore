@@ -151,7 +151,7 @@ docker-compose.override.yml
 *.bak
 
 # SSH and sensitive info
-SSH-Temp-Info.txt
+TempSSHForTesting.txt
 *-Temp-Info.txt
 *.credentials
 *.secrets

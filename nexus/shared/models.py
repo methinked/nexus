@@ -647,6 +647,7 @@ class HealthResponse(BaseModel):
     version: str = "0.1.0"
     uptime: Optional[int] = Field(None, description="Uptime in seconds")
     node_id: Optional[UUID] = Field(None, description="For agent health checks")
+    hostname: Optional[str] = Field(None, description="Hostname of the server")
 
 
 # ============================================================================

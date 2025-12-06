@@ -6,6 +6,7 @@ and provides the central API for the CLI and web dashboard.
 """
 
 import logging
+import socket
 from contextlib import asynccontextmanager
 from datetime import datetime
 
@@ -127,6 +128,7 @@ async def health_check():
         status="healthy",
         version="0.1.0",
         uptime=uptime,
+        hostname=socket.gethostname(),
     )
 
 

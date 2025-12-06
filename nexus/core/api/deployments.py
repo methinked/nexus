@@ -9,6 +9,7 @@ from typing import Optional
 from uuid import UUID
 
 import httpx
+import yaml
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -210,16 +211,74 @@ async def create_new_deployment(
     db_deployment = create_deployment(db, deployment)
     deployment_id = str(db_deployment.id)
 
-    # Merge service config with deployment config
-    service_config = {
-        "image": service.image,
-        "ports": deployment.config.get("ports") if deployment.config else service.ports,
-        "volumes": deployment.config.get("volumes") if deployment.config else service.volumes,
-        "environment": {
-            **(service.environment or {}),
-            **(deployment.config.get("environment", {}) if deployment.config else {})
+    # Parse docker-compose YAML to extract service config
+    try:
+        compose_config = yaml.safe_load(service.docker_compose)
+        # Get the first service from the compose file
+        service_name = list(compose_config['services'].keys())[0]
+        service_def = compose_config['services'][service_name]
+
+        # Extract image
+        image = service_def.get('image')
+
+        # Parse ports (convert "80:80/tcp" to {80: 80})
+        ports = {}
+        if 'ports' in service_def:
+            for port in service_def['ports']:
+                if isinstance(port, str):
+                    # Parse "host:container/protocol" or "host:container"
+                    parts = port.split(':')
+                    if len(parts) >= 2:
+                        host_port = int(parts[0])
+                        container_part = parts[1].split('/')[0]  # Remove /tcp, /udp
+                        container_port = int(container_part)
+                        ports[container_port] = host_port
+
+        # Parse volumes (convert "./data:/var/lib" to volume bindings)
+        volumes = {}
+        if 'volumes' in service_def:
+            for volume in service_def['volumes']:
+                if isinstance(volume, str) and ':' in volume:
+                    host_path, container_path = volume.split(':', 1)
+                    # Convert relative paths to absolute paths
+                    if host_path.startswith('./'):
+                        # Use /opt/nexus/deployments/<deployment_id>/ as base
+                        host_path = f"/opt/nexus/deployments/{deployment_id}/{host_path[2:]}"
+                    volumes[host_path] = {'container': container_path, 'mode': 'rw'}
+
+        # Get environment variables
+        environment = service_def.get('environment', {})
+        if isinstance(environment, list):
+            # Convert list format to dict
+            env_dict = {}
+            for item in environment:
+                if '=' in item:
+                    key, value = item.split('=', 1)
+                    env_dict[key] = value
+            environment = env_dict
+
+        # Merge with deployment config overrides
+        if deployment.config:
+            # deployment.config is a DeploymentConfig object, not a dict
+            config_dict = deployment.config if isinstance(deployment.config, dict) else {}
+        else:
+            config_dict = {}
+
+        service_config = {
+            "image": image,
+            "ports": config_dict.get("ports", ports),
+            "volumes": config_dict.get("volumes", volumes),
+            "environment": {
+                **environment,
+                **config_dict.get("environment", {})
+            }
         }
-    }
+    except Exception as e:
+        logger.error(f"Failed to parse docker-compose YAML: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to parse service configuration: {str(e)}"
+        )
 
     # Send deployment to agent
     container_id = await send_deploy_to_agent(node.ip_address, deployment_id, service_config)

@@ -1,7 +1,7 @@
 # Nexus Development Progress
 
-**Last Updated:** 2025-12-04 (Evening Session - Phase 7.3 Service Templates)
-**Current Phase:** Phase 7.3 - Pre-built Docker Service Templates (IN PROGRESS) 🚧
+**Last Updated:** 2025-12-05 (Housekeeping Session)
+**Current Phase:** Housekeeping - State Verification & Documentation 🧹
 
 ---
 
@@ -706,13 +706,81 @@ nexus deployment delete f6b858e2 --yes
 - nexus/core/main.py (+15 lines): Template seeding integration
 - nexus/web/templates/services.html (~200 lines modified): Enhanced UI
 
-**What's Next (Phase 7.3 Remaining):**
-- [ ] Test template deployment end-to-end
-- [ ] Add more service templates (Jellyfin, Plex, Transmission, etc.)
-- [ ] Template versioning and updates
-- [ ] Template marketplace/sharing (future)
+**End-to-End Testing (2025-12-06):**
+- ✅ **Successful Pi-hole deployment to moria-pi:**
+  - Docker installed on moria-pi (v29.1.2)
+  - Agent restarted with Docker socket access
+  - Deployment created via API: `pihole-moria-v3`
+  - Container ID: `5257cebbe569`
+  - Status: Running & Healthy
+  - Web UI accessible: http://192.168.0.78/admin/
+  - DNS server operational on port 53
 
-**Phase 7.3 Status:** 🚧 Core functionality complete, testing and expansion remaining
+- ✅ **Critical Bug Fixes During Testing:**
+  - Fixed docker-compose YAML parsing in deployments API (nexus/core/api/deployments.py:214-271)
+  - Added volume path conversion: relative paths (`./data`) → absolute paths (`/opt/nexus/deployments/{id}/data`)
+  - Fixed deployment config handling (DeploymentConfig object vs dict)
+  - Created deployment directory structure on agent: `/opt/nexus/deployments/`
+
+- ✅ **Verified End-to-End Pipeline:**
+  - Service template → API → YAML parsing → Agent → Docker container
+  - Image pull: `pihole/pihole:latest` (pulled successfully)
+  - Port mappings: 53/tcp, 53/udp, 80/tcp (bound correctly)
+  - Volume mounts: etc-pihole, etc-dnsmasq.d (created on agent)
+  - Container startup and health check (passed)
+
+**Phase 7.3 COMPLETE!** ✓ - Docker orchestration tested and operational
+
+**What's Next (Phase 7.3 Expansion - Optional):**
+- [ ] Add more service templates (Jellyfin, Plex, Transmission, Sonarr, Radarr, etc.)
+- [ ] Template versioning and update mechanism
+- [ ] Template marketplace/sharing (future consideration)
+
+---
+
+#### Phase 7.4: Production Hardening - Docker & Storage (IDENTIFIED 2025-12-06)
+
+**Status:** 📋 PLANNED
+
+**Goal:** Make Nexus production-ready for Raspberry Pi deployments with proper storage management.
+
+**Critical Issues Identified:**
+1. **Automatic Docker Installation:**
+   - Problem: Agents currently fail silently if Docker is not installed
+   - Impact: Manual SSH required to install Docker on each agent
+   - Solution Needed:
+     - Agent startup should detect Docker availability
+     - If missing, either auto-install (requires sudo) or fail with clear instructions
+     - Log clear error messages to Core for visibility in UI
+     - Add Docker installation status to agent health checks
+
+2. **External Storage for Docker (CRITICAL for Pi longevity):**
+   - Problem: Docker writes to SD card by default, causing premature wear/failure
+   - Impact: SD cards fail after weeks/months of Docker use
+   - Solution Needed:
+     - Detect external storage (USB drives, SSDs) on agent startup
+     - Configure Docker daemon to use external storage: `/etc/docker/daemon.json` with `data-root`
+     - Default paths: `/mnt/docker` or `/opt/docker` (external storage)
+     - Fallback to SD card only if no external storage detected
+     - Add storage location to agent metadata and display in UI
+     - Warn user in UI if agent is using SD card for Docker
+
+**Planned Tasks:**
+- [ ] Agent: Docker availability check on startup
+- [ ] Agent: External storage detection (check `/mnt`, `/media`, `/opt`)
+- [ ] Agent: Docker daemon configuration for external storage
+- [ ] Agent: Auto-install Docker script (optional, requires sudo)
+- [ ] Core: Display Docker storage location in Nodes UI
+- [ ] Core: Health warning for SD card Docker usage
+- [ ] Documentation: Setup guide for external storage on Pi
+
+**Benefits:**
+- Zero-touch Docker setup on new agents
+- SD card longevity (years instead of months)
+- Production-ready Raspberry Pi deployments
+- Better operator visibility into storage health
+
+**Phase 7.4 Status:** 📋 Identified and planned, awaiting implementation
 
 ---
 
@@ -1151,7 +1219,20 @@ raise HTTPException(
 5. `29e6fd5` - fix: Add proper error handling for storage devices section
 6. `bbea328` - docs: Add comprehensive error handling guidelines
 7. `cfb0243` - feat: Add quick agent update script
-8. `43c9c30` - roadmap: Add Phase 8 - Fleet Management with remote agent updates
+8. `43c9c30` - roadmap:- Or begin Phase 8: Remote fleet management and agent updates
+
+---
+
+## 🧹 Session: 2025-12-05 - State Verification
+
+### Housekeeping
+- **Verified Environment:**
+  - Confirmed Core running on Linux Laptop (`10.243.99.44`)
+  - Confirmed Agents on `moria-pi` and `Orthanc-pi`
+  - Corrected documentation to remove checking "Windows" confusion
+- **Documentation Updates:**
+  - Updated `CONTEXT.md` with verified current state
+  - Updated `PROGRESS.md` to reflect current maintenance status
 
 ### Testing Notes
 

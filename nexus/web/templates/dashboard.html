@@ -134,6 +134,17 @@ async function refreshDashboard() {
 
 async function loadStats() {
     try {
+        // Fetch Core health (includes hostname)
+        const healthResponse = await fetch('/health');
+        const healthData = await healthResponse.json();
+
+        // Update Core hostname in sidebar
+        const hostnameEl = document.getElementById('sidebar-core-hostname');
+        if (hostnameEl && healthData.hostname) {
+            hostnameEl.textContent = healthData.hostname;
+            hostnameEl.title = `Core server running on ${healthData.hostname}`;
+        }
+
         // Fetch nodes
         const nodesResponse = await fetch('/api/nodes');
         const nodesData = await nodesResponse.json();

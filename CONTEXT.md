@@ -1360,11 +1360,55 @@ Nexus is shifting from a monitoring-focused platform to a **full fleet orchestra
   - ⚠️ Not yet committed to git
   - ⚠️ Template deployment flow needs verification
 
-**Phase 7.3 Status:** 🚧 Core implementation complete, testing and expansion remaining
+**Phase 7.3 Status:** ✅ COMPLETE - Tested end-to-end with successful Pi-hole deployment
 
-**Next Session Goals:**
-- Test template seeding on Core startup
-- Verify template deployment end-to-end
+**Session 2025-12-06 (Evening - Phase 7.3 Testing & Phase 7.4 Identification):**
+- **Context:** Testing Phase 7.3 Docker orchestration end-to-end on live hardware
+- **Goal:** Deploy Pi-hole to moria-pi to verify the full deployment pipeline
+
+**Testing & Bug Fixes:**
+- ✅ Installed Docker on moria-pi (Docker Engine v29.1.2)
+- ✅ Fixed critical deployment bugs:
+  - Docker-compose YAML parsing (service model migration from `image/ports/volumes` to `docker_compose`)
+  - Volume path conversion: `./data` → `/opt/nexus/deployments/{id}/data`
+  - Deployment config handling (object vs dict)
+- ✅ Successfully deployed Pi-hole:
+  - Container ID: `5257cebbe569`
+  - Status: Running & healthy
+  - Web UI: http://192.168.0.78/admin/
+  - DNS: Operational on port 53
+- ✅ Verified end-to-end pipeline:
+  - Service template → API → YAML parsing → Agent → Container
+  - Image pull, port mapping, volume mounts all working
+
+**UI Enhancement:**
+- ✅ Added Core server hostname to web dashboard sidebar
+- Updated `/health` endpoint to include `hostname` field
+- Core server now displays as "Orthanc-pi" in Fleet Status
+
+**Production Concerns Identified (Phase 7.4):**
+1. **Docker Installation:**
+   - Issue: Agents fail silently if Docker not installed
+   - Solution: Auto-detect and install Docker on agent startup (or fail gracefully)
+
+2. **External Storage for Docker (CRITICAL):**
+   - Issue: Docker defaults to SD card, causing premature failure
+   - Solution: Detect external storage, configure Docker to use USB/SSD
+   - Default: `/mnt/docker` or `/opt/docker` (external)
+   - Fallback: SD card only if no external storage available
+   - UI: Show storage location and warn if using SD card
+
+**Files Modified:**
+- nexus/shared/models.py: Added `hostname` to HealthResponse
+- nexus/core/main.py: Added socket.gethostname() to health check
+- nexus/core/api/deployments.py: Fixed YAML parsing and volume paths
+- nexus/web/templates/base.html: Added Core hostname to sidebar
+- nexus/web/templates/dashboard.html: Fetch and display hostname
+- PROGRESS.md: Updated Phase 7.3 status, added Phase 7.4 section
+- CONTEXT.md: Updated fleet status and added session notes
+
+**Phase 7.3 COMPLETE!** ✓ - Docker orchestration fully tested and operational
+**Phase 7.4 IDENTIFIED** 📋 - Production hardening tasks planned
 - Add more service templates (Jellyfin, Plex, Transmission, etc.)
 - Commit Phase 7.3 work to git
 - Or begin Phase 8: Remote fleet management and agent updates
@@ -1414,8 +1458,83 @@ Nexus is shifting from a monitoring-focused platform to a **full fleet orchestra
 **Phase 7.3 Testing COMPLETE!** ✓ - System operational with 2 live agents
 
 **Next Session Goals:**
-- Test deploying a service (Pi-hole) to one of the Pis
-- Verify Docker container management end-to-end
-- Begin Phase 8.5: Auto-discovery implementation
-- Or expand service template library
+- **PRIORITY: Phase 7.4 - Production Hardening:**
+  - Implement auto-Docker installation on agents
+  - Implement external storage detection and configuration
+  - Add Docker storage location to agent metadata
+  - UI warnings for SD card Docker usage
+- **OPTIONAL: Phase 7.3 Expansion:**
+  - Add more service templates (Jellyfin, Plex, Transmission, Sonarr, Radarr)
+  - Template versioning mechanism
+- **OR: Begin Phase 8 - Fleet Management:**
+  - Remote agent updates from dashboard
+  - Version tracking and rollback
+  - Bulk operations across fleet
+
+
+---
+
+## 📍 Current State Assessment (Verified 2025-12-06 23:00 UTC)
+
+**Environment Verification:**
+- **Development Machine:** Linux Laptop (`gregory-latitude-kubuntu`)
+- **Active Workspace:** Local Linux environment (Kubuntu)
+- **Network:** ZeroTier VPN (10.243.x.x subnet)
+
+**Deployed Fleet (VERIFIED VIA SSH):**
+
+### Core Server
+- **Host:** Orthanc-pi (10.243.151.228) - Raspberry Pi 4 Model B
+- **Status:** ✅ ONLINE (uptime: ~30 minutes as of check)
+- **URL:** `http://10.243.151.228:8000`
+- **Process:** PID 1983 (started 22:47 UTC)
+- **Health:** Healthy, version 0.1.0
+- **Note:** Core migrated to Orthanc-pi (NOT on laptop as previously documented)
+
+### Agent 1: moria-pi
+- **IP:** 10.243.14.179 (ZeroTier)
+- **Local IP:** 192.168.0.78
+- **Hardware:** Raspberry Pi 3 Model B+
+- **Status:** ✅ ONLINE
+- **Process:** PID 9901 (agent restarted 13:29 UTC for Docker access)
+- **Node ID:** `2e58e914-4007-44ac-930c-6c8c7910c093`
+- **Docker:** ✅ INSTALLED (v29.1.2, socket permissions configured)
+- **Deployments:**
+  - **Pi-hole** (pihole-moria-v3):
+    - Container ID: `5257cebbe569`
+    - Status: Running & Healthy
+    - Ports: 53/tcp, 53/udp, 80/tcp
+    - Web UI: http://192.168.0.78/admin/
+    - DNS: Operational
+- **Connection:** Actively sending metrics/logs to Core (HTTP 201 OK)
+
+### Agent 2: Orthanc-pi (Co-located with Core)
+- **IP:** 10.243.151.228 (ZeroTier)
+- **Local IP:** 192.168.0.233
+- **Hardware:** Raspberry Pi 4 Model B
+- **Status:** ✅ ONLINE (uptime: 2 hours 48 minutes)
+- **Processes:**
+  - Core: PID 1983 (started 22:47 UTC)
+  - Agent: PID 2138 (started 22:49 UTC)
+- **Node ID:** `1d51f229-87cc-4880-8acd-1617096eaded`
+- **Last Seen:** 2025-12-05 23:17:43 UTC
+- **Connection:** Actively reporting to local Core (HTTP 201 OK)
+
+**Fleet Health Summary:**
+- ✅ Core server operational and accepting requests (Orthanc-pi)
+- ✅ 2/2 agents registered and reporting
+- ✅ Metrics collection working (30-second intervals)
+- ✅ Centralized logging operational
+- ✅ WebSocket connections active
+- ✅ **Docker orchestration TESTED and working:**
+  - Pi-hole deployed successfully to moria-pi
+  - End-to-end pipeline verified (template → API → agent → container)
+- 🎯 Both agents using local network IPs (192.168.0.x) + ZeroTier overlay
+
+**Phase 7.4 Priority Items (Production Hardening):**
+- ⚠️ Docker auto-installation on agents (currently manual)
+- ⚠️ **CRITICAL:** External storage for Docker (SD cards will fail!)
+  - Need USB/SSD detection and configuration
+  - Prevent Docker from writing to SD card on Pis
+
 
