@@ -17,6 +17,8 @@ Nexus is a lightweight, secure, and modular platform for managing fleets of Debi
 
 ## 🏗️ Architecture
 
+> **See the full System Map:** [ARCHITECTURE.md](ARCHITECTURE.md)
+
 ```mermaid
 graph TD
     User[User] -->|CLI / Web| Core[Nexus Core]

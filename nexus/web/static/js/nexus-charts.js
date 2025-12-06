@@ -1,3 +1,4 @@
+
 /**
  * Nexus Charts - Centralized Chart.js configuration
  */
@@ -112,7 +113,7 @@ const NexusCharts = {
         // Add unit suffix to tooltip and y-axis if provided
         if (overrides.unit) {
             options.plugins.tooltip.callbacks.label = function (context) {
-                return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}${overrides.unit}`;
+                return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}${overrides.unit} `;
             };
             options.scales.y.ticks.callback = function (value) {
                 return value + overrides.unit;
@@ -169,5 +170,47 @@ const NexusCharts = {
         chart.data.datasets[0].data = values.map((v, i) => ({ x: labels[i], y: v }));
 
         chart.update('none'); // 'none' mode for performance
+    },
+
+    /**
+     * Update a multi-series chart (e.g., Dashboard metrics for multiple nodes)
+     * @param {Chart} chart Chart.js instance
+     * @param {Array} allNodeMetrics Array of { node: Object, metrics: Array }
+     * @param {string} metricKey Key in metric object to plot (e.g., 'cpu_percent')
+     */
+    updateMultiSeriesChart(chart, allNodeMetrics, metricKey) {
+        const colorKeys = ['purple', 'blue', 'green', 'amber', 'red'];
+
+        const datasets = allNodeMetrics.map((nodeData, index) => {
+            const colorKey = colorKeys[index % colorKeys.length];
+            const color = this.colors[colorKey];
+
+            // Ensure chronological order
+            let metrics = [...nodeData.metrics];
+            if (metrics.length > 1 && new Date(metrics[0].timestamp) > new Date(metrics[metrics.length - 1].timestamp)) {
+                metrics.reverse();
+            }
+
+            // Map data
+            const dataPoints = metrics.map(m => ({ x: new Date(m.timestamp), y: m[metricKey] }));
+
+            return {
+                label: nodeData.node.name,
+                data: dataPoints,
+                borderColor: color.border,
+                backgroundColor: color.bg,
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 4
+            };
+        });
+
+        chart.data.datasets = datasets;
+        chart.update('none');
     }
 };
+
+// Make it globally available
+window.NexusCharts = NexusCharts;

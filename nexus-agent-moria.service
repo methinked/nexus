@@ -1,0 +1,31 @@
+[Unit]
+Description=Nexus Agent (Moria)
+After=network.target
+
+[Service]
+Type=simple
+User=methinked
+Group=methinked
+WorkingDirectory=/home/methinked/Projects/nexus/nexus
+Environment="PATH=/home/methinked/Projects/nexus/nexus/venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="NEXUS_CORE_URL=http://10.243.151.228:8000"
+Environment="NEXUS_NODE_ID=moria-pi"
+
+ExecStart=/home/methinked/Projects/nexus/nexus/venv/bin/python -m nexus.agent.main
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nexus-agent
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+# Allow write access to data/logs
+ReadWritePaths=/home/methinked/Projects/nexus/nexus/data /home/methinked/Projects/nexus/nexus/logs
+
+[Install]
+WantedBy=multi-user.target
