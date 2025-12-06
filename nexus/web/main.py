@@ -19,6 +19,13 @@ STATIC_DIR = WEB_DIR / "static"
 # Setup templating
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
+# Import version
+from nexus.shared.config import APP_VERSION
+
+# Add global context
+templates.env.globals["app_version"] = APP_VERSION
+
+
 # Create router
 router = APIRouter()
 
@@ -95,19 +102,36 @@ async def logs_page(request: Request):
     )
 
 
-@router.get("/modules", response_class=HTMLResponse)
-async def modules_page(request: Request):
+@router.get("/services", response_class=HTMLResponse)
+async def services_page(request: Request):
     """
-    Modules & Services page.
+    Docker Services page.
 
-    Manage and deploy services/modules across the fleet.
+    Manage Docker service templates.
     """
     return templates.TemplateResponse(
-        "modules.html",
+        "services.html",
         {
             "request": request,
-            "page_title": "Modules & Services",
-            "active_page": "modules"
+            "page_title": "Docker Services",
+            "active_page": "services"
+        }
+    )
+
+
+@router.get("/deployments", response_class=HTMLResponse)
+async def deployments_page(request: Request):
+    """
+    Deployments page.
+
+    Manage service deployments across the fleet.
+    """
+    return templates.TemplateResponse(
+        "deployments.html",
+        {
+            "request": request,
+            "page_title": "Deployments",
+            "active_page": "deployments"
         }
     )
 

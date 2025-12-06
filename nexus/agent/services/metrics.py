@@ -16,6 +16,7 @@ from uuid import UUID
 import httpx
 import psutil
 
+from nexus.agent.services.storage import get_all_disks
 from nexus.shared import AgentConfig, MetricCreate
 
 logger = logging.getLogger(__name__)
@@ -80,10 +81,6 @@ class MetricsCollector:
 
     async def _collect_and_send(self):
         """Collect metrics and send to Core."""
-        # TODO: Use psutil to collect actual metrics
-        # TODO: Use vcgencmd for Pi temperature (if available)
-        # TODO: Send metrics to Core via HTTP POST
-
         metrics = self._collect_metrics()
         await self._send_metrics(metrics)
 
@@ -94,20 +91,42 @@ class MetricsCollector:
         Returns:
             Metrics data
         """
-        # Collect CPU usage (averaged over 1 second for accuracy)
-        cpu_percent = psutil.cpu_percent(interval=1.0)
+        # Collect CPU usage (non-blocking, returns usage since last call)
+        # First call will return 0.0, subsequent calls return avg since last call
+        cpu_percent = psutil.cpu_percent(interval=0)
 
         # Collect memory usage
         memory = psutil.virtual_memory()
         memory_percent = memory.percent
 
-        # Collect disk usage (root partition)
-        disk = psutil.disk_usage('/')
-        disk_percent = disk.percent
+        # Collect all disk information (Phase 6.5 - Multi-disk support)
+        try:
+            disks = get_all_disks()
+
+            # Log disk information for debugging
+            if disks:
+                logger.debug(f"Detected {len(disks)} disk(s):")
+                for disk in disks:
+                    logger.debug(
+                        f"  {disk.mount_point}: {disk.type.value}, "
+                        f"{disk.usage_percent:.1f}% used, "
+                        f"Docker={disk.is_docker_data}, Nexus={disk.is_nexus_data}"
+                    )
+
+            # For backward compatibility, use root filesystem for disk_percent
+            root_disk = next((d for d in disks if d.is_system), None)
+            disk_percent = root_disk.usage_percent if root_disk else 0.0
+
+        except Exception as e:
+            logger.warning(f"Failed to collect disk info, using fallback: {e}")
+            # Fallback to old method
+            disk = psutil.disk_usage('/')
+            disk_percent = disk.percent
 
         # Try to get temperature (Raspberry Pi specific)
         temperature = self._get_temperature()
 
+        # TODO Phase 6.5.2: Add disks to MetricCreate once database schema updated
         return MetricCreate(
             node_id=self.node_id,
             timestamp=datetime.utcnow(),

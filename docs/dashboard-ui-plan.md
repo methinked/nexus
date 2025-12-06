@@ -796,8 +796,11 @@ Dashboard is successful if:
 - [ ] Dashboard overview page (stat cards, topology)
 - [ ] Nodes list page (table + detail panel)
 - [ ] Live metrics charts (last 24h)
-- [ ] Basic styling (purple theme, dark mode)
-- [ ] WebSocket for live updates
+- [ ] Web-based log viewer with filtering and search
+- [x] **Phase 6.6: UI Polish**
+  - [x] Global Toast Notifications
+  - [x] Loading states for actions
+  - [x] Standardized visual language
 
 **Estimated Effort:** 2-3 weeks
 

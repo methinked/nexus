@@ -75,9 +75,12 @@ def load_state() -> tuple[UUID | None, str | None]:
         return None, None
 
 
-async def register_with_core() -> tuple[UUID, str]:
+async def register_with_core(docker_storage_info: dict = None) -> tuple[UUID, str]:
     """
     Register this agent with the Core server.
+
+    Args:
+        docker_storage_info: Optional Docker storage metadata to include
 
     Returns:
         Tuple of (node_id, api_token)
@@ -94,6 +97,11 @@ async def register_with_core() -> tuple[UUID, str]:
     except Exception:
         ip_address = "127.0.0.1"
 
+    # Build custom metadata
+    custom_meta = {}
+    if docker_storage_info:
+        custom_meta["docker_storage"] = docker_storage_info
+
     # Create registration request
     registration = RegistrationRequest(
         name=config.node_name,
@@ -103,6 +111,7 @@ async def register_with_core() -> tuple[UUID, str]:
             location="",
             tags=[],
             description=f"Agent running on {config.node_name}",
+            custom=custom_meta,
         ),
     )
 
@@ -138,6 +147,40 @@ async def lifespan(app: FastAPI):
     logger.info(f"Environment: {config.env}")
     logger.info(f"Listening on {config.host}:{config.port}")
 
+    # Setup Docker storage (if external storage available)
+    logger.info("=" * 60)
+    logger.info("DOCKER STORAGE CONFIGURATION")
+    logger.info("=" * 60)
+
+    from nexus.agent.services.storage import setup_docker_storage_if_needed, get_docker_root
+
+    docker_disk = setup_docker_storage_if_needed()
+
+    # Build storage metadata for Core
+    docker_storage_info = None
+    if docker_disk:
+        logger.info(f"Docker configured for: {docker_disk.mount_point}")
+        logger.info(f"  Type: {docker_disk.type.value}")
+        logger.info(f"  Free space: {docker_disk.free_bytes / (1024**3):.1f} GB")
+
+        if docker_disk.type.value == "sd_card":
+            logger.warning("⚠️  Docker using SD card - consider adding external storage!")
+
+        # Prepare metadata for Core
+        docker_storage_info = {
+            "docker_root": get_docker_root() or f"{docker_disk.mount_point}/docker",
+            "storage_type": docker_disk.type.value,
+            "storage_device": docker_disk.device,
+            "storage_mount": docker_disk.mount_point,
+            "storage_size_gb": round(docker_disk.total_bytes / (1024**3), 2),
+            "storage_free_gb": round(docker_disk.free_bytes / (1024**3), 2),
+            "storage_used_percent": docker_disk.usage_percent,
+        }
+    else:
+        logger.warning("Could not determine Docker storage location")
+
+    logger.info("=" * 60)
+
     # Try to load existing registration
     node_id, api_token = load_state()
 
@@ -145,7 +188,7 @@ async def lifespan(app: FastAPI):
     if not node_id or not api_token:
         logger.info("No existing registration found, registering with Core...")
         try:
-            node_id, api_token = await register_with_core()
+            node_id, api_token = await register_with_core(docker_storage_info)
             save_state()
         except httpx.HTTPStatusError as e:
             logger.error(f"Registration failed: HTTP {e.response.status_code}")
@@ -241,11 +284,12 @@ async def health_check():
 # API Routers
 # ============================================================================
 
-from nexus.agent.api import jobs, system, terminal
+from nexus.agent.api import docker, jobs, system, terminal
 
 app.include_router(system.router, prefix="/api/system", tags=["system"])
 app.include_router(jobs.router, prefix="/api/jobs", tags=["jobs"])
 app.include_router(terminal.router, prefix="/api", tags=["terminal"])
+app.include_router(docker.router, prefix="/api/docker", tags=["docker"])
 
 
 # ============================================================================

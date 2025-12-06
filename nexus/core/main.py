@@ -6,6 +6,7 @@ and provides the central API for the CLI and web dashboard.
 """
 
 import logging
+import socket
 from contextlib import asynccontextmanager
 from datetime import datetime
 
@@ -21,8 +22,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+from nexus.shared.config import APP_VERSION
+
 # Load configuration
 config = CoreConfig()
+
 
 # Application startup time
 startup_time = datetime.utcnow()
@@ -46,6 +50,21 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("Database initialized successfully")
 
+    # Seed service templates
+    from nexus.core.db.database import get_db
+    from nexus.core.services.seed_templates import seed_service_templates
+    
+    logger.info("Seeding service templates...")
+    db = next(get_db())
+    try:
+        results = await seed_service_templates(db)
+        if results["created"]:
+            logger.info(f"Seeded {len(results['created'])} new templates: {', '.join(results['created'])}")
+        if results["errors"]:
+            logger.warning(f"Failed to seed {len(results['errors'])} templates")
+    finally:
+        db.close()
+
     # Start background services
     from nexus.core.services.log_cleanup import LogCleanupService
 
@@ -67,9 +86,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Nexus Core",
     description="Central management server for Nexus distributed Pi fleet",
-    version="0.1.0",
+    version=APP_VERSION,
     lifespan=lifespan,
 )
+
 
 # Add CORS middleware (configure for production)
 app.add_middleware(
@@ -92,11 +112,12 @@ async def api_root():
     """API root endpoint with basic information."""
     return {
         "name": "Nexus Core API",
-        "version": "0.1.0",
+        "version": APP_VERSION,
         "status": "running",
         "docs": "/docs",
         "dashboard": "/",
     }
+
 
 
 @app.get("/health", response_model=HealthResponse, tags=["health"])
@@ -110,9 +131,11 @@ async def health_check():
 
     return HealthResponse(
         status="healthy",
-        version="0.1.0",
+        version=APP_VERSION,
         uptime=uptime,
+        hostname=socket.gethostname(),
     )
+
 
 
 # ============================================================================

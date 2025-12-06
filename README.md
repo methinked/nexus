@@ -17,6 +17,8 @@ Nexus is a lightweight, secure, and modular platform for managing fleets of Debi
 
 ## 🏗️ Architecture
 
+> **See the full System Map:** [ARCHITECTURE.md](ARCHITECTURE.md)
+
 ```mermaid
 graph TD
     User[User] -->|CLI / Web| Core[Nexus Core]
@@ -44,11 +46,15 @@ graph TD
 
 **Fleet Monitoring (Speculum)** - Real-time system health metrics
 *   Collects CPU, RAM, Disk, Temperature every 30 seconds
+*   **Multi-disk detection** - Automatically detects all physical disks, partitions, and mount points
+    *   Smart primary storage identification (boot partitions, root filesystems, largest disk)
+    *   Categorizes disks by type (HDD, SSD, NVMe, SD Card, USB, Network)
+    *   Provides storage recommendations for optimal disk selection
 *   Works on any Debian-based system (`psutil` + platform-specific sensors)
 *   Raspberry Pi: `vcgencmd` for accurate GPU temperature
 *   Debian/Ubuntu: `lm-sensors` fallback for CPU temperature
 *   Health status calculation with configurable thresholds
-*   Historical metrics with aggregated statistics
+*   Historical metrics with aggregated statistics (min/max/avg)
 *   WebSocket real-time updates to dashboard
 
 **Remote Control (Imperium)** - Centralized logging and job execution
@@ -68,17 +74,24 @@ graph TD
 *   Unique CLI view showing equivalent commands for every action
 *   📋 **See full UI/UX plan:** [`docs/dashboard-ui-plan.md`](docs/dashboard-ui-plan.md)
 
-### 🚀 Planned (Phase 7)
+**Docker Service Orchestration (Phase 7.1)** - Deploy and manage containerized services
+*   Full REST API for service template management (CRUD operations)
+*   Deployment lifecycle management (create, start, stop, restart, delete)
+*   Service templates with configurable parameters (image, ports, volumes, environment)
+*   Deployment status tracking across nodes
+*   Multi-node deployment support
+*   Ready for agent-side Docker integration (Phase 7.2)
 
-**Docker Service Orchestration** - Deploy and manage containerized services
-*   Deploy Docker containers across your fleet (Pi-hole, Home Assistant, Prometheus, etc.)
-*   Manage container lifecycle (start, stop, restart, update)
+### 🚀 Planned (Phase 7.2+)
+
+**Agent Docker Module** - Container execution on managed nodes
+*   Docker SDK for Python integration on agents
+*   Container lifecycle operations (deploy, start, stop, restart, remove)
+*   Container health monitoring and resource usage tracking
 *   **Container migration** - Move services between nodes with one click (Pi 3 → Pi 4 upgrade, load balancing, failure recovery)
-*   Monitor container health and resource usage
-*   Service templates for common applications
-*   Multi-node deployments with automatic load distribution
 *   Docker Compose support for complex services
-*   Registry management for custom images
+*   Pre-built service templates (Pi-hole, Home Assistant, Prometheus, Grafana, etc.)
+*   Web UI for service deployment and management
 
 ### 📦 Optional (Vigil Legacy - Parked)
 
@@ -173,6 +186,67 @@ nexus node status <node_id>
 nexus node shell <node_id>
 ```
 
+### Metrics & Health
+```bash
+# View recent metrics for a node
+nexus metrics get <node_id>
+
+# View aggregated statistics (min/max/avg)
+nexus metrics stats <node_id>
+
+# View health status with thresholds
+nexus metrics health <node_id>
+```
+
+### Logs
+```bash
+# View logs from all nodes
+nexus logs list
+
+# View logs from a specific node
+nexus logs list <node_id>
+
+# Tail logs in real-time
+nexus logs tail
+```
+
+### Docker Services
+```bash
+# List all service templates
+nexus service list
+
+# View service template details
+nexus service get <service_id>
+
+# Create a new service template
+nexus service create --name pihole --image pihole/pihole:latest --description "Ad blocking"
+nexus service create -n nginx -i nginx:latest -p 80:80 -v /data:/usr/share/nginx/html
+
+# Delete a service template
+nexus service delete <service_id>
+```
+
+### Docker Deployments
+```bash
+# List all deployments
+nexus deployment list
+nexus deployment list --node <node_id>
+nexus deployment list --status running
+
+# Create a deployment
+nexus deployment create <service_id> <node_id>
+nexus deployment create <service_id> <node_id> -e PORT=8080
+
+# View deployment details
+nexus deployment get <deployment_id>
+
+# Manage deployment lifecycle
+nexus deployment start <deployment_id>
+nexus deployment stop <deployment_id>
+nexus deployment restart <deployment_id>
+nexus deployment delete <deployment_id>
+```
+
 ### Job Management
 ```bash
 # Submit an OCR job
@@ -184,8 +258,8 @@ nexus job list
 
 ### System
 ```bash
-# View centralized logs
-nexus logs --follow
+# View system configuration
+nexus config show
 
 # Update all agents
 nexus fleet update
@@ -204,13 +278,33 @@ nexus fleet update
 - [x] **WebSocket Real-time Updates** - Instant updates replacing 30s polling. ✅
 - [x] **Phase 6.3: Jobs Management UI** - Full job submission, monitoring, and review interface. ✅
 - [x] **Modules Preview** - Stub page for future module deployment system (Phase 7). ✅
-- [ ] **Phase 6.4: Log Viewer UI** - Web-based log viewer with filtering and search.
-- [ ] **Phase 7: Docker Orchestration** - Deploy and manage Docker services across fleet.
-  - [ ] Docker module API (deploy, start, stop, update containers)
-  - [ ] Service templates (Pi-hole, Home Assistant, Prometheus, Grafana, etc.)
-  - [ ] Docker Compose support for complex multi-container services
-  - [ ] Container health monitoring and resource tracking
-  - [ ] Web UI for service deployment and management
+- [x] **Phase 6.4: Log Viewer UI** - Web-based log viewer with filtering and search. ✅
+- [x] **Phase 6.5.1: Multi-Disk Detection** - Comprehensive disk detection and smart storage recommendations. ✅
+- [x] **Phase 7.1: Docker Orchestration API** - Core service management and deployment API. ✅
+- [x] **Phase 7.2: Agent Docker Module** - Docker container management on agents. ✅
+  - [x] Docker SDK for Python integration
+  - [x] Container lifecycle operations (deploy, start, stop, restart, remove)
+  - [x] Container health monitoring and resource tracking
+- [x] **Phase 7.3: Docker Service Templates** - Pre-built service templates and web UI. ✅
+  - [x] Service template library (7 pre-built templates: Pi-hole, Home Assistant, Prometheus, Grafana, Portainer, Nginx Proxy Manager, Nextcloud)
+  - [x] Automatic template seeding on Core startup
+  - [x] Enhanced web UI with category filtering and search
+  - [x] Separate modals for create, deploy, and view details
+  - [x] Separate modals for create, deploy, and view details
+  - [x] Docker Compose YAML support for all templates
+- [x] **Phase 6.6: UI Polish & UX Improvements**
+  - [x] Global Toast Notification System (replaces alerts)
+  - [x] Loading states for buttons (refresh, submit)
+  - [x] Consistent status badges and colors
+  - [x] Improved empty states for lists
+- [ ] **Phase 8: Fleet Management** - Centralized agent update and fleet-wide operations.
+  - [ ] Remote agent code updates from web dashboard (one-click agent updates)
+  - [ ] Remote agent code updates via CLI (`nexus fleet update`, `nexus node update <node_id>`)
+  - [ ] Agent version tracking and update availability notifications
+  - [ ] Fleet-wide configuration management
+  - [ ] Bulk operations across multiple nodes (update all, restart all, etc.)
+  - [ ] Update rollback mechanism for failed updates
+  - [ ] Zero-downtime agent updates with graceful restarts
 
 ## 🔒 Security
 
@@ -243,6 +337,18 @@ NEXUS_LOG_CLEANUP_INTERVAL_HOURS=24  # Default: 24 hours
 - **Development:** 7 days (default)
 - **Production:** 30-90 days depending on fleet size and disk space
 - **High-volume fleets:** 7-14 days with external log aggregation
+
+---
+
+## 📝 Documentation
+
+All documentation is up-to-date and reflects the current implementation:
+- **README.md** - Core features, CLI usage, and getting started guide
+- **docs/api.md** - Complete REST API reference with all endpoints
+- **docs/architecture.md** - System architecture including multi-disk detection and Docker orchestration
+- **docs/CONTRIBUTING.md** - Development guidelines and **error handling best practices**
+- **PROGRESS.md** - Development progress and phase completion tracking
+- **CONTEXT.md** - Project context and implementation details
 
 ---
 *Built with ❤️ for the Raspberry Pi Community.*

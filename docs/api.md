@@ -177,6 +177,58 @@ Deregister a node.
 
 ---
 
+#### `GET /api/nodes/{node_id}/disks`
+
+Get disk information from a node (Phase 6.5.1 - Multi-disk support).
+
+**Response:**
+```json
+[
+  {
+    "device": "/dev/mmcblk0p2",
+    "mount_point": "/",
+    "type": "sd_card",
+    "filesystem": "ext4",
+    "total_bytes": 31914983424,
+    "used_bytes": 12345678900,
+    "free_bytes": 19569304524,
+    "usage_percent": 38.7,
+    "read_only": false,
+    "is_system": true,
+    "is_docker_data": false,
+    "is_nexus_data": false,
+    "label": null,
+    "uuid": "abc-123-def"
+  },
+  {
+    "device": "/dev/sda1",
+    "mount_point": "/mnt/storage",
+    "type": "external_ssd",
+    "filesystem": "ext4",
+    "total_bytes": 256060514304,
+    "used_bytes": 89478485409,
+    "free_bytes": 166582028895,
+    "usage_percent": 34.9,
+    "read_only": false,
+    "is_system": false,
+    "is_docker_data": true,
+    "is_nexus_data": true,
+    "label": "external-ssd",
+    "uuid": "xyz-456-uvw"
+  }
+]
+```
+
+**Disk Types:**
+- `sd_card` - SD Card (typically root filesystem on Raspberry Pi)
+- `external_ssd` - External SSD drive
+- `external_hdd` - External HDD drive
+- `nvme` - NVMe drive
+- `usb_flash` - USB flash drive
+- `unknown` - Unknown disk type
+
+---
+
 ### Job Management
 
 #### `POST /api/jobs`
@@ -311,7 +363,484 @@ Get historical metrics for a node.
 
 ---
 
+#### `GET /api/metrics/{node_id}/stats`
+
+Get aggregated statistics for a node's metrics.
+
+**Query Parameters:**
+- `start_time` (optional): Start timestamp
+- `end_time` (optional): End timestamp
+
+**Response:**
+```json
+{
+  "node_id": "uuid",
+  "stats": {
+    "cpu_percent": {
+      "min": 10.5,
+      "max": 95.2,
+      "avg": 45.3
+    },
+    "memory_percent": {
+      "min": 40.1,
+      "max": 85.6,
+      "avg": 62.4
+    },
+    "disk_percent": {
+      "min": 35.0,
+      "max": 42.1,
+      "avg": 38.5
+    },
+    "temperature": {
+      "min": 45.0,
+      "max": 65.3,
+      "avg": 52.8
+    }
+  },
+  "period": {
+    "start": "timestamp",
+    "end": "timestamp",
+    "count": 120
+  }
+}
+```
+
+---
+
+#### `GET /api/nodes/{node_id}/health`
+
+Get health status for a node with threshold evaluation.
+
+**Response:**
+```json
+{
+  "node_id": "uuid",
+  "status": "warning",
+  "metrics": {
+    "cpu_percent": 45.2,
+    "memory_percent": 82.1,
+    "disk_percent": 38.5,
+    "temperature": 52.3
+  },
+  "thresholds": {
+    "cpu": {"warning": 80, "critical": 95},
+    "memory": {"warning": 80, "critical": 95},
+    "disk": {"warning": 85, "critical": 95},
+    "temperature": {"warning": 70, "critical": 85}
+  },
+  "warnings": [
+    "Memory usage is at 82.1% (warning threshold: 80%)"
+  ],
+  "last_updated": "timestamp"
+}
+```
+
+---
+
+### Logs
+
+#### `POST /api/logs`
+
+Submit logs from agent (agent-facing).
+
+**Request:**
+```json
+{
+  "node_id": "uuid",
+  "level": "info",
+  "message": "Agent started successfully",
+  "timestamp": "timestamp",
+  "metadata": {
+    "component": "agent.core"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "received": true
+}
+```
+
+---
+
+#### `GET /api/logs`
+
+Get logs from all nodes.
+
+**Query Parameters:**
+- `node_id` (optional): Filter by specific node
+- `level` (optional): Filter by log level (debug, info, warning, error)
+- `start_time` (optional): Start timestamp
+- `end_time` (optional): End timestamp
+- `limit` (optional): Max number of logs to return (default: 100)
+
+**Response:**
+```json
+{
+  "logs": [
+    {
+      "id": "uuid",
+      "node_id": "uuid",
+      "node_name": "kitchen-pi",
+      "level": "info",
+      "message": "Metrics collected successfully",
+      "timestamp": "timestamp",
+      "metadata": {}
+    }
+  ],
+  "total": 1
+}
+```
+
+---
+
+#### `GET /api/logs/{node_id}`
+
+Get logs for a specific node.
+
+**Query Parameters:**
+- `level` (optional): Filter by log level
+- `start_time` (optional): Start timestamp
+- `end_time` (optional): End timestamp
+- `limit` (optional): Max number of logs (default: 100)
+
+**Response:**
+```json
+{
+  "node_id": "uuid",
+  "node_name": "kitchen-pi",
+  "logs": [
+    {
+      "id": "uuid",
+      "level": "info",
+      "message": "Agent heartbeat sent",
+      "timestamp": "timestamp",
+      "metadata": {}
+    }
+  ],
+  "total": 1
+}
+```
+
+---
+
+### Services (Docker Orchestration)
+
+#### `GET /api/services`
+
+List all service templates.
+
+**Response:**
+```json
+{
+  "services": [
+    {
+      "id": "uuid",
+      "name": "pihole",
+      "image": "pihole/pihole:latest",
+      "description": "Network-wide ad blocking",
+      "ports": [{"host": 80, "container": 80}],
+      "volumes": [{"host": "/data/pihole", "container": "/etc/pihole"}],
+      "environment": {"TZ": "America/New_York"},
+      "created_at": "timestamp"
+    }
+  ],
+  "total": 1
+}
+```
+
+---
+
+#### `GET /api/services/{service_id}`
+
+Get details of a specific service template.
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "name": "pihole",
+  "image": "pihole/pihole:latest",
+  "description": "Network-wide ad blocking",
+  "ports": [{"host": 80, "container": 80}],
+  "volumes": [{"host": "/data/pihole", "container": "/etc/pihole"}],
+  "environment": {"TZ": "America/New_York"},
+  "created_at": "timestamp",
+  "updated_at": "timestamp"
+}
+```
+
+---
+
+#### `POST /api/services`
+
+Create a new service template.
+
+**Request:**
+```json
+{
+  "name": "pihole",
+  "image": "pihole/pihole:latest",
+  "description": "Network-wide ad blocking",
+  "ports": [{"host": 80, "container": 80}],
+  "volumes": [{"host": "/data/pihole", "container": "/etc/pihole"}],
+  "environment": {"TZ": "America/New_York"}
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "name": "pihole",
+  "created_at": "timestamp"
+}
+```
+
+---
+
+#### `PUT /api/services/{service_id}`
+
+Update a service template.
+
+**Request:**
+```json
+{
+  "name": "pihole-updated",
+  "description": "Updated description",
+  "environment": {"TZ": "Europe/London"}
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "name": "pihole-updated",
+  "updated_at": "timestamp"
+}
+```
+
+---
+
+#### `DELETE /api/services/{service_id}`
+
+Delete a service template.
+
+**Response:**
+```json
+{
+  "message": "Service deleted successfully"
+}
+```
+
+---
+
+### Deployments (Docker Orchestration)
+
+#### `GET /api/deployments`
+
+List all deployments.
+
+**Query Parameters:**
+- `node_id` (optional): Filter by node
+- `status` (optional): Filter by status (pending, running, stopped, failed)
+
+**Response:**
+```json
+{
+  "deployments": [
+    {
+      "id": "uuid",
+      "service_id": "uuid",
+      "service_name": "pihole",
+      "node_id": "uuid",
+      "node_name": "kitchen-pi",
+      "status": "running",
+      "created_at": "timestamp"
+    }
+  ],
+  "total": 1
+}
+```
+
+---
+
+#### `GET /api/deployments/{deployment_id}`
+
+Get details of a specific deployment.
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "service_id": "uuid",
+  "service_name": "pihole",
+  "node_id": "uuid",
+  "node_name": "kitchen-pi",
+  "status": "running",
+  "config": {
+    "ports": [{"host": 80, "container": 80}],
+    "volumes": [{"host": "/data/pihole", "container": "/etc/pihole"}],
+    "environment": {"TZ": "America/New_York"}
+  },
+  "created_at": "timestamp",
+  "updated_at": "timestamp",
+  "started_at": "timestamp"
+}
+```
+
+---
+
+#### `POST /api/deployments`
+
+Create a new deployment.
+
+**Request:**
+```json
+{
+  "service_id": "uuid",
+  "node_id": "uuid",
+  "config": {
+    "environment": {"CUSTOM_VAR": "value"}
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "service_id": "uuid",
+  "node_id": "uuid",
+  "status": "pending",
+  "created_at": "timestamp"
+}
+```
+
+---
+
+#### `PUT /api/deployments/{deployment_id}`
+
+Update deployment configuration.
+
+**Request:**
+```json
+{
+  "config": {
+    "environment": {"TZ": "Europe/London"}
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "updated_at": "timestamp"
+}
+```
+
+---
+
+#### `POST /api/deployments/{deployment_id}/start`
+
+Start a deployment.
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "status": "running",
+  "started_at": "timestamp"
+}
+```
+
+---
+
+#### `POST /api/deployments/{deployment_id}/stop`
+
+Stop a deployment.
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "status": "stopped",
+  "stopped_at": "timestamp"
+}
+```
+
+---
+
+#### `POST /api/deployments/{deployment_id}/restart`
+
+Restart a deployment.
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "status": "running",
+  "restarted_at": "timestamp"
+}
+```
+
+---
+
+#### `DELETE /api/deployments/{deployment_id}`
+
+Delete a deployment (stops and removes).
+
+**Response:**
+```json
+{
+  "message": "Deployment deleted successfully"
+}
+```
+
+---
+
 ### WebSocket Endpoints
+
+#### `WS /api/ws`
+
+General WebSocket endpoint for real-time updates.
+
+**Auth:** Token in query parameter: `?token=<jwt>`
+
+**Server -> Client Messages:**
+```json
+// Metrics update
+{
+  "type": "metrics",
+  "node_id": "uuid",
+  "data": {
+    "cpu_percent": 45.2,
+    "memory_percent": 62.1,
+    "disk_percent": 38.5,
+    "temperature": 52.3
+  }
+}
+
+// Node status change
+{
+  "type": "node_status",
+  "node_id": "uuid",
+  "status": "online"
+}
+
+// Deployment status change
+{
+  "type": "deployment_status",
+  "deployment_id": "uuid",
+  "status": "running"
+}
+```
+
+---
 
 #### `WS /api/nodes/{node_id}/terminal`
 
