@@ -31,6 +31,7 @@ from nexus.shared.models import (
     HealthResponse,
     HealthThresholds,
     Job,
+    InventoryUpdate,
     JobCreate,
     JobList,
     JobResult,
@@ -88,6 +89,7 @@ __all__ = [
     "NodeMetadata",
     "NodeStatus",
     "NodeWithMetrics",
+    "InventoryUpdate",
     # Models - Job
     "Job",
     "JobCreate",

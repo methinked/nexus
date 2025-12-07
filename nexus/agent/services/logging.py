@@ -195,7 +195,7 @@ class LogCollector:
             for log in logs:
                 try:
                     response = await client.post(
-                        f"{self.config.core_url}/api/logs",
+                        f"{self.config.core_url.rstrip('/')}/api/logs",
                         json=log.model_dump(mode="json"),
                         headers=headers,
                         timeout=5.0,

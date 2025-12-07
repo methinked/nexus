@@ -1542,3 +1542,33 @@ Nexus is shifting from a monitoring-focused platform to a **full fleet orchestra
   - Prevent Docker from writing to SD card on Pis
 
 
+
+**Session 2025-12-07 (Phase 9 & 10 & 11 - Sync Refactor & Optimization):**
+- **Inventory Sync Architecture Refactor (Phase 9):**
+  - **Problem:** "Pull" model (Core requesting Agent) was unreliable for storage/containers availability.
+  - **Solution:** Switched to "Push" model. Agent collects inventory and posts to Core.
+  - **Implementation:**
+    - `InventoryUpdate` Shared Model.
+    - `POST /api/nodes/inventory` endpoint in Core.
+    - `InventoryCollector` service in Agent (runs every 5 minutes).
+    - Database persistence fixed (`flag_modified` for JSON fields).
+  - **Result:** Reliable inventory data (Disks & Containers) even during network blips.
+
+- **Frontend Debugging & Fixes:**
+  - **Issue:** UI showed empty storage list despite API returning data.
+  - **Debugging:** Identified duplicate keys in `x-for` loop (`disk.device` was not unique).
+  - **Fix:** Changed key to `disk.mount_point` (unique).
+  - **Feature:** Implemented **"Stats for Nerds"** mode (Phase 11).
+    - Added `<details>` toggle to Health, Containers, and Storage cards.
+    - Displays raw JSON data for power user debugging.
+
+- **CLI & Optimization (Phase 10):**
+  - Updated `nexus-cli` to display storage and container tables in `node get`.
+  - Tuned Agent sync interval to 5 minutes to reduce noise.
+  - Verified system state via CLI.
+
+**System Status:**
+- Core & Agent fully synchronized.
+- UI showing real-time inventory and metrics.
+- "Stats for Nerds" enabled for advanced debugging.
+- Production ready for extended monitoring usage.

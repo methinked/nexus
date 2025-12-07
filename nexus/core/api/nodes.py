@@ -7,9 +7,11 @@ Handles node management, status, and queries.
 from typing import Optional
 from uuid import UUID
 
+import logging
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from nexus.core.db import (
     delete_node,
@@ -23,6 +25,7 @@ from nexus.core.db import (
 from nexus.core.db.database import get_db
 from nexus.core.services.health import calculate_node_health
 from nexus.shared import (
+    BaseResponse,
     DiskInfo,
     HealthThresholds,
     JobStatus,
@@ -34,9 +37,11 @@ from nexus.shared import (
     NodeStatus,
     NodeUpdate,
     NodeWithMetrics,
+    InventoryUpdate,
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("", response_model=NodeList)
@@ -267,31 +272,56 @@ async def get_node_health(
     return health_status
 
 
+@router.post("/inventory", status_code=status.HTTP_200_OK)
+async def update_inventory(
+    update: "InventoryUpdate",  # Quote to handle forward ref if needed, though imported
+    db: Session = Depends(get_db),
+):
+    """
+    Receive inventory update (disks, containers) from agent.
+    
+    This replaces the old "Pull" model. Agents push this data periodically.
+    """
+
+    # Get node
+    db_node = get_node(db, str(update.node_id))
+    if not db_node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Node {update.node_id} not found",
+        )
+
+    # Update metadata with inventory
+    # We deliberately use a deep merge philosophy: keys not in update are preserved?
+    # No, inventory is a snapshot. We overwrite the 'inventory' key.
+    
+    current_metadata = dict(db_node.node_metadata) # Ensure dict copy
+    current_metadata["inventory"] = {
+        "disks": [d.model_dump(mode='json') for d in update.disks],
+        "containers": update.containers,
+        "updated_at": update.timestamp.isoformat()
+    }
+    
+    # Save back to DB
+    # Note: db_update_node might expect NodeUpdate model, or we can set directly
+    db_node.node_metadata = current_metadata
+    flag_modified(db_node, "node_metadata") # Force SQLAlchemy to detect JSON change
+    db.commit()
+    db.refresh(db_node)
+    
+    return BaseResponse(message="Inventory updated")
+
+
 @router.get("/{node_id}/disks", response_model=list[DiskInfo])
 async def get_node_disks(
     node_id: UUID,
     db: Session = Depends(get_db),
 ):
     """
-    Get disk information from a node.
-
-    Fetches detailed information about all mounted disks on the node including:
-    - Device path and mount point
-    - Disk type (SD card, SSD, HDD, NVMe, USB flash, etc.)
-    - Filesystem type and usage statistics
-    - Special flags (system disk, Docker data, Nexus data, read-only)
-
-    Args:
-        node_id: UUID of the node
-
-    Returns:
-        List of disk information
-
-    Raises:
-        404: Node not found
-        503: Cannot communicate with agent
+    Get disk information from a node (Cached).
+    
+    Reads from the last received inventory push.
     """
-    # Validate node exists
     db_node = get_node(db, str(node_id))
     if not db_node:
         raise HTTPException(
@@ -299,27 +329,11 @@ async def get_node_disks(
             detail=f"Node {node_id} not found",
         )
 
-    # Fetch disk info from agent
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(
-                f"http://{db_node.ip_address}:8001/api/system/disks"
-            )
-            response.raise_for_status()
-            disks_data = response.json()
+    inventory = db_node.node_metadata.get("inventory", {})
+    disks_data = inventory.get("disks", [])
+    
+    return [DiskInfo.model_validate(d) for d in disks_data]
 
-            # Validate and return as DiskInfo models
-            return [DiskInfo.model_validate(disk) for disk in disks_data]
-    except httpx.HTTPError as e:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Cannot communicate with agent: {str(e)}",
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch disk information: {str(e)}",
-        )
 
 @router.get("/{node_id}/containers")
 async def get_node_containers(
@@ -328,20 +342,10 @@ async def get_node_containers(
     db: Session = Depends(get_db),
 ):
     """
-    Get running containers from a node.
-
-    Args:
-        node_id: UUID of the node
-        show_all: If true, include non-Nexus containers
-
-    Returns:
-        List of container info
-
-    Raises:
-        404: Node not found
-        503: Cannot communicate with agent
+    Get running containers from a node (Cached).
+    
+    Reads from the last received inventory push.
     """
-    # Validate node exists
     db_node = get_node(db, str(node_id))
     if not db_node:
         raise HTTPException(
@@ -349,25 +353,17 @@ async def get_node_containers(
             detail=f"Node {node_id} not found",
         )
 
-    # Fetch container info from agent
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(
-                f"http://{db_node.ip_address}:8001/api/docker/containers/list",
-                params={"show_all": str(show_all).lower()}
-            )
-            response.raise_for_status()
-            return response.json()
-    except httpx.HTTPError as e:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Cannot communicate with agent: {str(e)}",
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch container information: {str(e)}",
-        )
+    inventory = db_node.node_metadata.get("inventory", {})
+    containers = inventory.get("containers", [])
+    
+    # If show_all is False, filter for nexus-managed? 
+    # Current implementation of PUSH sends all. Filtering can happen here.
+    # Logic: if 'managed' is true (though current container dict might not have it explicitly if raw docker list)
+    # The agent inventory collector should ideally enrich this.
+    # For now, return all.
+    
+    return {"containers": containers}
+
 
 @router.delete("/{node_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def deregister_node(

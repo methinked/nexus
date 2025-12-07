@@ -11,6 +11,7 @@ from typing import Optional
 import httpx
 
 from nexus.agent.modules.shell import ShellExecutor
+from nexus.agent.modules.updater import UpdateExecutor
 from nexus.agent.services.job_queue import JobQueue, QueuedJob
 from nexus.shared import AgentConfig, JobType
 
@@ -44,6 +45,7 @@ class JobDispatcher:
 
         # Initialize executors
         self.shell_executor = ShellExecutor()
+        self.update_executor = UpdateExecutor(config.core_url, api_token)  # Late import?
         # TODO: Initialize OCR and Sync executors when implemented
 
     async def start(self):
@@ -102,6 +104,8 @@ class JobDispatcher:
             # Route to appropriate executor
             if job.job_type == JobType.SHELL:
                 result = await self.shell_executor.execute(job.payload)
+            elif job.job_type == JobType.UPDATE:
+                result = await self.update_executor.execute(job.payload)
             elif job.job_type == JobType.OCR:
                 # TODO: Implement OCR executor
                 result = {"success": False, "error": "OCR not yet implemented"}
@@ -151,7 +155,7 @@ class JobDispatcher:
 
             async with httpx.AsyncClient() as client:
                 response = await client.patch(
-                    f"{self.config.core_url}/api/jobs/{job_id}",
+                    f"{self.config.core_url.rstrip('/')}/api/jobs/{job_id}",
                     json=payload,
                     headers=headers,
                     timeout=10.0,

@@ -80,6 +80,9 @@
                         <p class="text-gray-400 text-sm mt-1" x-text="selectedNode.id"></p>
                     </div>
                     <div class="flex items-center space-x-3">
+                        <button @click="updateAgent(selectedNode.id)" class="btn btn-primary text-sm px-3 py-1">
+                            <span>Update Agent</span>
+                        </button>
                         <span :class="{
                             'bg-green-500/20 text-green-400 border-green-500/50': selectedNode.status === 'online',
                             'bg-red-500/20 text-red-400 border-red-500/50': selectedNode.status === 'offline',
@@ -230,6 +233,21 @@
                                 <div class="text-xs text-gray-400">Temp</div>
                             </div>
                         </div>
+                        <!-- Stats for Nerds (Health) -->
+                        <div class="mt-4 pt-4 border-t border-white/5">
+                            <details>
+                                <summary
+                                    class="text-xs text-gray-500 cursor-pointer hover:text-purple-400 transition-colors flex items-center gap-1 select-none">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                                    </svg>
+                                    Stats for Nerds
+                                </summary>
+                                <pre class="text-[10px] text-gray-400 font-mono mt-2 overflow-x-auto p-3 bg-black/40 rounded border border-white/5"
+                                    x-text="JSON.stringify(healthStatus, null, 2)"></pre>
+                            </details>
+                        </div>
                     </div>
                 </div>
 
@@ -333,6 +351,21 @@
                                 </div>
                             </template>
                         </div>
+                        <!-- Stats for Nerds (Containers) -->
+                        <div class="mt-4 pt-4 border-t border-white/5">
+                            <details>
+                                <summary
+                                    class="text-xs text-gray-500 cursor-pointer hover:text-purple-400 transition-colors flex items-center gap-1 select-none">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                                    </svg>
+                                    Stats for Nerds
+                                </summary>
+                                <pre class="text-[10px] text-gray-400 font-mono mt-2 overflow-x-auto p-3 bg-black/40 rounded border border-white/5"
+                                    x-text="JSON.stringify(containers, null, 2)"></pre>
+                            </details>
+                        </div>
                     </div>
                 </div>
 
@@ -351,7 +384,7 @@
                                 </div>
                             </template>
                             <template x-if="!disksError && disks && disks.length > 0">
-                                <template x-for="disk in disks" :key="disk.device">
+                                <template x-for="disk in disks" :key="disk.mount_point">
                                     <div class="p-3 bg-gray-800/40 border border-white/5 rounded-lg">
                                         <!-- Header with disk type and mount point -->
                                         <div class="flex items-start justify-between mb-2">
@@ -411,9 +444,26 @@
                             </template>
                             <template x-if="!disksError && (!disks || disks.length === 0)">
                                 <div class="text-gray-500 text-center py-4 text-sm">
-                                    Loading disk information...
+                                    <span x-show="!disks">Loading disk information...</span>
+                                    <span x-show="disks && disks.length === 0">No storage devices found.</span>
                                 </div>
                             </template>
+                        </div>
+
+                        <!-- Stats for Nerds (Storage) -->
+                        <div class="mt-4 pt-4 border-t border-white/5">
+                            <details>
+                                <summary
+                                    class="text-xs text-gray-500 cursor-pointer hover:text-purple-400 transition-colors flex items-center gap-1 select-none">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                                    </svg>
+                                    Stats for Nerds
+                                </summary>
+                                <pre class="text-[10px] text-gray-400 font-mono mt-2 overflow-x-auto p-3 bg-black/40 rounded border border-white/5"
+                                    x-text="JSON.stringify(disks, null, 2)"></pre>
+                            </details>
                         </div>
                     </div>
                 </div>
@@ -462,7 +512,7 @@
                                         'text-gray-400': log.level === 'DEBUG'
                                     }" x-text="log.level"></span>
                                     <span class="text-gray-500"
-                                        x-text="' | ' + new Date(log.timestamp).toLocaleTimeString()"></span>
+                                        x-text="' | ' + (log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : 'Unknown Time')"></span>
                                     <span class="text-gray-300" x-text="' | ' + log.message"></span>
                                 </div>
                             </template>
@@ -499,6 +549,25 @@
 
             async init() {
                 await this.loadNodes();
+
+                // Initialize Page Controller for real-time updates
+                this.pageController = new NexusPageController({
+                    onRefresh: () => {
+                        if (this.selectedNodeId) {
+                            this.refreshNodeData(this.selectedNodeId);
+                        }
+                    },
+                    onMetricUpdate: (data) => {
+                        // Only update if we're viewing the node that sent metrics
+                        if (this.selectedNodeId && String(data.node_id) === String(this.selectedNodeId)) {
+                            // Optimization: Update local state directly instead of full fetch
+                            // But for now, full fetch ensures consistency (charts need history)
+                            this.refreshNodeData(this.selectedNodeId);
+                        }
+                    },
+                    pageName: 'Nodes'
+                });
+
                 // Auto-select first node if available
                 if (this.nodes.length > 0) {
                     await this.selectNode(this.nodes[0].id);
@@ -596,8 +665,55 @@
                     // Refresh health status
                     const healthResponse = await fetch(`/api/nodes/${nodeId}/health`);
                     this.healthStatus = await healthResponse.json();
+
+                    // Refresh disks (Inventory)
+                    try {
+                        const disksResponse = await fetch(`/api/nodes/${nodeId}/disks`);
+                        if (disksResponse.ok) {
+                            this.disks = await disksResponse.json();
+                            this.disksError = false;
+                        }
+                    } catch (e) {
+                        console.warn('Failed to refresh disks', e);
+                    }
+
+                    // Refresh containers (Inventory)
+                    try {
+                        const containersResponse = await fetch(`/api/nodes/${nodeId}/containers?show_all=true`);
+                        if (containersResponse.ok) {
+                            const data = await containersResponse.json();
+                            this.containers = data.containers || [];
+                        }
+                    } catch (e) {
+                        console.warn('Failed to refresh containers', e);
+                    }
+
                 } catch (error) {
                     console.error('Failed to refresh node data:', error);
+                }
+            },
+
+            async updateAgent(nodeId) {
+                if (!confirm('Are you sure you want to update this agent? It will restart.')) return;
+
+                try {
+                    const response = await fetch(`/api/update/nodes/${nodeId}/update`, {
+                        method: 'POST'
+                    });
+
+                    if (response.ok) {
+                        alert('Update job submitted. Check the Jobs tab for progress.');
+                        // Reload jobs to show the new job
+                        const jobsResponse = await fetch(`/api/jobs?node_id=${nodeId}&limit=5`);
+                        const jobsData = await jobsResponse.json();
+                        this.recentJobs = jobsData.jobs || [];
+                    } else {
+                        const err = await response.json();
+                        alert('Failed to submit update: ' + (err.detail || err.message || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Update failed:', error);
+                    alert('Update request failed.');
                 }
             },
 
@@ -665,7 +781,13 @@
             formatLastSeen(timestamp) {
                 if (!timestamp) return 'Never';
                 const date = new Date(timestamp);
+                // Ensure we're comparing apples to apples (UTC vs Local)
+                // Assuming timestamp from server is UTC/ISO string
                 const now = new Date();
+
+                // If the date is in the future (skew), treat as now
+                if (date > now) return 'Just now';
+
                 const diffMs = now - date;
                 const diffSecs = Math.floor(diffMs / 1000);
                 const diffMins = Math.floor(diffSecs / 60);

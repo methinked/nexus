@@ -220,6 +220,68 @@ def get(
 
     console.print()
 
+    # Disks Table
+    try:
+        response = httpx.get(
+            f"{config.core_url}/api/nodes/{node_id}/disks",
+            headers=get_headers(config),
+            timeout=5.0
+        )
+        if response.status_code == 200:
+            disks = response.json()
+            if disks:
+                disk_table = Table(title="Storage Devices", show_header=True)
+                disk_table.add_column("Device", style="cyan")
+                disk_table.add_column("Mount", style="white")
+                disk_table.add_column("Type", style="dim")
+                disk_table.add_column("Size", style="green")
+                disk_table.add_column("Free", style="green")
+                disk_table.add_column("Usage", style="yellow")
+                
+                for d in disks:
+                    usage_color = "green" if d['usage_percent'] < 80 else ("yellow" if d['usage_percent'] < 95 else "red")
+                    size_gb = d['total_bytes'] / (1024**3)
+                    free_gb = d['free_bytes'] / (1024**3)
+                    disk_table.add_row(
+                        d['device'],
+                        d['mount_point'],
+                        d.get('type', 'unknown'),
+                        f"{size_gb:.1f} GB",
+                        f"{free_gb:.1f} GB",
+                        f"[{usage_color}]{d['usage_percent']:.1f}%[/{usage_color}]"
+                    )
+                console.print(disk_table)
+                console.print()
+    except Exception as e:
+        console.print(f"[yellow]Could not fetch disks: {e}[/yellow]")
+
+    # Containers Table
+    try:
+        response = httpx.get(
+            f"{config.core_url}/api/nodes/{node_id}/containers",
+            headers=get_headers(config),
+            timeout=5.0
+        )
+        if response.status_code == 200:
+            containers = response.json().get("containers", [])
+            if containers:
+                cont_table = Table(title="Containers", show_header=True)
+                cont_table.add_column("Name", style="cyan")
+                cont_table.add_column("Status", style="white")
+                cont_table.add_column("Image", style="dim")
+                
+                for c in containers:
+                    status_col = "green" if c['status'] == 'running' else "red"
+                    cont_table.add_row(
+                        c['name'].lstrip('/'),
+                        f"[{status_col}]{c['status']}[/{status_col}]",
+                        c['image']
+                    )
+                console.print(cont_table)
+                console.print()
+    except Exception as e:
+        console.print(f"[yellow]Could not fetch containers: {e}[/yellow]")
+
 
 @app.command()
 def update(

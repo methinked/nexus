@@ -281,7 +281,7 @@ async def get_container_logs(container_id: str, tail: int = 100):
 
 
 @router.get("/containers/list")
-async def list_containers(show_all: bool = False) -> List[Dict[str, Any]]:
+async def list_containers(show_all: bool = False) -> Dict[str, Any]:
     """
     List containers on this agent.
     

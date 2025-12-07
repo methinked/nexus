@@ -41,6 +41,7 @@ node_id: UUID | None = None
 api_token: str | None = None
 metrics_collector: MetricsCollector | None = None
 log_collector: LogCollector | None = None
+inventory_collector: "InventoryCollector | None" = None
 job_queue: "JobQueue | None" = None
 job_dispatcher: "JobDispatcher | None" = None
 
@@ -138,7 +139,7 @@ async def lifespan(app: FastAPI):
     """
     Lifespan context manager for startup and shutdown events.
     """
-    global node_id, api_token, metrics_collector, log_collector, job_queue, job_dispatcher
+    global node_id, api_token, metrics_collector, log_collector, inventory_collector, job_queue, job_dispatcher
 
     # Startup
     logger.info("Starting Nexus Agent...")
@@ -210,6 +211,11 @@ async def lifespan(app: FastAPI):
     log_collector = LogCollector(config, node_id, api_token)
     await log_collector.start()
 
+    # Start inventory collection (Phase 9 - Push Model)
+    from nexus.agent.services.inventory import InventoryCollector
+    inventory_collector = InventoryCollector(config, node_id, api_token)
+    await inventory_collector.start()
+
     # Start job system
     from nexus.agent.services.job_queue import JobQueue
     from nexus.agent.services.job_dispatcher import JobDispatcher
@@ -230,6 +236,10 @@ async def lifespan(app: FastAPI):
     # Stop metrics collection
     if metrics_collector:
         await metrics_collector.stop()
+    
+    # Stop inventory collection
+    if inventory_collector:
+        await inventory_collector.stop()
 
     # Stop log collection
     if log_collector:

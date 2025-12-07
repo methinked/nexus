@@ -142,7 +142,7 @@ async def health_check():
 # API Routers
 # ============================================================================
 
-from nexus.core.api import auth, deployments, jobs, logs, metrics, nodes, services, terminal, websocket
+from nexus.core.api import auth, deployments, jobs, logs, metrics, nodes, services, terminal, websocket, update
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(nodes.router, prefix="/api/nodes", tags=["nodes"])
@@ -151,6 +151,7 @@ app.include_router(metrics.router, prefix="/api/metrics", tags=["metrics"])
 app.include_router(logs.router, prefix="/api/logs", tags=["logs"])
 app.include_router(terminal.router, prefix="/api", tags=["terminal"])
 app.include_router(websocket.router, prefix="/api", tags=["websocket"])
+app.include_router(update.router, prefix="/api/update", tags=["update"])
 
 # Phase 7: Docker Orchestration
 app.include_router(services.router, prefix="/api/services", tags=["services"])

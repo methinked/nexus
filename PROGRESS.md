@@ -113,6 +113,31 @@ All components completed:
   - Removed Tailwind `@apply` directives for better compatibility
   - Refined scrollbars and shadows
 
+#### Phase 9: Sync Architecture Refactor (Completed 2025-12-07) ♻️
+
+- [x] **Push-Model Inventory Sync**
+  - Refactored from "Pull" (Core requests Agent) to "Push" (Agent sends to Core)
+  - Added `InventoryUpdate` model
+  - Implemented `POST /api/nodes/inventory` endpoint
+  - Created `InventoryCollector` service (runs every 5 minutes)
+  - **Result**: Reliable storage and container availability info even across network interruptions
+
+#### Phase 10: Optimization & CLI Tools (Completed 2025-12-07) 🚀
+
+- [x] **Performance Tuning**
+  - Increased inventory sync interval to 5 minutes (reduced noise)
+  - Optimized database commit logic for JSON fields (`flag_modified`)
+- [x] **CLI Enhancements**
+  - Updated `nexus-cli` to display Disks and Containers tables in `node get`
+  - Fixed disk type mapping in CLI output
+
+#### Phase 11: Developer Features (Completed 2025-12-07) 🤓
+
+- [x] **Stats for Nerds**
+  - Added raw JSON debug views to Nodes dashboard
+  - Available for Health, Containers, and Storage cards
+  - Toggleable UI element for power users
+
 ---
 
 ## 🚧 In Progress

@@ -4,6 +4,7 @@ Metrics collection service for Nexus Agent.
 Collects system metrics and sends them to Core.
 """
 
+from collections import deque
 import asyncio
 import logging
 import platform
@@ -41,6 +42,7 @@ class MetricsCollector:
         self.api_token = api_token
         self._task: asyncio.Task | None = None
         self._running = False
+        self._buffer: deque[MetricCreate] = deque(maxlen=100)
 
     async def start(self):
         """Start the metrics collection background task."""
@@ -186,7 +188,7 @@ class MetricsCollector:
         Args:
             metrics: Metrics to send
         """
-        url = f"{self.config.core_url}/api/metrics"
+        url = f"{self.config.core_url.rstrip('/')}/api/metrics"
         headers = {
             "Authorization": f"Bearer {self.api_token}",
             "Content-Type": "application/json",
@@ -194,6 +196,7 @@ class MetricsCollector:
 
         try:
             async with httpx.AsyncClient() as client:
+                # 1. Try to send current metric
                 response = await client.post(
                     url,
                     json=metrics.model_dump(mode='json'),
@@ -201,13 +204,34 @@ class MetricsCollector:
                     timeout=10.0,
                 )
                 response.raise_for_status()
+
+                # 2. If successful, try to flush buffer
+                while self._buffer:
+                    buffered_metric = self._buffer[0]  # Peek
+                    try:
+                        response = await client.post(
+                            url,
+                            json=buffered_metric.model_dump(mode='json'),
+                            headers=headers,
+                            timeout=10.0,
+                        )
+                        response.raise_for_status()
+                        self._buffer.popleft()  # Pop on success
+                        logger.debug(f"Flushed buffered metric ({len(self._buffer)} remaining)")
+                    except Exception as e:
+                        logger.warning(f"Failed to flush buffered metric: {e}")
+                        break
+
                 logger.debug(f"Metrics sent successfully: CPU={metrics.cpu_percent:.1f}% "
                            f"MEM={metrics.memory_percent:.1f}% "
                            f"DISK={metrics.disk_percent:.1f}%")
 
         except httpx.HTTPStatusError as e:
             logger.error(f"Failed to send metrics: HTTP {e.response.status_code}")
+            self._buffer.append(metrics)
         except httpx.ConnectError:
             logger.error(f"Failed to connect to Core at {self.config.core_url}")
+            self._buffer.append(metrics)
         except Exception as e:
             logger.error(f"Unexpected error sending metrics: {e}")
+            self._buffer.append(metrics)

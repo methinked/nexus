@@ -32,6 +32,7 @@ class JobType(str, Enum):
     OCR = "ocr"
     SHELL = "shell"
     SYNC = "sync"
+    UPDATE = "update"
 
 
 class JobStatus(str, Enum):
@@ -172,6 +173,14 @@ class ShellJobPayload(JobPayload):
     command: str
     working_dir: Optional[str] = None
     env: Dict[str, str] = Field(default_factory=dict)
+
+
+class UpdateJobPayload(JobPayload):
+    """Payload for update jobs."""
+
+    version: str
+    download_url: str
+    restart_service: bool = True
 
 
 class JobCreate(BaseModel):
@@ -633,6 +642,15 @@ class DiskInfo(BaseModel):
                 "uuid": "abc123-def456"
             }
         }
+
+
+class InventoryUpdate(BaseModel):
+    """Inventory update from agent (Push model)."""
+
+    node_id: UUID
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    disks: list[DiskInfo] = Field(default_factory=list)
+    containers: list[Dict[str, Any]] = Field(default_factory=list)  # Using Dict for flexibility, can iterate to ContainerStatus
 
 
 # ============================================================================
