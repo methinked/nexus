@@ -82,15 +82,17 @@ def list_deployments(
         table = Table(title="Deployments")
 
         table.add_column("ID", style="cyan", no_wrap=True)
-        table.add_column("Service", style="bold")
-        table.add_column("Node")
+        table.add_column("Name", style="bold")
+        table.add_column("Service ID")
+        table.add_column("Node ID")
         table.add_column("Status")
         table.add_column("Created")
 
         for deployment in deployments:
             deployment_id = deployment.get("id", "")[:8]
-            service_name = deployment.get("service_name", "N/A")
-            node_name = deployment.get("node_name", "N/A")
+            name = deployment.get("name", "N/A")
+            service_id = deployment.get("service_id", "")[:8]
+            node_id = deployment.get("node_id", "")[:8]
             dep_status = deployment.get("status", "unknown")
             created = deployment.get("created_at", "N/A")
 
@@ -106,7 +108,7 @@ def list_deployments(
             status_color = get_status_color(dep_status)
             status_display = f"[{status_color}]{dep_status.upper()}[/{status_color}]"
 
-            table.add_row(deployment_id, service_name, node_name, status_display, created)
+            table.add_row(deployment_id, name, service_id, node_id, status_display, created)
 
         console.print(table)
         console.print(f"\n[dim]Total: {len(deployments)} deployments[/dim]")
@@ -201,6 +203,7 @@ def get_deployment(
 def create_deployment(
     service_id: str = typer.Argument(..., help="Service template ID"),
     node_id: str = typer.Argument(..., help="Target node ID"),
+    name: Optional[str] = typer.Option(None, "--name", "-n", help="Deployment name"),
     env: Optional[list[str]] = typer.Option(None, "--env", "-e", help="Override environment variable (KEY=VALUE)"),
 ):
     """
@@ -209,7 +212,7 @@ def create_deployment(
     Deploys a service template to a specific node.
 
     Examples:
-        nexus deployment create f6b858e2 a1b2c3d4
+        nexus deployment create f6b858e2 a1b2c3d4 -n "My App"
         nexus deployment create f6b858e2 a1b2c3d4 -e PORT=8080 -e DEBUG=true
     """
     config = CLIConfig()
@@ -217,6 +220,7 @@ def create_deployment(
     try:
         # Build deployment data
         deployment_data = {
+            "name": name or f"deployment-{service_id[:8]}",
             "service_id": service_id,
             "node_id": node_id,
         }
@@ -239,6 +243,12 @@ def create_deployment(
                 headers=get_headers(config),
                 json=deployment_data,
             )
+            # Handle 422 specifically for UUID validation issues
+            if response.status_code == 422:
+                 console.print(f"[red]Validation Error: {response.text}[/red]")
+                 console.print("[yellow]Tip: Ensure you are using FULL UUIDs for service_id and node_id[/yellow]")
+                 raise typer.Exit(1)
+
             response.raise_for_status()
             result = response.json()
 

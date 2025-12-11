@@ -72,7 +72,7 @@ graph TD
 *   System topology and node discovery
 *   WebSocket real-time updates (instant, no polling)
 *   Unique CLI view showing equivalent commands for every action
-*   📋 **See full UI/UX plan:** [`docs/dashboard-ui-plan.md`](docs/dashboard-ui-plan.md)
+*   📋 **See full UI/UX plan:** [`docs/plans/dashboard-ui-plan.md`](docs/plans/dashboard-ui-plan.md)
 
 **Docker Service Orchestration (Phase 7.1)** - Deploy and manage containerized services
 *   Full REST API for service template management (CRUD operations)
@@ -345,9 +345,11 @@ NEXUS_LOG_CLEANUP_INTERVAL_HOURS=24  # Default: 24 hours
 All documentation is up-to-date and reflects the current implementation:
 - **README.md** - Core features, CLI usage, and getting started guide
 - **docs/api.md** - Complete REST API reference with all endpoints
-- **docs/architecture.md** - System architecture including multi-disk detection and Docker orchestration
-- **docs/CONTRIBUTING.md** - Development guidelines and **error handling best practices**
+- **docs/api.md** - Complete REST API reference with all endpoints
+- **ARCHITECTURE.md** - System architecture including multi-disk detection and Docker orchestration
+- **CONTRIBUTING.md** - Development guidelines and **error handling best practices**
 - **PROGRESS.md** - Development progress and phase completion tracking
+
 - **CONTEXT.md** - Project context and implementation details
 
 ---

@@ -336,6 +336,6 @@ rm -rf ~/nexus
 4. **Submit jobs**: Use `nexus job submit` to test job orchestration
 
 For more details, see:
-- [Architecture Documentation](architecture.md)
+- [Architecture Documentation](../ARCHITECTURE.md)
 - [API Reference](api.md)
 - [CLI Guide](cli.md)

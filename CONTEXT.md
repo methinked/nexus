@@ -1,4 +1,12 @@
-Nexus is a distributed fleet orchestration platform for Debian-based machines with a **CLI-first** and **Docker-first** philosophy. It manages fleets of Raspberry Pis, Ubuntu servers, Debian machines, and any Debian-derivative Linux systems from the command line, with an optional web dashboard. The core focus is on Docker-based service orchestration across the fleet.
+## 1. Project Philosophy
+**"Lightweight Fleet Observability"**
+Nexus is a minimal, agent-based monitoring system for home labs (specifically Raspberry Pi fleets).
+**Core Focus (MVP):** "Info, not Management."
+- **Observe:** Aggregates CPU, RAM, Temps, Storage, and Container status from all nodes.
+- **Visualize:** Presents a unified dashboard for "at a glance" health checks.
+- **Simplicity:** No complex orchestration, no job scheduling, no remote deployment features. Just pure, reliable stats.
+
+*(Previously aiming for "Orchestration/Management", pivoted Dec 2025 to focus on Monitoring MVP due to feature creep).*
 
 **Target Hardware:**
 - Development: Linux laptop (x86_64)
@@ -1366,6 +1374,8 @@ Nexus is shifting from a monitoring-focused platform to a **full fleet orchestra
 
 **Phase 7.3 Status:** ✅ COMPLETE - Tested end-to-end with successful Pi-hole deployment
 
+- **Last Seen:** 2025-12-05 23:17:43 UTC
+- **Connection:** Actively reporting to local Core (HTTP 201 OK)
 **Session 2025-12-06 (Evening - Phase 7.3 Testing & Phase 7.4 Identification):**
 - **Context:** Testing Phase 7.3 Docker orchestration end-to-end on live hardware
 - **Goal:** Deploy Pi-hole to moria-pi to verify the full deployment pipeline
@@ -1462,8 +1472,26 @@ Nexus is shifting from a monitoring-focused platform to a **full fleet orchestra
 **Phase 7.3 Testing COMPLETE!** ✓ - System operational with 2 live agents
 
 **Next Session Goals:**
-- **PRIORITY: Phase 7.4 - Production Hardening:**
-  - Implement auto-Docker installation on agents
+- **PRIORITY: **Session 2025-12-09 (Phase 12 - Production Readiness):**
+- **Deployment Hardening:**
+  - Standardized deployment artifacts in `scripts/` and `docs/systemd/`.
+  - Upgraded `deploy-pi.sh` to be production-grade:
+    - Auto-reads shared secret from `.env`.
+    - Detects and stops existing agents/zombies.
+    - Installs/Enables `nexus-agent` systemd service.
+    - Sets `NEXUS_ENV=production` and `NEXUS_AGENT_HOST=0.0.0.0`.
+  - Verified deployment to `192.168.0.125`.
+- **UI Optimization:**
+  - Addressed user feedback on UI lag.
+  - Refactored `nodes.html` to fetch Health, Metrics, Jobs, Logs, Disks, and Containers in parallel.
+  - Eliminated the "pop-in" effect for storage and containers.
+  - Optimized `dashboard.html` refresh cycle (66% fewer API calls).
+- **Phase 12 Complete!** ✓
+  - System is now more robust and responsive.
+  - ready for Alerting and Scheduling features.
+
+**Phase 7.4: Production Hardening - Docker & Storage (IDENTIFIED 2025-12-06)**
+  - Docker installation on agents
   - Implement external storage detection and configuration
   - Add Docker storage location to agent metadata
   - UI warnings for SD card Docker usage
@@ -1478,62 +1506,51 @@ Nexus is shifting from a monitoring-focused platform to a **full fleet orchestra
 
 ---
 
-## 📍 Current State Assessment (Verified 2025-12-06 23:00 UTC)
+## 📍 Current State Assessment (Verified 2025-12-10 20:30 UTC)
 
 **Environment Verification:**
-- **Development Machine:** Linux Laptop (`gregory-latitude-kubuntu`)
-- **Active Workspace:** Local Linux environment (Kubuntu)
-- **Network:** ZeroTier VPN (10.243.x.x subnet)
+- **Production Network:** 192.168.0.x (Local LAN) + 10.243.x.x (ZeroTier)
+- **Production Core Server:** Orthanc-pi (`10.243.151.228` / `192.168.0.233`)
 
-**Deployed Fleet (VERIFIED VIA SSH):**
+**Deployed Fleet (VERIFIED 3 NODES):**
 
-### Core Server
-- **Host:** Orthanc-pi (10.243.151.228) - Raspberry Pi 4 Model B
-- **Status:** ✅ ONLINE (uptime: ~30 minutes as of check)
-- **URL:** `http://10.243.151.228:8000`
-- **Process:** PID 1983 (started 22:47 UTC)
-- **Health:** Healthy, version 0.1.0
-- **Note:** Core migrated to Orthanc-pi (NOT on laptop as previously documented)
-
-### Agent 1: moria-pi
-- **IP:** 10.243.14.179 (ZeroTier)
-- **Local IP:** 192.168.0.78
-- **Hardware:** Raspberry Pi 3 Model B+
+### 1. Orthanc-pi (Core + Agent)
+- **Role:** Core Server & Agent
+- **IP:** `192.168.0.233` / `10.243.151.228`
+- **Hardware:** Raspberry Pi 4
 - **Status:** ✅ ONLINE
-- **Process:** PID 9901 (agent restarted 13:29 UTC for Docker access)
-- **Node ID:** `2e58e914-4007-44ac-930c-6c8c7910c093`
-- **Docker:** ✅ INSTALLED (v29.1.2, socket permissions configured)
+- **Services:** Nexus Core, Nexus Agent
 - **Deployments:**
-  - **Pi-hole** (pihole-moria-v3):
-    - Container ID: `5257cebbe569`
+  - **Nextcloud** (nextcloud-orthanc-v3):
+    - Container ID: `edc5b3a8`
     - Status: Running & Healthy
-    - Ports: 53/tcp, 53/udp, 80/tcp
-    - Web UI: http://192.168.0.78/admin/
-    - DNS: Operational
-- **Connection:** Actively sending metrics/logs to Core (HTTP 201 OK)
+    - Ports: 8081:80
+    - Storage (Files): `2TB HDD` (`/mnt/data/nextcloud`)
+    - URL: http://192.168.0.233:8081
+  - **MariaDB** (mariadb-orthanc-ssd):
+    - Container ID: `f3af338b`
+    - Status: Running & Healthy
+    - Ports: 3306:3306
+    - Storage (DB): `256GB SSD` (`/opt/nexus/mariadb`)
 
-### Agent 2: Orthanc-pi (Co-located with Core)
-- **IP:** 10.243.151.228 (ZeroTier)
-- **Local IP:** 192.168.0.233
-- **Hardware:** Raspberry Pi 4 Model B
-- **Status:** ✅ ONLINE (uptime: 2 hours 48 minutes)
-- **Processes:**
-  - Core: PID 1983 (started 22:47 UTC)
-  - Agent: PID 2138 (started 22:49 UTC)
-- **Node ID:** `1d51f229-87cc-4880-8acd-1617096eaded`
-- **Last Seen:** 2025-12-05 23:17:43 UTC
-- **Connection:** Actively reporting to local Core (HTTP 201 OK)
+### 2. moria-pi (Agent)
+- **Role:** Agent
+- **IP:** `192.168.0.78` / `10.243.14.179`
+- **Hardware:** Raspberry Pi 3B+
+- **Status:** ✅ ONLINE
+- **Storage:** External HDD (`/mnt/data`) - Docker Root
+
+### 3. bywater-pi (Agent)
+- **Role:** Agent
+- **IP:** `192.168.0.125`
+- **Hardware:** Raspberry Pi (New)
+- **Status:** ✅ ONLINE
+- **Note:** Previously "deployed-agent", now correctly named.
 
 **Fleet Health Summary:**
-- ✅ Core server operational and accepting requests (Orthanc-pi)
-- ✅ 2/2 agents registered and reporting
-- ✅ Metrics collection working (30-second intervals)
-- ✅ Centralized logging operational
-- ✅ WebSocket connections active
-- ✅ **Docker orchestration TESTED and working:**
-  - Pi-hole deployed successfully to moria-pi
-  - End-to-end pipeline verified (template → API → agent → container)
-- 🎯 Both agents using local network IPs (192.168.0.x) + ZeroTier overlay
+- ✅ Production Core is `192.168.0.233` (Orthanc-pi).
+- ✅ All 3 agents are registered to Production Core.
+- ✅ Container orchestration verified on `moria-pi`.
 
 **Phase 7.4 Priority Items (Production Hardening):**
 - ⚠️ Docker auto-installation on agents (currently manual)
@@ -1572,3 +1589,18 @@ Nexus is shifting from a monitoring-focused platform to a **full fleet orchestra
 - UI showing real-time inventory and metrics.
 - "Stats for Nerds" enabled for advanced debugging.
 - Production ready for extended monitoring usage.
+
+**Session 2025-12-10 (Fix Agent Naming & Production Core Discovery):**
+- **Debugged Agent Naming Issue:**
+  - Problem: Redeployed agents weren't updating their names in Core (stuck as "deployed-agent" or old names).
+  - Fix: Added `update_node_info` to agent startup to force-sync name from config.
+  - Fix: Reset agent state (`agent_state.json`) to force fresh registration.
+- **Production Core Discovery:**
+  - Identified confusion between "Ghost Core" (192.168.0.102 - dev laptop) and "Production Core" (192.168.0.233 - Orthanc-pi).
+  - Confirmed Production Core is the source of truth for the dashboard.
+- **Fleet Recovery:**
+  - Fixed `bywater-pi` (192.168.0.125): Was misnamed "deployed-agent" on Ghost Core. Redeployed to Production Core.
+  - Fixed `moria-pi` (192.168.0.78): Was registered to Ghost Core. Redeployed to Production Core.
+  - `Orthanc-pi` (192.168.0.233): Confirmed healthy as Core + Agent.
+- **Result:**
+  - All 3 Raspberry Pis are now ONLINE and correctly named in the Production Dashboard.

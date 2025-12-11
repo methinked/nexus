@@ -114,217 +114,229 @@
             </nav>
         </div>
 
-        <!-- Jobs Table -->
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-800/50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                            Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Type
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Node
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                            Command</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                            Created</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                            Duration</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                            Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-700">
-                    <template x-for="job in filteredJobs" :key="job.id">
-                        <tr class="hover:bg-gray-800/50 cursor-pointer" @click="selectedJob = job">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="status-badge" :class="`status-${job.status}`" x-text="job.status"></span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm font-mono uppercase" x-text="job.type"></span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm" x-text="getNodeName(job.node_id)"></span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="text-sm font-mono text-gray-300" x-text="getJobCommand(job)"></span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400"
-                                x-text="formatDate(job.created_at)"></td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400" x-text="getJobDuration(job)">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <button @click.stop="viewJobDetails(job)" class="text-purple-500 hover:text-purple-400">
-                                    Details
-                                </button>
-                            </td>
-                        </tr>
-                    </template>
-                </tbody>
-            </table>
-
-            <!-- Empty State -->
-            <div x-show="filteredJobs.length === 0" class="text-center py-12 text-gray-500">
-                <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                <p class="font-semibold">No jobs found</p>
-                <p class="text-sm mt-2">Submit a job to get started</p>
-            </div>
-        </div>
     </div>
 
-    <!-- Job Details Modal -->
-    <div x-show="selectedJob" x-cloak @click.self="selectedJob = null"
-        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="bg-gray-800 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <template x-if="selectedJob">
-                <div>
-                    <!-- Modal Header -->
-                    <div class="flex items-center justify-between p-6 border-b border-gray-700">
-                        <div class="flex items-center space-x-4">
-                            <h3 class="text-xl font-bold">Job Details</h3>
-                            <span class="status-badge" :class="`status-${selectedJob.status}`"
-                                x-text="selectedJob.status"></span>
+    <!-- Loading State -->
+    <div x-show="loading" class="text-center py-12">
+        <svg class="animate-spin h-8 w-8 text-purple-500 mx-auto" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
+        </svg>
+        <p class="text-gray-400 mt-2">Loading jobs...</p>
+    </div>
+
+    <!-- Jobs Table -->
+    <div x-show="!loading" class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-800/50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Type
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Node
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Command</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Created</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Duration</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-700">
+                <template x-for="job in filteredJobs" :key="job.id">
+                    <tr class="hover:bg-gray-800/50 cursor-pointer" @click="selectedJob = job">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="status-badge" :class="`status-${job.status}`" x-text="job.status"></span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-mono uppercase" x-text="job.type"></span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm" x-text="getNodeName(job.node_id)"></span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-sm font-mono text-gray-300" x-text="getJobCommand(job)"></span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400"
+                            x-text="formatDate(job.created_at)"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400" x-text="getJobDuration(job)">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <button @click.stop="viewJobDetails(job)" class="text-purple-500 hover:text-purple-400">
+                                Details
+                            </button>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+
+        <!-- Empty State -->
+        <div x-show="filteredJobs.length === 0" class="text-center py-12 text-gray-500">
+            <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p class="font-semibold">No jobs found</p>
+            <p class="text-sm mt-2">Submit a job to get started</p>
+        </div>
+    </div>
+</div>
+
+<!-- Job Details Modal -->
+<div x-show="selectedJob" x-cloak @click.self="selectedJob = null"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-gray-800 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <template x-if="selectedJob">
+            <div>
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between p-6 border-b border-gray-700">
+                    <div class="flex items-center space-x-4">
+                        <h3 class="text-xl font-bold">Job Details</h3>
+                        <span class="status-badge" :class="`status-${selectedJob.status}`"
+                            x-text="selectedJob.status"></span>
+                    </div>
+                    <button @click="selectedJob = null" class="text-gray-400 hover:text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="p-6 space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-400">Job ID</p>
+                            <p class="font-mono text-sm mt-1" x-text="selectedJob.id"></p>
                         </div>
-                        <button @click="selectedJob = null" class="text-gray-400 hover:text-white">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                        <div>
+                            <p class="text-sm text-gray-400">Type</p>
+                            <p class="font-mono text-sm mt-1 uppercase" x-text="selectedJob.type"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400">Node</p>
+                            <p class="text-sm mt-1" x-text="getNodeName(selectedJob.node_id)"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400">Created</p>
+                            <p class="text-sm mt-1" x-text="formatDate(selectedJob.created_at)"></p>
+                        </div>
+                        <div x-show="selectedJob.started_at">
+                            <p class="text-sm text-gray-400">Started</p>
+                            <p class="text-sm mt-1" x-text="formatDate(selectedJob.started_at)"></p>
+                        </div>
+                        <div x-show="selectedJob.completed_at">
+                            <p class="text-sm text-gray-400">Completed</p>
+                            <p class="text-sm mt-1" x-text="formatDate(selectedJob.completed_at)"></p>
+                        </div>
                     </div>
 
-                    <!-- Modal Body -->
-                    <div class="p-6 space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-sm text-gray-400">Job ID</p>
-                                <p class="font-mono text-sm mt-1" x-text="selectedJob.id"></p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-400">Type</p>
-                                <p class="font-mono text-sm mt-1 uppercase" x-text="selectedJob.type"></p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-400">Node</p>
-                                <p class="text-sm mt-1" x-text="getNodeName(selectedJob.node_id)"></p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-400">Created</p>
-                                <p class="text-sm mt-1" x-text="formatDate(selectedJob.created_at)"></p>
-                            </div>
-                            <div x-show="selectedJob.started_at">
-                                <p class="text-sm text-gray-400">Started</p>
-                                <p class="text-sm mt-1" x-text="formatDate(selectedJob.started_at)"></p>
-                            </div>
-                            <div x-show="selectedJob.completed_at">
-                                <p class="text-sm text-gray-400">Completed</p>
-                                <p class="text-sm mt-1" x-text="formatDate(selectedJob.completed_at)"></p>
-                            </div>
-                        </div>
+                    <div>
+                        <p class="text-sm text-gray-400 mb-2">Command</p>
+                        <pre class="bg-gray-900 p-4 rounded-lg text-sm font-mono overflow-x-auto"
+                            x-text="getJobCommand(selectedJob)"></pre>
+                    </div>
 
-                        <div>
-                            <p class="text-sm text-gray-400 mb-2">Command</p>
-                            <pre class="bg-gray-900 p-4 rounded-lg text-sm font-mono overflow-x-auto"
-                                x-text="getJobCommand(selectedJob)"></pre>
-                        </div>
+                    <div x-show="selectedJob.result">
+                        <p class="text-sm text-gray-400 mb-2">Output</p>
+                        <pre class="bg-gray-900 p-4 rounded-lg text-sm font-mono overflow-x-auto max-h-96"
+                            x-text="selectedJob.result?.output || 'No output'"></pre>
+                    </div>
 
-                        <div x-show="selectedJob.result">
-                            <p class="text-sm text-gray-400 mb-2">Output</p>
-                            <pre class="bg-gray-900 p-4 rounded-lg text-sm font-mono overflow-x-auto max-h-96"
-                                x-text="selectedJob.result?.output || 'No output'"></pre>
-                        </div>
-
-                        <div x-show="selectedJob.result?.error">
-                            <p class="text-sm text-red-400 mb-2">Error</p>
-                            <pre class="bg-red-900/20 border border-red-900 p-4 rounded-lg text-sm font-mono overflow-x-auto"
-                                x-text="selectedJob.result?.error"></pre>
-                        </div>
+                    <div x-show="selectedJob.result?.error">
+                        <p class="text-sm text-red-400 mb-2">Error</p>
+                        <pre class="bg-red-900/20 border border-red-900 p-4 rounded-lg text-sm font-mono overflow-x-auto"
+                            x-text="selectedJob.result?.error"></pre>
                     </div>
                 </div>
-            </template>
-        </div>
+            </div>
+        </template>
     </div>
+</div>
 
-    <!-- Job Submit Form Modal -->
-    <div x-show="showSubmitForm" x-cloak @click.self="showSubmitForm = false"
-        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="bg-gray-800 rounded-lg max-w-2xl w-full">
-            <div class="flex items-center justify-between p-6 border-b border-gray-700">
-                <h3 class="text-xl font-bold">Submit New Job</h3>
-                <button @click="showSubmitForm = false" class="text-gray-400 hover:text-white">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
+<!-- Job Submit Form Modal -->
+<div x-show="showSubmitForm" x-cloak @click.self="showSubmitForm = false"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-gray-800 rounded-lg max-w-2xl w-full">
+        <div class="flex items-center justify-between p-6 border-b border-gray-700">
+            <h3 class="text-xl font-bold">Submit New Job</h3>
+            <button @click="showSubmitForm = false" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <form @submit.prevent="submitJob" class="p-6 space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Job Type</label>
+                <select x-model="newJob.type"
+                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white">
+                    <option value="shell">Shell Command</option>
+                    <option value="ocr" disabled>OCR (Coming Soon)</option>
+                    <option value="sync" disabled>Sync (Coming Soon)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Target Node</label>
+                <select x-model="newJob.node_id"
+                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white">
+                    <option value="">Select a node...</option>
+                    <template x-for="node in nodes" :key="node.id">
+                        <option :value="node.id" x-text="node.name + ' (' + node.ip_address + ')'"></option>
+                    </template>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Command</label>
+                <textarea x-model="newJob.command" rows="4" placeholder="ls -la"
+                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white font-mono text-sm"
+                    required></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Timeout (seconds)</label>
+                <input type="number" x-model="newJob.timeout" min="1" max="3600"
+                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white" placeholder="300">
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" @click="showSubmitForm = false"
+                    class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">
+                    Cancel
+                </button>
+                <button type="submit" :disabled="submitting"
+                    class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+                    <svg x-show="submitting" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
                     </svg>
+                    <span x-text="submitting ? 'Submitting...' : 'Submit Job'"></span>
                 </button>
             </div>
-
-            <form @submit.prevent="submitJob" class="p-6 space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Job Type</label>
-                    <select x-model="newJob.type"
-                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white">
-                        <option value="shell">Shell Command</option>
-                        <option value="ocr" disabled>OCR (Coming Soon)</option>
-                        <option value="sync" disabled>Sync (Coming Soon)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Target Node</label>
-                    <select x-model="newJob.node_id"
-                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white">
-                        <option value="">Select a node...</option>
-                        <template x-for="node in nodes" :key="node.id">
-                            <option :value="node.id" x-text="node.name + ' (' + node.ip_address + ')'"></option>
-                        </template>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Command</label>
-                    <textarea x-model="newJob.command" rows="4" placeholder="ls -la"
-                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white font-mono text-sm"
-                        required></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Timeout (seconds)</label>
-                    <input type="number" x-model="newJob.timeout" min="1" max="3600"
-                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
-                        placeholder="300">
-                </div>
-
-                <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" @click="showSubmitForm = false"
-                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">
-                        Cancel
-                    </button>
-                    <button type="submit" :disabled="submitting"
-                        class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
-                        <svg x-show="submitting" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none"
-                            viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                            </circle>
-                            <path class="opacity-75" fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                            </path>
-                        </svg>
-                        <span x-text="submitting ? 'Submitting...' : 'Submit Job'"></span>
-                    </button>
-                </div>
-            </form>
-        </div>
+        </form>
     </div>
+</div>
 </div>
 
 <script>
     function jobsPage() {
         return {
+            loading: true,
             jobs: [],
             nodes: [],
             filterStatus: 'all',
@@ -360,6 +372,7 @@
             async init() {
                 await this.loadJobs();
                 await this.loadNodes();
+                this.loading = false;
 
                 // Set up WebSocket for real-time updates
                 if (window.wsClient) {

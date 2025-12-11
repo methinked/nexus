@@ -176,65 +176,66 @@ def create_service(
     config = CLIConfig()
 
     try:
-        # Build service template data
-        service_data = {
-            "name": name,
+        # Build Docker Compose structure
+        service_def = {
             "image": image,
+            "restart": "unless-stopped",
         }
-
-        if description:
-            service_data["description"] = description
 
         # Parse ports
         if port:
-            ports = []
+            ports_list = []
             for p in port:
-                parts = p.split(":")
-                if len(parts) != 2:
+                # Validate format
+                if ":" not in p:
                     console.print(f"[red]Invalid port format: {p}. Use host:container or host:container/protocol[/red]")
                     raise typer.Exit(1)
-
-                host_port = parts[0]
-                container_part = parts[1]
-
-                # Check for protocol
-                protocol = "tcp"
-                if "/" in container_part:
-                    container_port, protocol = container_part.split("/")
-                else:
-                    container_port = container_part
-
-                ports.append({
-                    "host": int(host_port),
-                    "container": int(container_port),
-                    "protocol": protocol
-                })
-            service_data["ports"] = ports
+                ports_list.append(p)
+            service_def["ports"] = ports_list
 
         # Parse volumes
         if volume:
-            volumes = []
+            volumes_list = []
             for v in volume:
-                parts = v.split(":")
-                if len(parts) != 2:
+                if ":" not in v:
                     console.print(f"[red]Invalid volume format: {v}. Use host:container[/red]")
                     raise typer.Exit(1)
-                volumes.append({
-                    "host": parts[0],
-                    "container": parts[1]
-                })
-            service_data["volumes"] = volumes
+                volumes_list.append(v)
+            service_def["volumes"] = volumes_list
 
         # Parse environment variables
+        environment_dict = {}
         if env:
-            environment = {}
             for e in env:
                 if "=" not in e:
                     console.print(f"[red]Invalid environment format: {e}. Use KEY=VALUE[/red]")
                     raise typer.Exit(1)
                 key, value = e.split("=", 1)
-                environment[key] = value
-            service_data["environment"] = environment
+                environment_dict[key] = value
+            service_def["environment"] = environment_dict
+
+        # Create full compose dict
+        compose_data = {
+            "version": "3.8",
+            "services": {
+                name: service_def
+            }
+        }
+
+        # dump to yaml string
+        import yaml
+        docker_compose_yaml = yaml.dump(compose_data, default_flow_style=False)
+
+        # Build service template data
+        service_data = {
+            "name": name,
+            "display_name": name.title().replace("-", " "),  # Generate a display name
+            "description": description or f"Service {name}",
+            "version": "latest",  # Default version
+            "category": "general",
+            "docker_compose": docker_compose_yaml,
+            "default_env": environment_dict,
+        }
 
         # Create service template
         with httpx.Client(timeout=10.0) as client:

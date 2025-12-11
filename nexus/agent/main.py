@@ -134,6 +134,37 @@ async def register_with_core(docker_storage_info: dict = None) -> tuple[UUID, st
     return registered_node_id, registered_token
 
 
+async def update_node_info(node_id: UUID, api_token: str):
+    """
+    Update node information (name) on Core.
+
+    This ensures that if the agent configuration changes (e.g. name change),
+    the Core is updated even if the node was already registered.
+    """
+    url = f"{config.core_url}/api/nodes/{node_id}"
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+    }
+
+    # We only update the name for now
+    payload = {
+        "name": config.node_name
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.put(
+                url,
+                json=payload,
+                headers=headers,
+                timeout=5.0,
+            )
+            response.raise_for_status()
+            logger.info(f"Updated node info on Core: name={config.node_name}")
+        except Exception as e:
+            logger.warning(f"Failed to update node info: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -202,6 +233,8 @@ async def lifespan(app: FastAPI):
             raise
     else:
         logger.info(f"Using existing registration: node_id={node_id}")
+        # Ensure Core has the latest name from specific config
+        await update_node_info(node_id, api_token)
 
     # Start metrics collection
     metrics_collector = MetricsCollector(config, node_id, api_token)

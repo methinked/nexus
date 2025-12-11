@@ -29,12 +29,12 @@
             </div>
         </div>
 
-        <!-- Jobs -->
+        <!-- Containers -->
         <div class="stat-card hover-lift">
-            <div class="stat-card-label">Jobs</div>
-            <div class="stat-card-value" id="stat-jobs">-</div>
+            <div class="stat-card-label">Running Containers</div>
+            <div class="stat-card-value" id="stat-containers">-</div>
             <div class="text-sm mt-2">
-                <span class="text-blue-400" id="stat-running">-</span> running
+                <span class="text-blue-400">Inventory</span>
             </div>
         </div>
 
@@ -59,7 +59,7 @@
     <div class="card">
         <div class="card-header flex items-center justify-between">
             <h2 class="text-xl font-semibold">Fleet Topology</h2>
-            <button onclick="loadNodes()" class="text-sm text-purple-400 hover:text-purple-300">
+            <button onclick="refreshDashboard()" class="text-sm text-purple-400 hover:text-purple-300">
                 Refresh
             </button>
         </div>
@@ -154,10 +154,15 @@
         icon.classList.add('animate-spin');
 
         try {
+            // Fetch nodes once and reuse
+            const nodesResponse = await fetch('/api/nodes');
+            const nodesData = await nodesResponse.json();
+            const nodes = nodesData.nodes || [];
+
             await Promise.all([
-                loadStats(),
-                loadNodes(),
-                loadChartData() // Explicitly reload charts on manual refresh
+                loadStats(nodes),
+                renderTopology(nodes),
+                loadChartData(nodes)
             ]);
             showToast('success', 'Dashboard updated');
         } catch (error) {
@@ -170,7 +175,7 @@
         }
     }
 
-    async function loadStats() {
+    async function loadStats(nodes) {
         try {
             // Fetch Core health (includes hostname)
             const healthResponse = await fetch('/health');
@@ -183,12 +188,9 @@
                 hostnameEl.title = `Core server running on ${healthData.hostname}`;
             }
 
-            // Fetch nodes
-            const nodesResponse = await fetch('/api/nodes');
-            const nodesData = await nodesResponse.json();
-
-            const totalNodes = nodesData.nodes.length;
-            const onlineNodes = nodesData.nodes.filter(n => n.status === 'online').length;
+            // Use provided nodes
+            const totalNodes = nodes.length;
+            const onlineNodes = nodes.filter(n => n.status === 'online').length;
 
             document.getElementById('stat-nodes').textContent = totalNodes;
             document.getElementById('stat-online').textContent = onlineNodes;
@@ -197,16 +199,19 @@
             document.getElementById('sidebar-nodes-count').textContent = totalNodes;
             document.getElementById('sidebar-online-count').textContent = onlineNodes;
 
-            // Fetch jobs
-            const jobsResponse = await fetch('/api/jobs');
-            const jobsData = await jobsResponse.json();
+            // Calculate total containers from all nodes inventory
+            let totalContainers = 0;
+            // Note: We need full node details (with metadata) for this.
+            // If the `/api/nodes` list doesn't include full metadata, we might need to fetch it.
+            // However, looking at `api/nodes.py`, it does return `metadata` dict which includes `inventory`.
 
-            const totalJobs = jobsData.total;
-            const runningJobs = jobsData.jobs.filter(j => j.status === 'running').length;
+            nodes.forEach(node => {
+                if (node.metadata && node.metadata.inventory && node.metadata.inventory.containers) {
+                    totalContainers += node.metadata.inventory.containers.length;
+                }
+            });
 
-            document.getElementById('stat-jobs').textContent = totalJobs;
-            document.getElementById('stat-running').textContent = runningJobs;
-            document.getElementById('sidebar-jobs-count').textContent = runningJobs;
+            document.getElementById('stat-containers').textContent = totalContainers;
 
         } catch (error) {
             console.error('Error loading stats:', error);
@@ -214,14 +219,11 @@
         }
     }
 
-    async function loadNodes() {
+    async function renderTopology(nodes) {
         try {
-            const response = await fetch('/api/nodes');
-            const data = await response.json();
-
             const topologyView = document.getElementById('topology-view');
 
-            if (data.nodes.length === 0) {
+            if (nodes.length === 0) {
                 topologyView.innerHTML = `
                 <div class="text-center py-12 text-gray-500">
                     <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -238,7 +240,7 @@
             let html = '<div class="space-y-2">';
             html += '<div class="text-center mb-4"><div class="inline-block px-4 py-2 bg-purple-600 rounded-lg font-semibold">Nexus Core</div></div>';
 
-            for (const node of data.nodes) {
+            for (const node of nodes) {
                 const statusColor = node.status === 'online' ? 'green' : 'gray';
                 const statusIcon = node.status === 'online' ? '🟢' : '⚫';
 
@@ -321,18 +323,22 @@
         loadChartData();
     }
 
-    async function loadChartData() {
+    async function loadChartData(nodes) {
         try {
-            // Fetch nodes first
-            const nodesResponse = await fetch('/api/nodes');
-            const nodesData = await nodesResponse.json();
+            // Fetch nodes if not provided
+            let currentNodes = nodes;
+            if (!currentNodes) {
+                const nodesResponse = await fetch('/api/nodes');
+                const nodesData = await nodesResponse.json();
+                currentNodes = nodesData.nodes;
+            }
 
-            if (nodesData.nodes.length === 0) {
+            if (currentNodes.length === 0) {
                 return;
             }
 
             // Fetch metrics for all nodes
-            const metricsPromises = nodesData.nodes.map(async node => {
+            const metricsPromises = currentNodes.map(async node => {
                 const response = await fetch(`/api/metrics/${node.id}?limit=50`);
                 const data = await response.json();
                 return {

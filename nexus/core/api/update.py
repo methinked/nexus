@@ -52,8 +52,8 @@ def create_source_bundle() -> io.BytesIO:
                 full_path = os.path.join(root, file)
                 rel_path = os.path.relpath(full_path, base_dir)
                 
-                # Only include relevant paths (nexus/ package, setup scripts, requirements)
-                if rel_path.startswith("nexus/") or rel_path in ["requirements.txt", "setup.py", "setup-agent.sh"]:
+                # Only include relevant paths (nexus/ package, scripts/, setup scripts, requirements)
+                if rel_path.startswith("nexus/") or rel_path.startswith("scripts/") or rel_path in ["requirements.txt", "setup.py"]:
                     tar.add(full_path, arcname=rel_path)
                     
     buffer.seek(0)

@@ -599,56 +599,65 @@
 
             async loadNodeDetails(nodeId) {
                 try {
-                    // Load health status
-                    const healthResponse = await fetch(`/api/nodes/${nodeId}/health`);
-                    this.healthStatus = await healthResponse.json();
+                    // Fetch all data in parallel
+                    const [
+                        healthResult,
+                        metricsResult,
+                        jobsResult,
+                        logsResult,
+                        disksResult,
+                        containersResult
+                    ] = await Promise.allSettled([
+                        fetch(`/api/nodes/${nodeId}/health`).then(r => r.json()),
+                        fetch(`/api/metrics/${nodeId}?limit=50`).then(r => r.json()),
+                        fetch(`/api/jobs?node_id=${nodeId}&limit=5`).then(r => r.json()),
+                        fetch(`/api/logs/${nodeId}?limit=20`).then(r => r.json()),
+                        fetch(`/api/nodes/${nodeId}/disks?ts=${Date.now()}`).then(async r => {
+                            if (!r.ok) throw new Error(r.status);
+                            return r.json();
+                        }),
+                        fetch(`/api/nodes/${nodeId}/containers?show_all=true&ts=${Date.now()}`).then(async r => {
+                            if (!r.ok) throw new Error(r.status);
+                            return r.json();
+                        })
+                    ]);
 
-                    // Load metrics and create charts
-                    const metricsResponse = await fetch(`/api/metrics/${nodeId}?limit=50`);
-                    const metricsData = await metricsResponse.json();
-                    this.latestMetrics = (metricsData.metrics || []).reverse(); // Newest first
-                    this.createCharts(this.latestMetrics);
+                    // Process Health
+                    this.healthStatus = healthResult.status === 'fulfilled' ? healthResult.value : null;
 
-                    // Load recent jobs
-                    const jobsResponse = await fetch(`/api/jobs?node_id=${nodeId}&limit=5`);
-                    const jobsData = await jobsResponse.json();
-                    this.recentJobs = jobsData.jobs || [];
+                    // Process Metrics
+                    if (metricsResult.status === 'fulfilled') {
+                        const metricsData = metricsResult.value;
+                        this.latestMetrics = (metricsData.metrics || []).reverse();
+                        this.createCharts(this.latestMetrics);
+                    } else {
+                        this.latestMetrics = [];
+                    }
 
-                    // Load recent logs
-                    const logsResponse = await fetch(`/api/logs/${nodeId}?limit=20`);
-                    const logsData = await logsResponse.json();
-                    this.recentLogs = logsData.logs || [];
+                    // Process Jobs
+                    this.recentJobs = jobsResult.status === 'fulfilled' ? (jobsResult.value.jobs || []) : [];
 
-                    // Load disk information
-                    try {
-                        const disksResponse = await fetch(`/api/nodes/${nodeId}/disks`);
-                        if (disksResponse.ok) {
-                            this.disks = await disksResponse.json();
-                            this.disksError = false;
-                        } else {
-                            console.warn('Failed to load disk information:', disksResponse.status);
-                            this.disks = [];
-                            this.disksError = true;
-                        }
-                    } catch (error) {
-                        console.warn('Failed to load disk information:', error);
+                    // Process Logs
+                    this.recentLogs = logsResult.status === 'fulfilled' ? (logsResult.value.logs || []) : [];
+
+                    // Process Disks
+                    if (disksResult.status === 'fulfilled') {
+                        this.disks = disksResult.value;
+                        this.disksError = false;
+                    } else {
+                        console.warn('Failed to load disk information');
                         this.disks = [];
                         this.disksError = true;
                     }
 
-                    // Load containers
-                    try {
-                        const containersResponse = await fetch(`/api/nodes/${nodeId}/containers?show_all=true`);
-                        if (containersResponse.ok) {
-                            const data = await containersResponse.json();
-                            this.containers = data.containers || [];
-                        } else {
-                            this.containers = [];
-                        }
-                    } catch (error) {
-                        console.warn('Failed to load containers:', error);
+                    // Process Containers
+                    if (containersResult.status === 'fulfilled') {
+                        this.containers = containersResult.value.containers || [];
+                    } else {
+                        console.warn('Failed to load containers');
                         this.containers = [];
                     }
+
                 } catch (error) {
                     console.error('Failed to load node details:', error);
                 }
@@ -656,36 +665,45 @@
 
             async refreshNodeData(nodeId) {
                 try {
-                    // Refresh metrics and update charts
-                    const metricsResponse = await fetch(`/api/metrics/${nodeId}?limit=50`);
-                    const metricsData = await metricsResponse.json();
-                    this.latestMetrics = (metricsData.metrics || []).reverse(); // Newest first
-                    this.updateChartData(this.latestMetrics);
+                    const [
+                        metricsResult,
+                        healthResult,
+                        disksResult,
+                        containersResult
+                    ] = await Promise.allSettled([
+                        fetch(`/api/metrics/${nodeId}?limit=50`).then(r => r.json()),
+                        fetch(`/api/nodes/${nodeId}/health`).then(r => r.json()),
+                        fetch(`/api/nodes/${nodeId}/disks?ts=${Date.now()}`).then(async r => {
+                            if (!r.ok) throw new Error(r.status);
+                            return r.json();
+                        }),
+                        fetch(`/api/nodes/${nodeId}/containers?show_all=true&ts=${Date.now()}`).then(async r => {
+                            if (!r.ok) throw new Error(r.status);
+                            return r.json();
+                        })
+                    ]);
 
-                    // Refresh health status
-                    const healthResponse = await fetch(`/api/nodes/${nodeId}/health`);
-                    this.healthStatus = await healthResponse.json();
-
-                    // Refresh disks (Inventory)
-                    try {
-                        const disksResponse = await fetch(`/api/nodes/${nodeId}/disks`);
-                        if (disksResponse.ok) {
-                            this.disks = await disksResponse.json();
-                            this.disksError = false;
-                        }
-                    } catch (e) {
-                        console.warn('Failed to refresh disks', e);
+                    // Update Metrics
+                    if (metricsResult.status === 'fulfilled') {
+                        const metricsData = metricsResult.value;
+                        this.latestMetrics = (metricsData.metrics || []).reverse();
+                        this.updateChartData(this.latestMetrics);
                     }
 
-                    // Refresh containers (Inventory)
-                    try {
-                        const containersResponse = await fetch(`/api/nodes/${nodeId}/containers?show_all=true`);
-                        if (containersResponse.ok) {
-                            const data = await containersResponse.json();
-                            this.containers = data.containers || [];
-                        }
-                    } catch (e) {
-                        console.warn('Failed to refresh containers', e);
+                    // Update Health
+                    if (healthResult.status === 'fulfilled') {
+                        this.healthStatus = healthResult.value;
+                    }
+
+                    // Update Disks
+                    if (disksResult.status === 'fulfilled') {
+                        this.disks = disksResult.value;
+                        this.disksError = false;
+                    }
+
+                    // Update Containers
+                    if (containersResult.status === 'fulfilled') {
+                        this.containers = containersResult.value.containers || [];
                     }
 
                 } catch (error) {

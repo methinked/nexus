@@ -10,7 +10,8 @@
         </div>
         <button @click="refreshLogs()" class="btn-primary">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             Refresh
         </button>
@@ -47,24 +48,31 @@
                 <!-- Source Filter -->
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">Source</label>
-                    <input type="text" x-model="filters.source" @input="applyFilters()" placeholder="Filter by source..." class="input w-full">
+                    <input type="text" x-model="filters.source" @input="applyFilters()"
+                        placeholder="Filter by source..." class="input w-full">
                 </div>
 
                 <!-- Search -->
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">Search</label>
-                    <input type="text" x-model="filters.search" @input="applyFilters()" placeholder="Search message..." class="input w-full">
+                    <input type="text" x-model="filters.search" @input="applyFilters()" placeholder="Search message..."
+                        class="input w-full">
                 </div>
             </div>
 
             <!-- Time Range -->
             <div class="mt-4 flex items-center space-x-4">
                 <label class="text-sm font-medium text-gray-300">Last:</label>
-                <button @click="setTimeRange(1)" :class="filters.hours === 1 ? 'btn-primary' : 'btn'" class="text-sm">1 Hour</button>
-                <button @click="setTimeRange(6)" :class="filters.hours === 6 ? 'btn-primary' : 'btn'" class="text-sm">6 Hours</button>
-                <button @click="setTimeRange(24)" :class="filters.hours === 24 ? 'btn-primary' : 'btn'" class="text-sm">24 Hours</button>
-                <button @click="setTimeRange(168)" :class="filters.hours === 168 ? 'btn-primary' : 'btn'" class="text-sm">7 Days</button>
-                <button @click="setTimeRange(0)" :class="filters.hours === 0 ? 'btn-primary' : 'btn'" class="text-sm">All Time</button>
+                <button @click="setTimeRange(1)" :class="filters.hours === 1 ? 'btn-primary' : 'btn'" class="text-sm">1
+                    Hour</button>
+                <button @click="setTimeRange(6)" :class="filters.hours === 6 ? 'btn-primary' : 'btn'" class="text-sm">6
+                    Hours</button>
+                <button @click="setTimeRange(24)" :class="filters.hours === 24 ? 'btn-primary' : 'btn'"
+                    class="text-sm">24 Hours</button>
+                <button @click="setTimeRange(168)" :class="filters.hours === 168 ? 'btn-primary' : 'btn'"
+                    class="text-sm">7 Days</button>
+                <button @click="setTimeRange(0)" :class="filters.hours === 0 ? 'btn-primary' : 'btn'"
+                    class="text-sm">All Time</button>
             </div>
         </div>
     </div>
@@ -88,8 +96,11 @@
                             <tr>
                                 <td colspan="5" class="px-6 py-12 text-center text-gray-500">
                                     <svg class="animate-spin h-8 w-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
                                     </svg>
                                     Loading logs...
                                 </td>
@@ -104,14 +115,17 @@
                         </template>
                         <template x-for="log in paginatedLogs" :key="log.id">
                             <tr class="hover:bg-gray-800 cursor-pointer" @click="selectedLog = log; showDetails = true">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400" x-text="formatTime(log.timestamp)"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400"
+                                    x-text="formatTime(log.timestamp)"></td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span :class="getLevelBadgeClass(log.level)" x-text="log.level.toUpperCase()"></span>
+                                    <span :class="getLevelBadgeClass(log.level)"
+                                        x-text="log.level.toUpperCase()"></span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                                     <span x-text="getNodeName(log.node_id)"></span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 font-mono text-xs" x-text="log.source"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 font-mono text-xs"
+                                    x-text="log.source"></td>
                                 <td class="px-6 py-4 text-sm text-gray-300">
                                     <div class="max-w-2xl truncate" x-text="log.message"></div>
                                 </td>
@@ -129,22 +143,27 @@
                     <span x-text="filteredLogs.length"></span> logs
                 </div>
                 <div class="flex space-x-2">
-                    <button @click="previousPage()" :disabled="currentPage === 1" class="btn text-sm" :class="currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''">Previous</button>
-                    <span class="px-4 py-2 text-sm text-gray-400">Page <span x-text="currentPage"></span> of <span x-text="totalPages"></span></span>
-                    <button @click="nextPage()" :disabled="currentPage === totalPages" class="btn text-sm" :class="currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''">Next</button>
+                    <button @click="previousPage()" :disabled="currentPage === 1" class="btn text-sm"
+                        :class="currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''">Previous</button>
+                    <span class="px-4 py-2 text-sm text-gray-400">Page <span x-text="currentPage"></span> of <span
+                            x-text="totalPages"></span></span>
+                    <button @click="nextPage()" :disabled="currentPage === totalPages" class="btn text-sm"
+                        :class="currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''">Next</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Log Detail Modal -->
-    <div x-show="showDetails" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showDetails = false">
+    <div x-show="showDetails" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        @click.self="showDetails = false">
         <div class="bg-gray-900 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-start mb-4">
                 <h2 class="text-2xl font-bold">Log Details</h2>
                 <button @click="showDetails = false" class="text-gray-400 hover:text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -158,7 +177,8 @@
                         </div>
                         <div>
                             <div class="text-sm text-gray-400">Level</div>
-                            <div><span :class="getLevelBadgeClass(selectedLog.level)" x-text="selectedLog.level.toUpperCase()"></span></div>
+                            <div><span :class="getLevelBadgeClass(selectedLog.level)"
+                                    x-text="selectedLog.level.toUpperCase()"></span></div>
                         </div>
                         <div>
                             <div class="text-sm text-gray-400">Node</div>
@@ -172,13 +192,15 @@
 
                     <div>
                         <div class="text-sm text-gray-400 mb-2">Message</div>
-                        <div class="bg-gray-800 p-4 rounded font-mono text-sm whitespace-pre-wrap" x-text="selectedLog.message"></div>
+                        <div class="bg-gray-800 p-4 rounded font-mono text-sm whitespace-pre-wrap"
+                            x-text="selectedLog.message"></div>
                     </div>
 
                     <template x-if="selectedLog.extra && Object.keys(selectedLog.extra).length > 0">
                         <div>
                             <div class="text-sm text-gray-400 mb-2">Extra Data</div>
-                            <pre class="bg-gray-800 p-4 rounded text-xs overflow-x-auto" x-text="JSON.stringify(selectedLog.extra, null, 2)"></pre>
+                            <pre class="bg-gray-800 p-4 rounded text-xs overflow-x-auto"
+                                x-text="JSON.stringify(selectedLog.extra, null, 2)"></pre>
                         </div>
                     </template>
                 </div>
@@ -188,135 +210,132 @@
 </div>
 
 <script>
-function logsPage() {
-    return {
-        logs: [],
-        nodes: [],
-        filteredLogs: [],
-        loading: false,
-        showDetails: false,
-        selectedLog: null,
-        currentPage: 1,
-        pageSize: 50,
-        filters: {
-            nodeId: '',
-            level: '',
-            source: '',
-            search: '',
-            hours: 24
-        },
+    function logsPage() {
+        return {
+            logs: [],
+            nodes: [],
+            filteredLogs: [],
+            loading: false,
+            showDetails: false,
+            selectedLog: null,
+            currentPage: 1,
+            pageSize: 50,
+            filters: {
+                nodeId: '',
+                level: '',
+                source: '',
+                search: '',
+                hours: 24
+            },
 
-        get totalPages() {
-            return Math.ceil(this.filteredLogs.length / this.pageSize);
-        },
+            get totalPages() {
+                return Math.ceil(this.filteredLogs.length / this.pageSize);
+            },
 
-        get paginatedLogs() {
-            const start = (this.currentPage - 1) * this.pageSize;
-            const end = start + this.pageSize;
-            return this.filteredLogs.slice(start, end);
-        },
+            get paginatedLogs() {
+                const start = (this.currentPage - 1) * this.pageSize;
+                const end = start + this.pageSize;
+                return this.filteredLogs.slice(start, end);
+            },
 
-        async init() {
-            await this.loadNodes();
-            await this.refreshLogs();
+            async init() {
+                await this.loadNodes();
+                await this.refreshLogs();
 
-            // Auto-refresh every 30 seconds
-            setInterval(() => this.refreshLogs(), 30000);
-        },
+                // Auto-refresh every 30 seconds
+                setInterval(() => this.refreshLogs(), 30000);
+            },
 
-        async loadNodes() {
-            try {
-                const response = await fetch('/api/nodes');
-                const data = await response.json();
-                this.nodes = data.nodes || [];
-            } catch (error) {
-                console.error('Failed to load nodes:', error);
-            }
-        },
-
-        async refreshLogs() {
-            this.loading = true;
-            try {
-                let url = '/api/logs?limit=1000';
-
-                if (this.filters.hours > 0) {
-                    url += `&hours=${this.filters.hours}`;
+            async loadNodes() {
+                try {
+                    const response = await fetch('/api/nodes');
+                    const data = await response.json();
+                    this.nodes = data.nodes || [];
+                } catch (error) {
+                    console.error('Failed to load nodes:', error);
                 }
+            },
 
-                const response = await fetch(url);
-                const data = await response.json();
-                this.logs = data.logs || [];
-                this.applyFilters();
-            } catch (error) {
-                console.error('Failed to load logs:', error);
-            } finally {
-                this.loading = false;
-            }
-        },
+            async refreshLogs() {
+                this.loading = true;
+                try {
+                    let url = '/api/logs?limit=1000';
 
-        applyFilters() {
-            this.filteredLogs = this.logs.filter(log => {
-                if (this.filters.nodeId && log.node_id !== this.filters.nodeId) return false;
-                if (this.filters.level && log.level !== this.filters.level) return false;
-                if (this.filters.source && !log.source.toLowerCase().includes(this.filters.source.toLowerCase())) return false;
-                if (this.filters.search && !log.message.toLowerCase().includes(this.filters.search.toLowerCase())) return false;
-                return true;
-            });
-            this.currentPage = 1;
-        },
+                    if (this.filters.hours > 0) {
+                        url += `&hours=${this.filters.hours}`;
+                    }
 
-        setTimeRange(hours) {
-            this.filters.hours = hours;
-            this.refreshLogs();
-        },
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    this.logs = data.logs || [];
+                    this.applyFilters();
+                } catch (error) {
+                    console.error('Failed to load logs:', error);
+                } finally {
+                    this.loading = false;
+                }
+            },
 
-        getNodeName(nodeId) {
-            const node = this.nodes.find(n => n.id === nodeId);
-            return node ? node.name : nodeId.substring(0, 8);
-        },
+            applyFilters() {
+                this.filteredLogs = this.logs.filter(log => {
+                    if (this.filters.nodeId && log.node_id !== this.filters.nodeId) return false;
+                    if (this.filters.level && log.level !== this.filters.level) return false;
+                    if (this.filters.source && !log.source.toLowerCase().includes(this.filters.source.toLowerCase())) return false;
+                    if (this.filters.search && !log.message.toLowerCase().includes(this.filters.search.toLowerCase())) return false;
+                    return true;
+                });
+                this.currentPage = 1;
+            },
 
-        getLevelBadgeClass(level) {
-            const classes = {
-                'debug': 'badge-secondary',
-                'info': 'badge-primary',
-                'warning': 'badge-warning',
-                'error': 'badge-error',
-                'critical': 'badge-error animate-pulse'
-            };
-            return classes[level] || 'badge';
-        },
+            setTimeRange(hours) {
+                this.filters.hours = hours;
+                this.refreshLogs();
+            },
 
-        formatTime(timestamp) {
-            if (!timestamp) return 'N/A';
-            const date = new Date(timestamp);
-            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        },
+            getNodeName(nodeId) {
+                const node = this.nodes.find(n => n.id === nodeId);
+                return node ? node.name : nodeId.substring(0, 8);
+            },
 
-        formatFullTime(timestamp) {
-            if (!timestamp) return 'N/A';
-            const date = new Date(timestamp);
-            return date.toLocaleString('en-US', {
-                year: 'numeric', month: 'short', day: 'numeric',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            });
-        },
+            getLevelBadgeClass(level) {
+                const classes = {
+                    'debug': 'badge-secondary',
+                    'info': 'badge-primary',
+                    'warning': 'badge-warning',
+                    'error': 'badge-error',
+                    'critical': 'badge-error animate-pulse'
+                };
+                return classes[level] || 'badge';
+            },
 
-        previousPage() {
-            if (this.currentPage > 1) {
-                this.currentPage--;
-            }
-        },
+            formatTime(timestamp) {
+                if (!timestamp) return 'N/A';
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            },
 
-        nextPage() {
-            if (this.currentPage < this.totalPages) {
-                this.currentPage++;
+            formatFullTime(timestamp) {
+                if (!timestamp) return 'N/A';
+                const date = new Date(timestamp);
+                return date.toLocaleString('en-US', {
+                    year: 'numeric', month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+            },
+
+            previousPage() {
+                if (this.currentPage > 1) {
+                    this.currentPage--;
+                }
+            },
+
+            nextPage() {
+                if (this.currentPage < this.totalPages) {
+                    this.currentPage++;
+                }
             }
         }
     }
-}
 </script>
 
-<style>
-[x-cloak] { display: none !important; }
-</style>
 {% endblock %}

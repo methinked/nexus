@@ -4,6 +4,10 @@
  * Purple theme, dark mode optimized
  */
 
+[x-cloak] {
+    display: none !important;
+}
+
 /* Custom scrollbar for dark theme */
 ::-webkit-scrollbar {
     width: 6px;
