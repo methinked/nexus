@@ -6,7 +6,7 @@ Nexus is a minimal, agent-based monitoring system for home labs (specifically Ra
 - **Visualize:** Presents a unified dashboard for "at a glance" health checks.
 - **Simplicity:** No complex orchestration, no job scheduling, no remote deployment features. Just pure, reliable stats.
 
-*(Previously aiming for "Orchestration/Management", pivoted Dec 2025 to focus on Monitoring MVP due to feature creep).*
+*(Pivot Dec 2025: Focused strictly on Monitoring MVP. Orchestration features removed).*
 
 **Target Hardware:**
 - Development: Linux laptop (x86_64)
@@ -125,71 +125,18 @@ Nexus is a minimal, agent-based monitoring system for home labs (specifically Ra
   - `cancel` - Stub for job cancellation
   - `logs` - Stub for job logs (Phase 4)
 
----
+## 🚧 What's Next - Scaling & Refinement
 
-## ✅ What's Been Completed
+**The core fleet monitoring system is functional.**
 
-### Phase 5: The Hands - Workload Orchestration (COMPLETE ✓)
-**Status:** All core job execution infrastructure complete!
+### Priority: Fleet-wide Updates & Stability
+1. **Automated Updates**: Ensure straightforward update path for agents.
+2. **Stability**: Long-term robust metrics collection.
+3. **Container Monitoring**: Lightweight viewing of containers (without management).
 
-**What's Working:**
-1. ✅ Job Queue System
-   - FIFO scheduling with deque
-   - Concurrent job limits (configurable, default: 2)
-   - Thread-safe operations with asyncio.Lock
-   - Status tracking (pending, running, completed, failed)
-2. ✅ Shell Job Execution
-   - Async subprocess execution
-   - Output capture (stdout/stderr)
-   - Timeout support (configurable, default: 300s)
-   - Result reporting to Core
-3. ✅ Job Dispatcher Service
-   - Background polling loop
-   - Routes jobs to appropriate executors
-   - Reports results back to Core
-   - Graceful error handling
-
-**Deferred for Future:**
-- Scriptor Module (OCR Processing) - Infrastructure ready (optional/parked)
-- Arbiter Module (Sync Conflict Resolution) - Infrastructure ready (optional/parked)
-- Terminal CLI Client - WebSocket + TTY handling complex
-- Job scheduling (cron-like) - Can build on existing queue system
-
-## 🚧 What's Next - Phase 6: The Dashboard
-
-**The core CLI-based fleet management system is complete and production-ready!**
-
-### Priority: Web Dashboard for Visualization
-The next logical enhancement is a web-based dashboard for real-time monitoring:
-
-**High Priority Features:**
-1. **Web Dashboard** - Real-time fleet monitoring
-   - Live metrics visualization (CPU, memory, disk, temperature charts)
-   - Health status overview with color-coded indicators
-   - Centralized log viewer with filtering and search
-   - Job submission and monitoring UI
-   - System topology and node discovery
-   - Technology stack options:
-     - Lightweight: FastAPI + htmx/Alpine.js
-     - Full-featured: FastAPI + React/Vue
-
-3. **Container Visibility**
-    - List all running Docker containers (managed & unmanaged)
-    - Monitor container status (running, exited, etc.)
-
-2. **Alerting System** - Proactive notifications
-   - Email/webhook alerts for node health issues
-   - Configurable thresholds per node
-   - Alert history and acknowledgment
-
-**Medium Priority:**
-3. **Job Scheduling** - Cron-like recurring job support
-4. **Terminal CLI Client** - WebSocket-based remote shell
-5. **Job Templates** - Pre-defined configurations for common tasks
-
-**Optional (Vigil Legacy - Parked):**
-- OCR Jobs (Scriptor) - Tesseract integration
-- Sync Jobs (Arbiter) - Syncthing conflict resolution
+**Removed Features (Dec 2025):**
+- Docker Service Orchestration (Service Templates, Deployments) - Removed to reduce complexity.
+- Remote Terminal/Shell - Removed to focus on read-only monitoring.
 
 ---
 

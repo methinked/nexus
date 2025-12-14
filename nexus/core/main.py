@@ -50,21 +50,6 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("Database initialized successfully")
 
-    # Seed service templates
-    from nexus.core.db.database import get_db
-    from nexus.core.services.seed_templates import seed_service_templates
-    
-    logger.info("Seeding service templates...")
-    db = next(get_db())
-    try:
-        results = await seed_service_templates(db)
-        if results["created"]:
-            logger.info(f"Seeded {len(results['created'])} new templates: {', '.join(results['created'])}")
-        if results["errors"]:
-            logger.warning(f"Failed to seed {len(results['errors'])} templates")
-    finally:
-        db.close()
-
     # Start background services
     from nexus.core.services.log_cleanup import LogCleanupService
 
@@ -142,7 +127,7 @@ async def health_check():
 # API Routers
 # ============================================================================
 
-from nexus.core.api import auth, deployments, jobs, logs, metrics, nodes, services, terminal, websocket, update
+from nexus.core.api import auth, jobs, logs, metrics, nodes, terminal, websocket, update
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(nodes.router, prefix="/api/nodes", tags=["nodes"])
@@ -152,10 +137,6 @@ app.include_router(logs.router, prefix="/api/logs", tags=["logs"])
 app.include_router(terminal.router, prefix="/api", tags=["terminal"])
 app.include_router(websocket.router, prefix="/api", tags=["websocket"])
 app.include_router(update.router, prefix="/api/update", tags=["update"])
-
-# Phase 7: Docker Orchestration
-app.include_router(services.router, prefix="/api/services", tags=["services"])
-app.include_router(deployments.router, prefix="/api/deployments", tags=["deployments"])
 
 # ============================================================================
 # Web Dashboard

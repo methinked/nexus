@@ -2,6 +2,6 @@
 Nexus Core API routers.
 """
 
-from nexus.core.api import auth, deployments, jobs, metrics, nodes, services
+from nexus.core.api import auth, jobs, logs, metrics, nodes, terminal, update, websocket
 
-__all__ = ["auth", "nodes", "jobs", "metrics", "services", "deployments"]
+__all__ = ["auth", "jobs", "logs", "metrics", "nodes", "terminal", "update", "websocket"]

@@ -12,7 +12,7 @@ from sqlalchemy import JSON, Column, DateTime, Enum, Float, ForeignKey, Integer,
 from sqlalchemy.orm import relationship
 
 from nexus.core.db.database import Base
-from nexus.shared.models import DeploymentStatus, JobStatus, JobType, NodeStatus
+from nexus.shared.models import JobStatus, JobType, NodeStatus
 
 
 def generate_uuid() -> str:
@@ -140,72 +140,4 @@ class LogModel(Base):
         return f"<Log(id={self.id}, node_id={self.node_id}, level={self.level}, source={self.source})>"
 
 
-# ============================================================================
-# Phase 7: Docker Orchestration Models
-# ============================================================================
 
-
-class ServiceModel(Base):
-    """Service template database model (Phase 7 - Docker Orchestration)."""
-
-    __tablename__ = "services"
-
-    # Primary key
-    id = Column(String(36), primary_key=True, default=generate_uuid)
-
-    # Core fields
-    name = Column(String(100), nullable=False, unique=True, index=True)
-    display_name = Column(String(200), nullable=False)
-    description = Column(Text, nullable=False)
-    version = Column(String(50), nullable=False)
-    category = Column(String(50), default="general", nullable=False, index=True)
-
-    # Docker configuration
-    docker_compose = Column(Text, nullable=False)  # YAML content
-    default_env = Column(JSON, default=dict, nullable=False)  # Default environment variables
-    icon_url = Column(String(500), nullable=True)
-
-    # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationships
-    deployments = relationship("DeploymentModel", back_populates="service", cascade="all, delete-orphan")
-
-    def __repr__(self) -> str:
-        return f"<Service(id={self.id}, name={self.name}, version={self.version})>"
-
-
-class DeploymentModel(Base):
-    """Service deployment database model (Phase 7 - Docker Orchestration)."""
-
-    __tablename__ = "deployments"
-
-    # Primary key
-    id = Column(String(36), primary_key=True, default=generate_uuid)
-
-    # Core fields
-    name = Column(String(100), nullable=False, index=True)
-    status = Column(Enum(DeploymentStatus), default=DeploymentStatus.DEPLOYING, nullable=False, index=True)
-
-    # Foreign keys
-    service_id = Column(String(36), ForeignKey("services.id", ondelete="CASCADE"), nullable=False, index=True)
-    node_id = Column(String(36), ForeignKey("nodes.id", ondelete="CASCADE"), nullable=False, index=True)
-
-    # Configuration (stored as JSON)
-    config = Column(JSON, default=dict, nullable=False)  # env, ports, volumes, etc.
-
-    # Container information (from agent)
-    container_id = Column(String(100), nullable=True, index=True)
-
-    # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    deployed_at = Column(DateTime, nullable=True)
-
-    # Relationships
-    service = relationship("ServiceModel", back_populates="deployments")
-    node = relationship("NodeModel")
-
-    def __repr__(self) -> str:
-        return f"<Deployment(id={self.id}, name={self.name}, status={self.status}, node_id={self.node_id})>"

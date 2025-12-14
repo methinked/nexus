@@ -99,20 +99,15 @@ def info() -> None:
 # Note: These imports must come after app is defined
 try:
     from nexus.cli.commands import config as config_commands
-    from nexus.cli.commands import deployment as deployment_commands
-    from nexus.cli.commands import job as job_commands
     from nexus.cli.commands import logs as logs_commands
     from nexus.cli.commands import metrics as metrics_commands
     from nexus.cli.commands import node as node_commands
-    from nexus.cli.commands import service as service_commands
 
     app.add_typer(config_commands.app, name="config", help="Configuration management")
     app.add_typer(node_commands.app, name="node", help="Node management")
     app.add_typer(job_commands.app, name="job", help="Job management")
     app.add_typer(metrics_commands.app, name="metrics", help="View and analyze metrics")
     app.add_typer(logs_commands.app, name="logs", help="View logs from nodes")
-    app.add_typer(service_commands.app, name="service", help="Manage Docker service templates")
-    app.add_typer(deployment_commands.app, name="deployment", help="Manage service deployments")
 except ImportError as e:
     # Commands not yet implemented - gracefully continue
     console.print(f"[yellow]Warning: Some command modules not yet available: {e}[/yellow]")

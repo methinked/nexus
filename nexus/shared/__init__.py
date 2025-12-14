@@ -17,14 +17,6 @@ from nexus.shared.auth import (
 from nexus.shared.config import AgentConfig, BaseConfig, CLIConfig, CoreConfig
 from nexus.shared.models import (
     BaseResponse,
-    ContainerStatus,
-    Deployment,
-    DeploymentConfig,
-    DeploymentCreate,
-    DeploymentList,
-    DeploymentStatus,
-    DeploymentUpdate,
-    DeploymentWithDetails,
     DiskInfo,
     DiskType,
     ErrorResponse,
@@ -57,13 +49,10 @@ from nexus.shared.models import (
     NodeWithMetrics,
     RegistrationRequest,
     RegistrationResponse,
-    Service,
-    ServiceCreate,
-    ServiceList,
-    ServiceUpdate,
     SystemInfo,
     Token,
     TokenData,
+
 )
 
 __all__ = [
@@ -111,20 +100,6 @@ __all__ = [
     "LogCreate",
     "LogList",
     "LogLevel",
-    # Models - Service (Phase 7 - Docker Orchestration)
-    "Service",
-    "ServiceCreate",
-    "ServiceUpdate",
-    "ServiceList",
-    # Models - Deployment (Phase 7 - Docker Orchestration)
-    "Deployment",
-    "DeploymentCreate",
-    "DeploymentUpdate",
-    "DeploymentList",
-    "DeploymentStatus",
-    "DeploymentConfig",
-    "DeploymentWithDetails",
-    "ContainerStatus",
     # Models - Disk Storage (Phase 6.5 - Multi-Disk Support)
     "DiskInfo",
     "DiskType",

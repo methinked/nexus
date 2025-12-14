@@ -102,38 +102,7 @@ async def logs_page(request: Request):
     )
 
 
-@router.get("/services", response_class=HTMLResponse)
-async def services_page(request: Request):
-    """
-    Docker Services page.
 
-    Manage Docker service templates.
-    """
-    return templates.TemplateResponse(
-        "services.html",
-        {
-            "request": request,
-            "page_title": "Docker Services",
-            "active_page": "services"
-        }
-    )
-
-
-@router.get("/deployments", response_class=HTMLResponse)
-async def deployments_page(request: Request):
-    """
-    Deployments page.
-
-    Manage service deployments across the fleet.
-    """
-    return templates.TemplateResponse(
-        "deployments.html",
-        {
-            "request": request,
-            "page_title": "Deployments",
-            "active_page": "deployments"
-        }
-    )
 
 
 @router.get("/settings", response_class=HTMLResponse)

@@ -74,7 +74,10 @@ def detect_disk_type(device: str) -> DiskType:
 
 def check_docker_data_path(mount_point: str) -> bool:
     """
-    Check if Docker data directory is on this mount point.
+    Check if Docker data directory is permanently stored on this mount point.
+    
+    This uses st_dev to verify the Docker root is physically on the same 
+    device as the mount point, handling bind mounts and overlays correctly.
 
     Args:
         mount_point: Mount point to check
@@ -89,23 +92,27 @@ def check_docker_data_path(mount_point: str) -> bool:
         # Try default location
         docker_root = "/var/lib/docker"
 
-    # Check if Docker root exists and is under this mount point
-    if os.path.exists(docker_root):
-        try:
-            # Check if docker_root is under mount_point
-            common = os.path.commonpath([docker_root, mount_point])
-            if common == mount_point:
-                return True
-        except ValueError:
-            # Paths on different drives
-            pass
+    if not os.path.exists(docker_root):
+        return False
+
+    try:
+        # Get device IDs
+        docker_dev = os.stat(docker_root).st_dev
+        mount_dev = os.stat(mount_point).st_dev
+        
+        # If devices match, Docker is stored here
+        if docker_dev == mount_dev:
+            return True
+            
+    except (OSError, ValueError):
+        pass
 
     return False
 
 
 def check_nexus_data_path(mount_point: str) -> bool:
     """
-    Check if Nexus data/logs are on this mount point.
+    Check if Nexus data/logs are stored on this mount point.
 
     Args:
         mount_point: Mount point to check
@@ -119,13 +126,20 @@ def check_nexus_data_path(mount_point: str) -> bool:
         os.getenv("NEXUS_LOGS_DIR", "logs"),
     ]
 
+    try:
+        mount_dev = os.stat(mount_point).st_dev
+    except OSError:
+        return False
+
     for nexus_path in nexus_paths:
         abs_path = os.path.abspath(nexus_path)
         if os.path.exists(abs_path):
             try:
-                if os.path.commonpath([abs_path, mount_point]) == mount_point:
+                # Check if path is on same device
+                path_dev = os.stat(abs_path).st_dev
+                if path_dev == mount_dev:
                     return True
-            except ValueError:
+            except (OSError, ValueError):
                 continue
 
     return False
@@ -180,15 +194,21 @@ def get_filesystem_uuid(device: str) -> Optional[str]:
 def get_all_disks() -> list[DiskInfo]:
     """
     Get information about all mounted disks.
+    
+    Filters out duplicates (bind mounts) by ensuring each unique physical 
+    device is listed only once, prioritizing the root mount or the shortest path.
 
     Returns:
         List of DiskInfo objects for all mounted disks
     """
     disks = []
+    seen_devices = set()
+    candidate_partitions = []
 
     # Get all disk partitions
     partitions = psutil.disk_partitions(all=False)
 
+    # First pass: Collect valid candidates
     for partition in partitions:
         # Skip virtual filesystems
         if partition.fstype in ("tmpfs", "devtmpfs", "squashfs", "overlay", "proc", "sysfs", "devpts"):
@@ -198,7 +218,19 @@ def get_all_disks() -> list[DiskInfo]:
         if "docker" in partition.mountpoint and "overlay" in partition.fstype:
             continue
 
+        candidate_partitions.append(partition)
+    
+    # Sort candidates to prioritize root '/' and shorter paths
+    # This ensures that when we dedupe by device, we keep the most "main" mount point
+    candidate_partitions.sort(key=lambda p: (p.mountpoint != '/', len(p.mountpoint)))
+
+    for partition in candidate_partitions:
         try:
+            # Skip if we've already seen this device (deduplication)
+            # This handles bind mounts where the same device appears multiple times
+            if partition.device in seen_devices:
+                continue
+                
             # Get disk usage
             usage = psutil.disk_usage(partition.mountpoint)
 
@@ -238,12 +270,13 @@ def get_all_disks() -> list[DiskInfo]:
             )
 
             disks.append(disk_info)
+            seen_devices.add(partition.device)
 
         except (PermissionError, OSError) as e:
             logger.warning(f"Could not get disk usage for {partition.mountpoint}: {e}")
             continue
 
-    # Sort by mount point (root first, then alphabetically)
+    # Final sort: Root first, then alphabetical by mount point
     disks.sort(key=lambda d: (not d.is_system, d.mount_point))
 
     return disks

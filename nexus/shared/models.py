@@ -53,14 +53,7 @@ class NodeHealth(str, Enum):
     UNKNOWN = "unknown"
 
 
-class DeploymentStatus(str, Enum):
-    """Status of a service deployment."""
 
-    DEPLOYING = "deploying"
-    RUNNING = "running"
-    STOPPED = "stopped"
-    FAILED = "failed"
-    REMOVING = "removing"
 
 
 # ============================================================================
@@ -445,141 +438,7 @@ class SystemInfo(BaseModel):
     total_disk: int = Field(..., description="Total disk in MB")
 
 
-# ============================================================================
-# Service Models (Phase 7 - Docker Orchestration)
-# ============================================================================
 
-
-class ServiceBase(BaseModel):
-    """Base service model with common fields."""
-
-    name: str = Field(..., min_length=1, max_length=100, description="Unique service identifier")
-    display_name: str = Field(..., min_length=1, max_length=200, description="Human-readable name")
-    description: str = Field(..., description="Service description")
-    version: str = Field(..., description="Service/image version")
-    category: str = Field(default="general", description="Service category (networking, monitoring, etc.)")
-    docker_compose: str = Field(..., description="Docker Compose YAML content")
-    default_env: Dict[str, str] = Field(default_factory=dict, description="Default environment variables")
-    icon_url: Optional[str] = Field(None, description="Icon URL for UI")
-
-
-class ServiceCreate(ServiceBase):
-    """Model for creating a new service template."""
-
-    pass
-
-
-class ServiceUpdate(BaseModel):
-    """Model for updating a service template."""
-
-    display_name: Optional[str] = Field(None, min_length=1, max_length=200)
-    description: Optional[str] = None
-    version: Optional[str] = None
-    category: Optional[str] = None
-    docker_compose: Optional[str] = None
-    default_env: Optional[Dict[str, str]] = None
-    icon_url: Optional[str] = None
-
-
-class Service(ServiceBase, TimestampedModel):
-    """Full service model with all fields."""
-
-    id: UUID = Field(default_factory=uuid4)
-
-    class Config:
-        from_attributes = True
-
-
-class ServiceList(BaseModel):
-    """List of services."""
-
-    services: list[Service]
-    total: int
-
-
-# ============================================================================
-# Deployment Models (Phase 7 - Docker Orchestration)
-# ============================================================================
-
-
-class DeploymentConfig(BaseModel):
-    """Configuration for a service deployment."""
-
-    env: Dict[str, str] = Field(default_factory=dict, description="Environment variables")
-    ports: Dict[str, str] = Field(default_factory=dict, description="Port mappings (host:container)")
-    volumes: Dict[str, str] = Field(default_factory=dict, description="Volume mappings")
-    networks: list[str] = Field(default_factory=list, description="Docker networks")
-    restart_policy: str = Field(default="unless-stopped", description="Container restart policy")
-    # Extensible for custom configuration
-    custom: Dict[str, Any] = Field(default_factory=dict)
-
-
-class DeploymentBase(BaseModel):
-    """Base deployment model with common fields."""
-
-    name: str = Field(..., min_length=1, max_length=100, description="User-defined deployment name")
-    service_id: UUID = Field(..., description="Service template ID")
-    node_id: UUID = Field(..., description="Target node ID")
-    config: DeploymentConfig = Field(default_factory=DeploymentConfig, description="Deployment configuration")
-
-
-class DeploymentCreate(DeploymentBase):
-    """Model for creating a new deployment."""
-
-    pass
-
-
-class DeploymentUpdate(BaseModel):
-    """Model for updating a deployment."""
-
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    config: Optional[DeploymentConfig] = None
-    status: Optional[DeploymentStatus] = None
-
-
-class Deployment(DeploymentBase, TimestampedModel):
-    """Full deployment model with all fields."""
-
-    id: UUID = Field(default_factory=uuid4)
-    status: DeploymentStatus = Field(default=DeploymentStatus.DEPLOYING)
-    container_id: Optional[str] = Field(None, description="Docker container ID from agent")
-    deployed_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-
-
-class DeploymentList(BaseModel):
-    """List of deployments."""
-
-    deployments: list[Deployment]
-    total: int
-
-
-class DeploymentWithDetails(Deployment):
-    """Deployment with related service and node information."""
-
-    service: Optional[Service] = None
-    node_name: Optional[str] = None
-    node_ip: Optional[str] = None
-
-
-# ============================================================================
-# Container Status Models (Phase 7 - Docker Orchestration)
-# ============================================================================
-
-
-class ContainerStatus(BaseModel):
-    """Container runtime status reported by agent."""
-
-    deployment_id: UUID
-    container_id: str
-    status: str = Field(..., description="Container status (running, exited, paused, etc.)")
-    cpu_percent: Optional[float] = Field(None, description="CPU usage percentage")
-    memory_usage: Optional[int] = Field(None, description="Memory usage in bytes")
-    created_at: datetime
-    started_at: Optional[datetime] = None
-    health: Optional[str] = Field(None, description="Health status (healthy, unhealthy, starting)")
 
 
 # ============================================================================

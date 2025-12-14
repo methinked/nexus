@@ -74,24 +74,7 @@ graph TD
 *   Unique CLI view showing equivalent commands for every action
 *   📋 **See full UI/UX plan:** [`docs/plans/dashboard-ui-plan.md`](docs/plans/dashboard-ui-plan.md)
 
-**Docker Service Orchestration (Phase 7.1)** - Deploy and manage containerized services
-*   Full REST API for service template management (CRUD operations)
-*   Deployment lifecycle management (create, start, stop, restart, delete)
-*   Service templates with configurable parameters (image, ports, volumes, environment)
-*   Deployment status tracking across nodes
-*   Multi-node deployment support
-*   Ready for agent-side Docker integration (Phase 7.2)
 
-### 🚀 Planned (Phase 7.2+)
-
-**Agent Docker Module** - Container execution on managed nodes
-*   Docker SDK for Python integration on agents
-*   Container lifecycle operations (deploy, start, stop, restart, remove)
-*   Container health monitoring and resource usage tracking
-*   **Container migration** - Move services between nodes with one click (Pi 3 → Pi 4 upgrade, load balancing, failure recovery)
-*   Docker Compose support for complex services
-*   Pre-built service templates (Pi-hole, Home Assistant, Prometheus, Grafana, etc.)
-*   Web UI for service deployment and management
 
 ### 📦 Optional (Vigil Legacy - Parked)
 
@@ -210,42 +193,7 @@ nexus logs list <node_id>
 nexus logs tail
 ```
 
-### Docker Services
-```bash
-# List all service templates
-nexus service list
 
-# View service template details
-nexus service get <service_id>
-
-# Create a new service template
-nexus service create --name pihole --image pihole/pihole:latest --description "Ad blocking"
-nexus service create -n nginx -i nginx:latest -p 80:80 -v /data:/usr/share/nginx/html
-
-# Delete a service template
-nexus service delete <service_id>
-```
-
-### Docker Deployments
-```bash
-# List all deployments
-nexus deployment list
-nexus deployment list --node <node_id>
-nexus deployment list --status running
-
-# Create a deployment
-nexus deployment create <service_id> <node_id>
-nexus deployment create <service_id> <node_id> -e PORT=8080
-
-# View deployment details
-nexus deployment get <deployment_id>
-
-# Manage deployment lifecycle
-nexus deployment start <deployment_id>
-nexus deployment stop <deployment_id>
-nexus deployment restart <deployment_id>
-nexus deployment delete <deployment_id>
-```
 
 ### Job Management
 ```bash
@@ -280,18 +228,7 @@ nexus fleet update
 - [x] **Modules Preview** - Stub page for future module deployment system (Phase 7). ✅
 - [x] **Phase 6.4: Log Viewer UI** - Web-based log viewer with filtering and search. ✅
 - [x] **Phase 6.5.1: Multi-Disk Detection** - Comprehensive disk detection and smart storage recommendations. ✅
-- [x] **Phase 7.1: Docker Orchestration API** - Core service management and deployment API. ✅
-- [x] **Phase 7.2: Agent Docker Module** - Docker container management on agents. ✅
-  - [x] Docker SDK for Python integration
-  - [x] Container lifecycle operations (deploy, start, stop, restart, remove)
-  - [x] Container health monitoring and resource tracking
-- [x] **Phase 7.3: Docker Service Templates** - Pre-built service templates and web UI. ✅
-  - [x] Service template library (7 pre-built templates: Pi-hole, Home Assistant, Prometheus, Grafana, Portainer, Nginx Proxy Manager, Nextcloud)
-  - [x] Automatic template seeding on Core startup
-  - [x] Enhanced web UI with category filtering and search
-  - [x] Separate modals for create, deploy, and view details
-  - [x] Separate modals for create, deploy, and view details
-  - [x] Docker Compose YAML support for all templates
+
 - [x] **Phase 6.6: UI Polish & UX Improvements**
   - [x] Global Toast Notification System (replaces alerts)
   - [x] Loading states for buttons (refresh, submit)
