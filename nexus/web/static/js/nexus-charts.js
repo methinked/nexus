@@ -21,7 +21,8 @@ const NexusCharts = {
             maintainAspectRatio: false,
             animation: false, // Performance optimization for real-time data
             interaction: {
-                mode: 'index',
+                mode: 'nearest',
+                axis: 'x',
                 intersect: false,
             },
             plugins: {
@@ -192,7 +193,17 @@ const NexusCharts = {
             }
 
             // Map data
-            const dataPoints = metrics.map(m => ({ x: new Date(m.timestamp), y: m[metricKey] }));
+            const dataPoints = metrics.map(m => {
+                // Parse timestamp explicitly to ensure Chart.js adapter handles it correctly
+                // API usually returns ISO string "2025-12-14T21:33:43.010356"
+                // New Date() should handle this fine in modern browsers, but ensure it's valid
+                const date = new Date(m.timestamp);
+
+                return {
+                    x: date.getTime(), // Use timestamp number to avoid parsing ambiguity in Chart.js
+                    y: m[metricKey]
+                };
+            });
 
             return {
                 label: nodeData.node.name,
@@ -203,7 +214,9 @@ const NexusCharts = {
                 fill: true,
                 tension: 0.4,
                 pointRadius: 0,
-                pointHoverRadius: 4
+                pointHoverRadius: 4,
+                // Ensure spanGaps is true for sparse data
+                spanGaps: true
             };
         });
 

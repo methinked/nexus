@@ -282,10 +282,12 @@ async def update_inventory(
     
     This replaces the old "Pull" model. Agents push this data periodically.
     """
+    logger.info(f"Received inventory update for node {update.node_id}. Disks: {len(update.disks)}, Containers: {len(update.containers)}")
 
     # Get node
     db_node = get_node(db, str(update.node_id))
     if not db_node:
+        logger.error(f"Node {update.node_id} not found for inventory update")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Node {update.node_id} not found",
@@ -295,7 +297,9 @@ async def update_inventory(
     # We deliberately use a deep merge philosophy: keys not in update are preserved?
     # No, inventory is a snapshot. We overwrite the 'inventory' key.
     
-    current_metadata = dict(db_node.node_metadata) # Ensure dict copy
+    current_metadata = dict(db_node.node_metadata) if db_node.node_metadata else {} # Ensure dict
+    # logger.info(f"Current metadata before update: {current_metadata.keys()}")
+    
     current_metadata["inventory"] = {
         "disks": [d.model_dump(mode='json') for d in update.disks],
         "containers": update.containers,
@@ -306,8 +310,15 @@ async def update_inventory(
     # Note: db_update_node might expect NodeUpdate model, or we can set directly
     db_node.node_metadata = current_metadata
     flag_modified(db_node, "node_metadata") # Force SQLAlchemy to detect JSON change
-    db.commit()
-    db.refresh(db_node)
+    
+    try:
+        db.commit()
+        db.refresh(db_node)
+        logger.info(f"Successfully saved inventory for {update.node_id}. Metadata keys: {db_node.node_metadata.keys()}")
+    except Exception as e:
+        logger.error(f"Failed to commit inventory update: {e}")
+        db.rollback()
+        raise e
     
     return BaseResponse(message="Inventory updated")
 

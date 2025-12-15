@@ -28,9 +28,15 @@ from nexus.core.db.crud import (
     update_job_status,
     update_node,
     update_node_status,
+    # Alert CRUD
+    create_alert,
+    get_active_alerts,
+    get_active_alerts_count,
+    resolve_alert,
+    resolve_alerts_by_type,
 )
 from nexus.core.db.database import Base, SessionLocal, engine, get_db, init_db
-from nexus.core.db.models import JobModel, MetricModel, NodeModel
+from nexus.core.db.models import JobModel, MetricModel, NodeModel, AlertModel
 
 __all__ = [
     # Database
@@ -70,4 +76,11 @@ __all__ = [
     "get_logs",
     "get_logs_count",
     "delete_old_logs",
+    # Alerts
+    "AlertModel",
+    "create_alert",
+    "get_active_alerts",
+    "get_active_alerts_count",
+    "resolve_alert",
+    "resolve_alerts_by_type",
 ]

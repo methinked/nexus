@@ -8,20 +8,34 @@
             <h1 class="text-3xl font-bold">Dashboard</h1>
             <p class="text-gray-400 mt-1">Fleet overview and health at a glance</p>
         </div>
-        <button id="refresh-btn" onclick="refreshDashboard()"
-            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span>Refresh</span>
-        </button>
+        <div class="flex items-center space-x-3">
+            <!-- Time Range Selector -->
+            <div class="bg-gray-800 rounded-lg p-1 flex items-center space-x-1 border border-gray-700">
+                <button onclick="setTimeRange(30)" id="btn-30m"
+                    class="px-3 py-1 text-sm rounded transition-colors bg-purple-600 text-white font-medium">30m</button>
+                <button onclick="setTimeRange(60)" id="btn-1h"
+                    class="px-3 py-1 text-sm rounded transition-colors text-gray-400 hover:text-white hover:bg-gray-700">1h</button>
+                <button onclick="setTimeRange(360)" id="btn-6h"
+                    class="px-3 py-1 text-sm rounded transition-colors text-gray-400 hover:text-white hover:bg-gray-700">6h</button>
+                <button onclick="setTimeRange(1440)" id="btn-24h"
+                    class="px-3 py-1 text-sm rounded transition-colors text-gray-400 hover:text-white hover:bg-gray-700">24h</button>
+            </div>
+
+            <button id="refresh-btn" onclick="refreshDashboard()"
+                class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Refresh</span>
+            </button>
+        </div>
     </div>
 
     <!-- Stat Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Nodes -->
-        <div class="stat-card hover-lift">
+        <div class="stat-card hover-lift cursor-pointer" onclick="window.location.href='/nodes'">
             <div class="stat-card-label">Total Nodes</div>
             <div class="stat-card-value" id="stat-nodes">-</div>
             <div class="text-sm mt-2">
@@ -30,19 +44,21 @@
         </div>
 
         <!-- Containers -->
-        <div class="stat-card hover-lift">
+        <div class="stat-card hover-lift cursor-pointer transition-all duration-300 hover:border-blue-500"
+            onclick="toggleContainerModal()">
             <div class="stat-card-label">Running Containers</div>
             <div class="stat-card-value" id="stat-containers">-</div>
             <div class="text-sm mt-2">
-                <span class="text-blue-400">Inventory</span>
+                <span class="text-blue-400">View Details &rarr;</span>
             </div>
         </div>
 
         <!-- Alerts -->
-        <div class="stat-card hover-lift">
+        <div class="stat-card hover-lift cursor-pointer transition-all duration-300" id="card-alerts"
+            onclick="toggleAlertModal()">
             <div class="stat-card-label">Alerts</div>
             <div class="stat-card-value" id="stat-alerts">0</div>
-            <div class="text-sm mt-2">
+            <div class="text-sm mt-2" id="stat-alerts-status">
                 <span class="text-green-400">🟢 All healthy</span>
             </div>
         </div>
@@ -94,7 +110,7 @@
         <div class="card">
             <div class="card-header">
                 <h2 class="text-xl font-semibold">CPU Usage</h2>
-                <p class="text-sm text-gray-400 mt-1">Real-time (Last 25m)</p>
+                <p class="text-sm text-gray-400 mt-1 chart-time-label">Real-time (Last 30m)</p>
             </div>
             <div class="card-body relative h-64">
                 <canvas id="cpu-chart"></canvas>
@@ -105,7 +121,7 @@
         <div class="card">
             <div class="card-header">
                 <h2 class="text-xl font-semibold">Memory Usage</h2>
-                <p class="text-sm text-gray-400 mt-1">Real-time (Last 25m)</p>
+                <p class="text-sm text-gray-400 mt-1 chart-time-label">Real-time (Last 30m)</p>
             </div>
             <div class="card-body relative h-64">
                 <canvas id="memory-chart"></canvas>
@@ -116,7 +132,7 @@
         <div class="card">
             <div class="card-header">
                 <h2 class="text-xl font-semibold">Disk Usage</h2>
-                <p class="text-sm text-gray-400 mt-1">Real-time (Last 25m)</p>
+                <p class="text-sm text-gray-400 mt-1 chart-time-label">Real-time (Last 30m)</p>
             </div>
             <div class="card-body relative h-64">
                 <canvas id="disk-chart"></canvas>
@@ -127,10 +143,128 @@
         <div class="card">
             <div class="card-header">
                 <h2 class="text-xl font-semibold">Temperature</h2>
-                <p class="text-sm text-gray-400 mt-1">Real-time (Last 25m)</p>
+                <p class="text-sm text-gray-400 mt-1 chart-time-label">Real-time (Last 30m)</p>
             </div>
             <div class="card-body relative h-64">
                 <canvas id="temp-chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts Modal -->
+<div id="alerts-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-80 transition-opacity backdrop-blur-sm" aria-hidden="true"
+            onclick="toggleAlertModal()"></div>
+
+        <!-- Center modal -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div
+            class="inline-block align-bottom bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-gray-700">
+            <div class="bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div
+                        class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                        <svg class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-xl leading-6 font-semibold text-gray-100 flex items-center justify-between"
+                            id="modal-title">
+                            Active Alerts
+                            <button onclick="loadAlertsForModal()"
+                                class="text-sm text-purple-400 hover:text-purple-300 font-normal">
+                                Refresh
+                            </button>
+                        </h3>
+                        <div class="mt-4 text-sm text-gray-400 min-h-[100px] max-h-[60vh] overflow-y-auto custom-scrollbar"
+                            id="alerts-list">
+                            <!-- Alert items populated by JS -->
+                            <div class="flex justify-center py-8">
+                                <svg class="animate-spin h-6 w-6 text-purple-500" xmlns="http://www.w3.org/2000/svg"
+                                    fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-750 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-700">
+                <button type="button"
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
+                    onclick="toggleAlertModal()">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Containers Modal -->
+<div id="containers-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-80 transition-opacity backdrop-blur-sm" aria-hidden="true"
+            onclick="toggleContainerModal()"></div>
+
+        <!-- Center modal -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div
+            class="inline-block align-bottom bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full border border-gray-700">
+            <div class="bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div
+                        class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                        <svg class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-xl leading-6 font-semibold text-gray-100 flex items-center justify-between"
+                            id="modal-title">
+                            Container Inventory
+                            <button onclick="loadContainersForModal()"
+                                class="text-sm text-purple-400 hover:text-purple-300 font-normal">
+                                Refresh
+                            </button>
+                        </h3>
+                        <div class="mt-4 text-sm text-gray-400 min-h-[100px] max-h-[60vh] overflow-y-auto custom-scrollbar"
+                            id="containers-list">
+                            <!-- Container items populated by JS -->
+                            <div class="flex justify-center py-8">
+                                <svg class="animate-spin h-6 w-6 text-purple-500" xmlns="http://www.w3.org/2000/svg"
+                                    fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-750 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-700">
+                <button type="button"
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
+                    onclick="toggleContainerModal()">
+                    Close
+                </button>
             </div>
         </div>
     </div>
@@ -144,6 +278,36 @@
     // Dashboard JavaScript
     let pageController = null;
     let cpuChart, memoryChart, diskChart, tempChart;
+    let currentTimeRange = 30; // Minutes
+
+    function setTimeRange(minutes) {
+        currentTimeRange = minutes;
+
+        // Update button styles
+        const map = { 30: '30m', 60: '1h', 360: '6h', 1440: '24h' };
+        Object.keys(map).forEach(m => {
+            const btn = document.getElementById(`btn-${map[m]}`);
+            if (parseInt(m) === minutes) {
+                btn.className = "px-3 py-1 text-sm rounded transition-colors bg-purple-600 text-white font-medium";
+            } else {
+                btn.className = "px-3 py-1 text-sm rounded transition-colors text-gray-400 hover:text-white hover:bg-gray-700";
+            }
+        });
+
+        // Update charts text
+        const labelText = minutes >= 60
+            ? `History (Last ${minutes >= 1440 ? (minutes / 1440).toFixed(0) + ' Days' : (minutes / 60).toFixed(0) + ' Hours'})`
+            : `Real-time (Last ${minutes}m)`;
+
+        document.querySelectorAll('.chart-time-label').forEach(el => {
+            el.textContent = labelText;
+        });
+
+        // Refresh stats/charts with new range
+        // If we only wanted to refresh charts we could just call loadChartData()
+        // but user might expect everything to refresh.
+        refreshDashboard();
+    }
 
     async function refreshDashboard() {
         const btn = document.getElementById('refresh-btn');
@@ -201,10 +365,6 @@
 
             // Calculate total containers from all nodes inventory
             let totalContainers = 0;
-            // Note: We need full node details (with metadata) for this.
-            // If the `/api/nodes` list doesn't include full metadata, we might need to fetch it.
-            // However, looking at `api/nodes.py`, it does return `metadata` dict which includes `inventory`.
-
             nodes.forEach(node => {
                 if (node.metadata && node.metadata.inventory && node.metadata.inventory.containers) {
                     totalContainers += node.metadata.inventory.containers.length;
@@ -212,6 +372,30 @@
             });
 
             document.getElementById('stat-containers').textContent = totalContainers;
+
+            // Fetch Alerts Count
+            try {
+                const alertsResponse = await fetch('/api/alerts/count');
+                const alertsData = await alertsResponse.json();
+                const alertCount = alertsData.count;
+
+                const alertEl = document.getElementById('stat-alerts');
+                const alertStatusEl = document.getElementById('stat-alerts-status');
+                const alertCard = document.getElementById('card-alerts');
+
+                alertEl.textContent = alertCount;
+
+                if (alertCount === 0) {
+                    alertStatusEl.innerHTML = '<span class="text-green-400">🟢 All healthy</span>';
+                    alertCard.classList.remove('border-red-500', 'bg-red-900/10');
+                } else {
+                    alertStatusEl.innerHTML = '<span class="text-red-400 font-bold">🔴 Attention Needed</span>';
+                    alertCard.classList.add('border-red-500', 'bg-red-900/10');
+                }
+            } catch (e) {
+                console.error("Failed to load alerts:", e);
+                document.getElementById('stat-alerts').textContent = "?";
+            }
 
         } catch (error) {
             console.error('Error loading stats:', error);
@@ -272,6 +456,114 @@
         `;
         }
     }
+
+    // --- Alert Modal Logic ---
+    function toggleAlertModal() {
+        const modal = document.getElementById('alerts-modal');
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+            loadAlertsForModal(); // Load data when opening
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+
+    // Close on escape key
+    document.addEventListener('keydown', function (event) {
+        if (event.key === "Escape") {
+            const modal = document.getElementById('alerts-modal');
+            if (!modal.classList.contains('hidden')) {
+                toggleAlertModal();
+            }
+        }
+    });
+
+    async function loadAlertsForModal() {
+        const container = document.getElementById('alerts-list');
+        container.innerHTML = `
+            <div class="flex justify-center py-8">
+                <svg class="animate-spin h-6 w-6 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        `;
+
+        try {
+            const response = await fetch('/api/alerts');
+            const data = await response.json();
+            const alerts = data.alerts || [];
+
+            if (alerts.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-green-500/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="font-medium">No active alerts</p>
+                        <p class="text-xs mt-1">All systems are operating normally</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Lookup Node names for context
+            // Optimization: We could use the nodes list we already have in memory if we passed it,
+            // but for simplicity we'll just check if we can get names or fallback to ID.
+            // Ideally we'd map IDs to names.
+            let nodesMap = {};
+            try {
+                const nodesResponse = await fetch('/api/nodes');
+                const nodesData = await nodesResponse.json();
+                (nodesData.nodes || []).forEach(n => nodesMap[n.id] = n.name);
+            } catch (e) { console.warn("Could not fetch nodes for matching", e); }
+
+
+            let html = '<div class="space-y-3">';
+            for (const alert of alerts) {
+                const isCritical = alert.severity === 'critical';
+                const severityColor = isCritical ? 'red' : 'yellow';
+                const severityIcon = isCritical ? '⚠️' : '⚠️';
+                const nodeName = nodesMap[alert.node_id] || alert.node_id.substring(0, 8);
+                const timeAgo = new Date(alert.created_at).toLocaleString();
+
+                html += `
+                    <div class="bg-gray-900/50 border-l-4 border-${severityColor}-500 rounded p-4 flex items-start space-x-3">
+                        <div class="flex-shrink-0 pt-0.5">
+                            <span class="text-xl">${severityIcon}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-bold text-${severityColor}-400 uppercase tracking-wide">
+                                    ${alert.severity}
+                                </p>
+                                <span class="text-xs text-gray-500">${timeAgo}</span>
+                            </div>
+                            <h4 class="text-sm font-semibold text-gray-200 mt-0.5">
+                                ${alert.message}
+                            </h4>
+                            <p class="text-xs text-gray-400 mt-1">
+                                Node: <span class="text-gray-300 font-mono">${nodeName}</span>
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+
+            container.innerHTML = html;
+
+        } catch (error) {
+            console.error("Failed to load alerts:", error);
+            container.innerHTML = `
+                <div class="text-center py-8 text-red-400">
+                    <p>Failed to load alerts</p>
+                    <p class="text-xs mt-1">${error.message}</p>
+                </div>
+            `;
+        }
+    }
+
 
     // Load data on page load
     document.addEventListener('DOMContentLoaded', () => {
@@ -339,11 +631,26 @@
 
             // Fetch metrics for all nodes
             const metricsPromises = currentNodes.map(async node => {
-                const response = await fetch(`/api/metrics/${node.id}?limit=50`);
+                // Calculate limit based on duration (assuming ~2 metrics per minute for safety)
+                // 30m = 60, 1h = 120, 24h = 2880.
+                // We add a buffer factor of 1.5x
+                const limit = Math.ceil(currentTimeRange * 2 * 1.5);
+                const cappedLimit = Math.min(limit, 5000); // Respect API cap
+
+                // Calculate Start Time (ISO)
+                const cutoffTime = Date.now() - currentTimeRange * 60 * 1000;
+                const since = new Date(cutoffTime).toISOString();
+
+                const response = await fetch(`/api/metrics/${node.id}?limit=${cappedLimit}&since=${since}`);
                 const data = await response.json();
+
+                // Client-side filter as backup (API 'since' should handle it mostly)
+                // Also ensures we strictly chop off anything older than the window if API returns slightly more
+                const recentMetrics = (data.metrics || []).filter(m => new Date(m.timestamp).getTime() > cutoffTime);
+
                 return {
                     node: node,
-                    metrics: data.metrics // API returns newest first usually
+                    metrics: recentMetrics
                 };
             });
 
@@ -357,6 +664,141 @@
 
         } catch (error) {
             console.error('Error loading chart data:', error);
+        }
+    }
+    // --- Container Modal Logic ---
+    function toggleContainerModal() {
+        const modal = document.getElementById('containers-modal');
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+            loadContainersForModal(); // Load data when opening
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+
+    // Close on escape key
+    document.addEventListener('keydown', function (event) {
+        if (event.key === "Escape") {
+            const modal = document.getElementById('containers-modal');
+            if (!modal.classList.contains('hidden')) {
+                toggleContainerModal();
+            }
+        }
+    });
+
+    async function loadContainersForModal() {
+        const containerEl = document.getElementById('containers-list');
+        containerEl.innerHTML = `
+            <div class="flex justify-center py-8">
+                <svg class="animate-spin h-6 w-6 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        `;
+
+        try {
+            // Fetch nodes to get inventory
+            const response = await fetch('/api/nodes');
+            const data = await response.json();
+            const nodes = data.nodes || [];
+
+            let allContainers = [];
+            nodes.forEach(node => {
+                if (node.metadata && node.metadata.inventory && node.metadata.inventory.containers) {
+                    node.metadata.inventory.containers.forEach(c => {
+                        // Clone and attach node info
+                        const enriched = { ...c, nodeName: node.name, nodeId: node.id };
+                        allContainers.push(enriched);
+                    });
+                }
+            });
+
+            if (allContainers.length === 0) {
+                containerEl.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-blue-500/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        <p class="font-medium">No containers found</p>
+                        <p class="text-xs mt-1">Ensure agents have Docker permissions</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Render
+            let html = '<div class="space-y-3">';
+            for (const c of allContainers) {
+                const statusColor = (c.status === 'running') ? 'green' :
+                    (c.status === 'exited' || c.status === 'dead') ? 'red' : 'amber';
+                const statusTextColor = `text-${statusColor}-400`;
+                const statusBgColor = `bg-${statusColor}-400`;
+
+                let uptimeStr = 'Unknown';
+                if (c.uptime && c.uptime !== 'Unknown') {
+                    try {
+                        uptimeStr = new Date(c.uptime).toLocaleString();
+                    } catch (e) { uptimeStr = c.uptime; }
+                }
+
+                html += `
+                    <div class="flex flex-col p-4 bg-gray-900/50 border border-white/5 rounded-lg hover:border-blue-500/30 transition-colors gap-2">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3 overflow-hidden">
+                                <div class="${statusBgColor} w-2 h-2 rounded-full flex-shrink-0 mt-1"></div>
+                                <div class="overflow-hidden min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <div class="font-medium truncate text-gray-200">${(c.name || '').replace(/^\//, '')}</div>
+                                        <div class="px-2 py-0.5 rounded-full bg-gray-800 text-xs text-gray-400 border border-gray-700 font-mono">${c.nodeName}</div>
+                                    </div>
+                                    <div class="text-xs text-gray-500 truncate mt-0.5" title="${c.image}">
+                                        ${c.image} <span class="text-gray-600">• ${c.short_id || ''}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right flex-shrink-0 ml-2">
+                                <div class="text-sm capitalize ${statusTextColor} font-medium">${c.status}</div>
+                                ${c.managed ? '<div class="text-xs text-purple-400 mt-1">Managed</div>' : ''}
+                            </div>
+                        </div>
+                        
+                        <!-- Detailed Info Row -->
+                        <div class="flex flex-wrap gap-2 text-[10px] font-mono pl-5 mt-1">
+                            ${c.ports ? `
+                            <div class="px-2 py-1 bg-black/40 rounded border border-white/5 text-gray-300 flex items-center gap-1">
+                                <span class="text-gray-500 font-bold">PORTS:</span>
+                                <span>${c.ports}</span>
+                            </div>` : ''}
+                            
+                            ${(c.uptime && c.uptime !== 'Unknown') ? `
+                            <div class="px-2 py-1 bg-black/40 rounded border border-white/5 text-gray-300 flex items-center gap-1">
+                                <span class="text-gray-500 font-bold">STARTED:</span>
+                                <span>${uptimeStr}</span>
+                            </div>` : ''}
+                            
+                             ${c.state ? `
+                            <div class="px-2 py-1 bg-black/40 rounded border border-white/5 text-gray-300 flex items-center gap-1">
+                                <span class="text-gray-500 font-bold">STATE:</span>
+                                <span>${c.state}</span>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+
+            containerEl.innerHTML = html;
+
+        } catch (error) {
+            console.error("Failed to load containers:", error);
+            containerEl.innerHTML = `
+                <div class="text-center py-8 text-red-400">
+                    <p>Failed to load containers</p>
+                    <p class="text-xs mt-1">${error.message}</p>
+                </div>
+            `;
         }
     }
 </script>

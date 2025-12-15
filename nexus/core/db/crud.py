@@ -21,6 +21,10 @@ from nexus.shared.models import (
     NodeCreate,
     NodeStatus,
     NodeUpdate,
+    # Alert imports
+    AlertCreate,
+    AlertStatus,
+    AlertType,
 )
 
 
@@ -441,3 +445,97 @@ def delete_old_logs(db: Session, before: datetime) -> int:
 
 
 
+    deleted = db.query(LogModel).filter(LogModel.timestamp < before).delete()
+    db.commit()
+    return deleted
+
+
+# ============================================================================
+# Alert CRUD Operations
+# ============================================================================
+
+
+def create_alert(db: Session, alert: "AlertCreate") -> "AlertModel":
+    """Create a new alert."""
+    from nexus.core.db.models import AlertModel
+
+    db_alert = AlertModel(
+        node_id=str(alert.node_id),
+        type=alert.type,
+        severity=alert.severity,
+        message=alert.message,
+        status="active",
+        created_at=datetime.utcnow(),
+    )
+    db.add(db_alert)
+    db.commit()
+    db.refresh(db_alert)
+    return db_alert
+
+
+def get_active_alerts(
+    db: Session,
+    node_id: Optional[str] = None,
+) -> List["AlertModel"]:
+    """Get active alerts."""
+    from nexus.core.db.models import AlertModel
+
+    query = db.query(AlertModel).filter(AlertModel.status == "active")
+
+    if node_id:
+        query = query.filter(AlertModel.node_id == node_id)
+
+    return query.order_by(AlertModel.created_at.desc()).all()
+
+
+def get_active_alerts_count(db: Session, node_id: Optional[str] = None) -> int:
+    """Get count of active alerts."""
+    from nexus.core.db.models import AlertModel
+
+    query = db.query(AlertModel).filter(AlertModel.status == "active")
+
+    if node_id:
+        query = query.filter(AlertModel.node_id == node_id)
+
+    return query.count()
+
+
+def resolve_alert(db: Session, alert_id: str) -> Optional["AlertModel"]:
+    """Mark an alert as resolved."""
+    from nexus.core.db.models import AlertModel
+
+    db_alert = db.query(AlertModel).filter(AlertModel.id == alert_id).first()
+    if not db_alert:
+        return None
+
+    db_alert.status = "resolved"
+    db_alert.resolved_at = datetime.utcnow()
+    db_alert.updated_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(db_alert)
+    return db_alert
+
+
+def resolve_alerts_by_type(db: Session, node_id: str, alert_type: str) -> int:
+    """Resolve all active alerts of a specific type for a node."""
+    from nexus.core.db.models import AlertModel
+
+    # Find active alerts of this type
+    alerts = db.query(AlertModel).filter(
+        AlertModel.node_id == node_id,
+        AlertModel.type == alert_type,
+        AlertModel.status == "active"
+    ).all()
+
+    count = 0
+    for alert in alerts:
+        alert.status = "resolved"
+        alert.resolved_at = datetime.utcnow()
+        alert.updated_at = datetime.utcnow()
+        count += 1
+    
+    if count > 0:
+        db.commit()
+    
+    return count

@@ -64,14 +64,36 @@ graph TD
 *   Job queue with concurrent execution limits
 *   Result reporting and tracking
 
-**Web Dashboard** - Real-time fleet monitoring (UniFi-style with purple theme)
-*   Live metrics visualization (CPU, memory, disk, temperature)
-*   Health status overview for all nodes
-*   Log viewer with filtering and search
-*   Job submission and monitoring UI
-*   System topology and node discovery
-*   WebSocket real-time updates (instant, no polling)
-*   Unique CLI view showing equivalent commands for every action
+## ✨ Features
+
+### 🖥️ Monitoring Dashboard
+- **Real-time Metrics:**
+    - Live tracking of CPU, Memory, Disk, and Temperature.
+    - Interactive charts with 30m, 1h, 6h, and 24h history.
+    - Automatic 7-day data retention policy.
+- **Alert System:**
+    - Proactive health monitoring (Critical/Warning thresholds).
+    - Checks for High CPU (>95%), Memory (>95%), Disk (>95%), and Temperature (>85°C).
+    - Node offline detection.
+    - Interactive Alerts Modal on dashboard.
+- **Inventory Management:**
+    - Detailed hardware info (Disk type detection: SD Card vs SSD/HDD).
+    - Container inventory with Port mappings, Uptime, and Status.
+    - Multi-disk storage visualization.
+- **Fleet View:**
+    - Status overview of all registered nodes (Online/Offline).
+    - Remote agent updates via UI.
+
+### 🤖 Intelligent Agent
+- **Auto-Discovery:**
+    - Automatic registration with the Core server.
+    - Hardware capability detection (ARM/x86, Storage types).
+- **Self-Healing:**
+    - Automatic service restart on failure.
+    - offline caching of metrics during network interruptions.
+- **Secure:**
+    - Token-based authentication.
+    - Least-privilege execution.
 *   📋 **See full UI/UX plan:** [`docs/plans/dashboard-ui-plan.md`](docs/plans/dashboard-ui-plan.md)
 
 

@@ -52,9 +52,17 @@ async def lifespan(app: FastAPI):
 
     # Start background services
     from nexus.core.services.log_cleanup import LogCleanupService
+    from nexus.core.services.data_retention import DataRetentionService
 
     log_cleanup_service = LogCleanupService(config)
     await log_cleanup_service.start()
+
+    data_retention_service = DataRetentionService(config)
+    await data_retention_service.start()
+
+    from nexus.core.services.alert_service import AlertService
+    alert_service = AlertService(config)
+    await alert_service.start()
 
     yield
 
@@ -63,6 +71,8 @@ async def lifespan(app: FastAPI):
 
     # Stop background services
     await log_cleanup_service.stop()
+    await data_retention_service.stop()
+    await alert_service.stop()
 
     # Database connections are closed automatically per-request
 
@@ -127,7 +137,7 @@ async def health_check():
 # API Routers
 # ============================================================================
 
-from nexus.core.api import auth, jobs, logs, metrics, nodes, terminal, websocket, update
+from nexus.core.api import auth, jobs, logs, metrics, nodes, terminal, websocket, update, alerts
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(nodes.router, prefix="/api/nodes", tags=["nodes"])
@@ -137,6 +147,7 @@ app.include_router(logs.router, prefix="/api/logs", tags=["logs"])
 app.include_router(terminal.router, prefix="/api", tags=["terminal"])
 app.include_router(websocket.router, prefix="/api", tags=["websocket"])
 app.include_router(update.router, prefix="/api/update", tags=["update"])
+app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
 
 # ============================================================================
 # Web Dashboard

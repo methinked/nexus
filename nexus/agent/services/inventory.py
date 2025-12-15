@@ -120,16 +120,35 @@ class InventoryCollector:
             container_list = []
             for c in containers:
                 try:
-                    # Basic extraction, matching the structure used in `nexus.agent.api.docker`
-                    # We send a simplified dict that fits into our metadata schema
+                    # Parse ports: {'80/tcp': [{'HostIp': '0.0.0.0', 'HostPort': '8000'}]}
+                    ports = []
+                    if c.attrs.get("NetworkSettings", {}).get("Ports"):
+                        for internal, bindings in c.attrs["NetworkSettings"]["Ports"].items():
+                            if bindings:
+                                for b in bindings:
+                                    ports.append(f"{b['HostPort']}:{internal}")
+                            else:
+                                ports.append(internal)
+
+                    # Calculate Uptime
+                    started_at = c.attrs.get("State", {}).get("StartedAt")
+                    uptime_str = "Unknown"
+                    if started_at:
+                        # Format: 2023-10-27T10:00:00.123456789Z
+                        # Simple truncation or parsing if needed, but raw string is often fine for now
+                        uptime_str = started_at
+
                     info = {
                         "id": c.id,
                         "short_id": c.short_id,
                         "name": c.name,
-                        "status": c.status,
+                        "status": c.status, # 'running', 'exited'
+                        "state": c.attrs.get("State", {}).get("Status", "unknown"), # 'running'
                         "image": c.image.tags[0] if c.image.tags else c.image.id,
                         "created": c.attrs.get("Created"),
-                        "state": c.attrs.get("State", {}),
+                        "ports": ", ".join(ports),
+                        "uptime": uptime_str,
+                        "description": f"{c.name} ({c.short_id[:8]}) - {c.attrs.get('Config', {}).get('Image', 'unknown')}",
                         # Managed flag if labeled
                         "managed": c.labels.get("com.nexus.managed") == "true"
                     }

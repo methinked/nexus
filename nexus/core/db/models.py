@@ -45,6 +45,7 @@ class NodeModel(Base):
     jobs = relationship("JobModel", back_populates="node", cascade="all, delete-orphan")
     metrics = relationship("MetricModel", back_populates="node", cascade="all, delete-orphan")
     logs = relationship("LogModel", back_populates="node", cascade="all, delete-orphan")
+    alerts = relationship("AlertModel", back_populates="node", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Node(id={self.id}, name={self.name}, status={self.status})>"
@@ -138,6 +139,36 @@ class LogModel(Base):
 
     def __repr__(self) -> str:
         return f"<Log(id={self.id}, node_id={self.node_id}, level={self.level}, source={self.source})>"
+
+
+class AlertModel(Base):
+    """Alert database model."""
+
+    __tablename__ = "alerts"
+
+    # Primary key
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+
+    # Foreign key to node
+    node_id = Column(String(36), ForeignKey("nodes.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Alert details
+    type = Column(String(50), nullable=False, index=True)
+    severity = Column(String(20), nullable=False)
+    message = Column(Text, nullable=False)
+    status = Column(String(20), default="active", nullable=False, index=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    resolved_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    node = relationship("NodeModel", back_populates="alerts")
+
+    def __repr__(self) -> str:
+        return f"<Alert(id={self.id}, node_id={self.node_id}, type={self.type}, status={self.status})>"
+
 
 
 

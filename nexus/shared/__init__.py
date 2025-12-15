@@ -52,7 +52,15 @@ from nexus.shared.models import (
     SystemInfo,
     Token,
     TokenData,
-
+    # Alerts
+    Alert,
+    AlertBase,
+    AlertCreate,
+    AlertList,
+    AlertSeverity,
+    AlertStatus,
+    AlertType,
+    AlertUpdate,
 )
 
 __all__ = [
@@ -113,4 +121,13 @@ __all__ = [
     "HealthResponse",
     "ErrorResponse",
     "BaseResponse",
+    # Alerts
+    "Alert",
+    "AlertBase",
+    "AlertCreate",
+    "AlertList",
+    "AlertSeverity",
+    "AlertStatus",
+    "AlertType",
+    "AlertUpdate",
 ]

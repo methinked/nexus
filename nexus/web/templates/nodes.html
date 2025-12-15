@@ -328,24 +328,53 @@
                             </template>
                             <template x-for="container in containers" :key="container.id">
                                 <div
-                                    class="flex items-center justify-between p-3 bg-gray-800/40 border border-white/5 rounded-lg hover:bg-gray-700/40 transition-colors">
-                                    <div class="flex items-center space-x-3">
-                                        <div :class="{
-                                            'bg-green-400': container.status === 'running',
-                                            'bg-red-400': container.status === 'exited' || container.status === 'dead',
-                                            'bg-amber-400': container.status === 'paused' || container.status === 'restarting',
-                                            'bg-gray-400': container.status === 'created'
-                                        }" class="w-2 h-2 rounded-full flex-shrink-0"></div>
-                                        <div class="overflow-hidden">
-                                            <div class="font-medium truncate"
-                                                x-text="container.name.replace(/^\//, '')"></div>
-                                            <div class="text-xs text-gray-500 truncate" x-text="container.image"
-                                                :title="container.image"></div>
+                                    class="flex flex-col p-3 bg-gray-800/40 border border-white/5 rounded-lg hover:bg-gray-700/40 transition-colors gap-2">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex items-center space-x-3 overflow-hidden">
+                                            <div :class="{
+                                                'bg-green-400': container.status === 'running',
+                                                'bg-red-400': container.status === 'exited' || container.status === 'dead',
+                                                'bg-amber-400': container.status === 'paused' || container.status === 'restarting',
+                                                'bg-gray-400': container.status === 'created'
+                                            }" class="w-2 h-2 rounded-full flex-shrink-0 mt-1"></div>
+                                            <div class="overflow-hidden min-w-0">
+                                                <div class="flex items-baseline gap-2">
+                                                    <div class="font-medium truncate"
+                                                        x-text="container.name.replace(/^\//, '')"></div>
+                                                    <div class="text-[10px] text-gray-500 font-mono"
+                                                        x-text="container.short_id"></div>
+                                                </div>
+                                                <div class="text-xs text-gray-400 truncate" x-text="container.image"
+                                                    :title="container.image"></div>
+                                            </div>
+                                        </div>
+                                        <div class="text-right flex-shrink-0 ml-2">
+                                            <div class="text-sm capitalize" :class="{
+                                                'text-green-400': container.status === 'running',
+                                                'text-red-400': container.status === 'exited',
+                                                'text-gray-400': container.status !== 'running' && container.status !== 'exited'
+                                            }" x-text="container.status"></div>
+                                            <div x-show="container.managed" class="text-xs text-purple-400">Managed
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="text-right flex-shrink-0 ml-2">
-                                        <span class="text-sm text-gray-400 capitalize" x-text="container.status"></span>
-                                        <div x-show="container.managed" class="text-xs text-purple-400">Nexus Managed
+
+                                    <!-- Detailed Info Row -->
+                                    <div class="flex flex-wrap gap-2 text-[10px] font-mono pl-5">
+                                        <div x-show="container.ports"
+                                            class="px-1.5 py-0.5 bg-black/30 rounded border border-white/5 text-gray-300 flex items-center gap-1">
+                                            <span class="text-gray-500">PORTS:</span>
+                                            <span x-text="container.ports"></span>
+                                        </div>
+                                        <div x-show="container.uptime && container.uptime !== 'Unknown'"
+                                            class="px-1.5 py-0.5 bg-black/30 rounded border border-white/5 text-gray-300 flex items-center gap-1">
+                                            <span class="text-gray-500">UP:</span>
+                                            <span x-text="new Date(container.uptime).toLocaleString()"></span>
+                                        </div>
+                                        <div x-show="container.state"
+                                            class="px-1.5 py-0.5 bg-black/30 rounded border border-white/5 text-gray-300 flex items-center gap-1">
+                                            <span class="text-gray-500">STATE:</span>
+                                            <span x-text="container.state"></span>
                                         </div>
                                     </div>
                                 </div>

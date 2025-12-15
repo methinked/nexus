@@ -53,6 +53,30 @@ class NodeHealth(str, Enum):
     UNKNOWN = "unknown"
 
 
+class AlertSeverity(str, Enum):
+    """Severity level of an alert."""
+
+    WARNING = "warning"
+    CRITICAL = "critical"
+
+
+class AlertStatus(str, Enum):
+    """Status of an alert."""
+
+    ACTIVE = "active"
+    RESOLVED = "resolved"
+
+
+class AlertType(str, Enum):
+    """Type of alert condition."""
+
+    NODE_OFFLINE = "node_offline"
+    HIGH_CPU = "high_cpu"
+    HIGH_MEMORY = "high_memory"
+    HIGH_DISK = "high_disk"
+    HIGH_TEMP = "high_temp"
+
+
 
 
 
@@ -85,6 +109,8 @@ class NodeMetadata(BaseModel):
     location: Optional[str] = None
     tags: list[str] = Field(default_factory=list)
     description: Optional[str] = None
+    # Inventory data (disks, containers)
+    inventory: Dict[str, Any] = Field(default_factory=dict)
     # Extensible for custom fields
     custom: Dict[str, Any] = Field(default_factory=dict)
 
@@ -544,3 +570,49 @@ class ErrorResponse(BaseModel):
     """Standard error response."""
 
     error: ErrorDetail
+
+
+# ============================================================================
+# Alert Models
+# ============================================================================
+
+
+class AlertBase(BaseModel):
+    """Base alert model."""
+
+    node_id: UUID
+    type: AlertType
+    severity: AlertSeverity
+    message: str
+
+
+class AlertCreate(AlertBase):
+    """Model for creating a new alert."""
+    pass
+
+
+class AlertUpdate(BaseModel):
+    """Model for updating an alert."""
+    
+    status: Optional[AlertStatus] = None
+    resolved_at: Optional[datetime] = None
+
+
+class Alert(AlertBase, TimestampedModel):
+    """Complete alert model."""
+
+    id: UUID = Field(default_factory=uuid4)
+    status: AlertStatus = AlertStatus.ACTIVE
+    resolved_at: Optional[datetime] = None
+
+    class Config:
+        """Pydantic configuration."""
+        from_attributes = True
+
+
+class AlertList(BaseModel):
+    """Response model for listing alerts."""
+
+    alerts: list[Alert]
+    total: int
+
