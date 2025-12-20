@@ -835,6 +835,23 @@ nexus deployment delete f6b858e2 --yes
 
 **Phase 13 COMPLETE!** ✓ - Fleet is now self-updating and resilient
 
+---
+
+#### Phase 14: Quality of Life & Polish (Planned) 💅
+
+**Goal:** Refine the user experience based on real-world usage feedback.
+
+**Planned Features:**
+- [ ] **Enhanced Container Detection:**
+  - Improve `DockerService` to detect rootless Docker and non-standard sockets.
+  - Parse `org.opencontainers.image.*` labels for friendly descriptions and icons.
+  - Centralize Docker logic (remove duplication in `inventory.py`).
+  - Better handling of image tags/digests (resolve `sha256:` to readable names).
+- [ ] **UI/UX Improvements:**
+  - "Copy to Clipboard" buttons for API tokens and logs.
+  - Better mobile responsiveness for tables.
+  - collapsible/expandable sections in Node Detail view.
+
   - Volume mounts: etc-pihole, etc-dnsmasq.d (created on agent)
   - Container startup and health check (passed)
 
