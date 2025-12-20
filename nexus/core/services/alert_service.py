@@ -82,6 +82,8 @@ class AlertService:
                 break
             except Exception as e:
                 logger.error(f"Error in alert monitor loop: {e}", exc_info=True)
+                # Prevent tight loop on error
+                await asyncio.sleep(5)
             
             await asyncio.sleep(self.check_interval_seconds)
 
@@ -123,6 +125,9 @@ class AlertService:
                 AlertSeverity.CRITICAL,
                 f"Node {node.name} is offline (last seen {int(time_since_seen)}s ago)"
             )
+            # Update node status to OFFLINE to satisfy UI
+            from nexus.core.db.crud import update_node_status
+            update_node_status(db, str(node.id), NodeStatus.OFFLINE, node.last_seen)
         else:
             # Node is online - Resolve Alert
             resolve_alerts_by_type(db, str(node.id), AlertType.NODE_OFFLINE)

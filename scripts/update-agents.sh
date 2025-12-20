@@ -4,7 +4,7 @@
 
 set -e
 
-CORE_IP="10.243.99.44"
+CORE_IP="10.243.151.228"
 CORE_URL="http://${CORE_IP}:8000"
 USERNAME="methinked"
 PASSWORD="107512625"
@@ -30,8 +30,8 @@ for AGENT_IP in "${AGENTS[@]}"; do
         fi
         
         # Update NEXUS_CORE_URL
-        sed -i "s|NEXUS_CORE_URL=.*|NEXUS_CORE_URL=http://10.243.99.44:8000|g" .env || \
-        echo "NEXUS_CORE_URL=http://10.243.99.44:8000" >> .env
+        sed -i "s|NEXUS_CORE_URL=.*|NEXUS_CORE_URL=${CORE_URL}|g" .env || \
+        echo "NEXUS_CORE_URL=${CORE_URL}" >> .env
         
         # Remove old agent state to force re-registration
         rm -f data/agent_state.json

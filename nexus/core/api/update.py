@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from nexus.core.db.database import get_db
 from nexus.core.db.crud import create_job
-from nexus.shared.models import JobType, UpdateJobPayload, BaseResponse
+from nexus.shared.models import JobType, UpdateJobPayload, BaseResponse, JobCreate
 from nexus.core.db import get_node
 
 router = APIRouter()
@@ -103,11 +103,12 @@ async def trigger_update(
         restart_service=True
     )
     
-    create_job(
-        db,
-        node_id=str(node_id),
+    job_create = JobCreate(
+        node_id=node_id,
         type=JobType.UPDATE,
         payload=payload.model_dump()
     )
+
+    create_job(db, job_create)
     
     return BaseResponse(message="Update job created")

@@ -83,10 +83,10 @@ class MetricsCollector:
 
     async def _collect_and_send(self):
         """Collect metrics and send to Core."""
-        metrics = self._collect_metrics()
+        metrics = await self._collect_metrics()
         await self._send_metrics(metrics)
 
-    def _collect_metrics(self) -> MetricCreate:
+    async def _collect_metrics(self) -> MetricCreate:
         """
         Collect current system metrics using psutil.
 
