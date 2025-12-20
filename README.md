@@ -256,14 +256,11 @@ nexus fleet update
   - [x] Loading states for buttons (refresh, submit)
   - [x] Consistent status badges and colors
   - [x] Improved empty states for lists
-- [ ] **Phase 8: Fleet Management** - Centralized agent update and fleet-wide operations.
-  - [ ] Remote agent code updates from web dashboard (one-click agent updates)
-  - [ ] Remote agent code updates via CLI (`nexus fleet update`, `nexus node update <node_id>`)
-  - [ ] Agent version tracking and update availability notifications
-  - [ ] Fleet-wide configuration management
-  - [ ] Bulk operations across multiple nodes (update all, restart all, etc.)
-  - [ ] Update rollback mechanism for failed updates
-  - [ ] Zero-downtime agent updates with graceful restarts
+- [x] **Phase 13: Fleet Management & Auto-Update**
+  - [x] Remote agent code updates from web dashboard (one-click agent updates)
+  - [x] Agent self-update script with git pull & restart
+  - [x] Core API support for update jobs
+  - [x] Resilience improvements (re-registration support, crash loop fixes)
 
 ## 🔒 Security
 

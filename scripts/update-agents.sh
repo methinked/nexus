@@ -21,7 +21,7 @@ for AGENT_IP in "${AGENTS[@]}"; do
     echo "Updating agent at ${AGENT_IP}..."
     
     # Update .env file on agent
-    sshpass -p "${PASSWORD}" ssh -o StrictHostKeyChecking=no ${USERNAME}@${AGENT_IP} << 'ENDSSH'
+    sshpass -p "${PASSWORD}" ssh -o StrictHostKeyChecking=no ${USERNAME}@${AGENT_IP} << ENDSSH
         cd ~/nexus-agent
         
         # Backup existing .env

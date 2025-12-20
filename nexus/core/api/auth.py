@@ -55,11 +55,32 @@ async def register_node(
         )
 
     # Check if node with same name already exists
+    # Check if node with same name already exists
     existing_node = get_node_by_name(db, request.name)
     if existing_node:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Node with name '{request.name}' already registered",
+        # If node exists and shared secret is valid (already checked),
+        # we treat this as a re-registration / recovery.
+        # Update IP and metadata
+        existing_node.ip_address = request.ip_address
+        if request.metadata:
+             existing_node.node_metadata = request.metadata.model_dump()
+        
+        db.commit()
+        db.refresh(existing_node)
+        
+        # Create new API token
+        token, expires_at = create_access_token(
+            node_id=existing_node.id,
+            node_name=existing_node.name,
+            secret_key=config.jwt_secret_key,
+            algorithm=config.jwt_algorithm,
+            expires_delta=timedelta(hours=config.jwt_expiration_hours),
+        )
+
+        return RegistrationResponse(
+            node_id=existing_node.id,
+            api_token=token,
+            expires_at=expires_at,
         )
 
     # Create node in database

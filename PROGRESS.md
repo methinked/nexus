@@ -798,6 +798,43 @@ nexus deployment delete f6b858e2 --yes
   - Service template → API → YAML parsing → Agent → Docker container
   - Image pull: `pihole/pihole:latest` (pulled successfully)
   - Port mappings: 53/tcp, 53/udp, 80/tcp (bound correctly)
+
+**Phase 7.3 COMPLETE!** ✓ - Pre-built service templates operational
+
+---
+
+#### Phase 13: Agent Auto-Update & Resilience (Completed 2025-12-20) 🔄
+
+**Status:** ✅ COMPLETE
+
+**Goal:** Enable remote self-updating of agents from the Core Dashboard to ensure the fleet stays in sync.
+
+**Completed Features:**
+- ✅ **Agent Self-Update Mechanism:**
+  - `update_agent.sh` script detects git branch and pulls latest code
+  - Handles dependency updates (`pip install`) automatically
+  - Gracefully restarts the agent service
+  - Robust error handling and fallback to 'dev' branch
+- ✅ **Core Update Orchestration:**
+  - New `UPDATE` job type in Core API
+  - `POST /api/update/nodes/{node_id}/update` endpoint
+  - `UpdateExecutor` in Job Dispatcher to trigger updates
+- ✅ **Dashboard UI Integration:**
+  - "Update Agent" button on Node Detail page
+  - Visual feedback during update (Offline -> Online transition)
+- ✅ **Resilience & Bug Fixes:**
+  - **Re-registration Support:** Core now allows existing nodes to re-register (critical for post-update recovery)
+  - **Crash Loop Fix:** Resolved async/await syntax error in metrics collector
+  - **Deployment Fix:** Fixed variable expansion in `update-agents.sh` script
+  - **Stale Alerts:** Fixed `AlertService` to properly sync offline status
+
+**Verification:**
+- Validated on `moria-pi`, `orthanc-pi`, and `bywater-pi`
+- Full fleet update performed successfully
+- All nodes returned to Online status automaticallly
+
+**Phase 13 COMPLETE!** ✓ - Fleet is now self-updating and resilient
+
   - Volume mounts: etc-pihole, etc-dnsmasq.d (created on agent)
   - Container startup and health check (passed)
 
