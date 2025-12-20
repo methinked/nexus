@@ -1,12 +1,31 @@
 ## 1. Project Philosophy
-**"Lightweight Fleet Observability"**
-Nexus is a minimal, agent-based monitoring system for home labs (specifically Raspberry Pi fleets).
-**Core Focus (MVP):** "Info, not Management."
-- **Observe:** Aggregates CPU, RAM, Temps, Storage, and Container status from all nodes.
-- **Visualize:** Presents a unified dashboard for "at a glance" health checks.
-- **Simplicity:** No complex orchestration, no job scheduling, no remote deployment features. Just pure, reliable stats.
+**"Lightweight Fleet Management & Observability"**
+Nexus is a focused, agent-based system for monitoring and managing home lab fleets (specifically Raspberry Pi nodes).
 
-*(Pivot Dec 2025: Focused strictly on Monitoring MVP. Orchestration features removed).*
+**Core Focus:** "Visibility & Control, without the bloat."
+
+We sit in the "Goldilocks Zone" between:
+- **Too Simple:** A static dashboard that just shows CPU usage. #Boring
+- **Too Complex:** Kubernetes, K3s, or Ansible Tower. #Overkill
+
+**What we ARE:**
+- **Observer:** A "Single Pane of Glass" for fleet health (CPU, RAM, Temps, Storage).
+- **Controller:** A standardized way to deploy Docker services (Pi-hole, Home Assistant) to specific nodes.
+- **Automator:** A mechanism to run shell jobs and maintenance tasks.
+
+**What we are NOT:**
+- **Kubernetes:** We do not do "scheduling", "bin-packing", or "self-healing mesh networking". If a node dies, we alert you. We don't magically move workloads.
+- **Terraform:** We manage *services*, not low-level infrastructure provisioning.
+
+## 🚫 The "Anti-Creep" Manifesto (Guiding Principles)
+*To keep this project maintainable and stable, we strictly adhere to these rules. If you (the User) or I (the AI) suggest breaking them, politely point to this section and say "No".*
+
+1.  **Orchestration Lite:** Docker Compose is the source of truth. We do not invent our own container format. We just automate `docker compose up`.
+2.  **No Complex Networking:** We assume a flat LAN (or VPN like ZeroTier). We DO NOT implement overlays, ingress controllers, or mesh routing.
+3.  **Database Stability:** If a feature requires a complex migration that risks existing data for a "nice to have," it is rejected.
+4.  **CLI First, Always:** If we can't do it in the terminal, it doesn't go in the UI.
+5.  **Specific vs Generic:** We build headers for *our* specific use cases (Pi-hole, Home Assistant), not a generic "run anything anywhere" platform.
+6.  **No "Smart" Scheduling:** Users pick which node runs a service. The system definitely does not pick.
 
 **Target Hardware:**
 - Development: Linux laptop (x86_64)
@@ -125,18 +144,27 @@ Nexus is a minimal, agent-based monitoring system for home labs (specifically Ra
   - `cancel` - Stub for job cancellation
   - `logs` - Stub for job logs (Phase 4)
 
-## 🚧 What's Next - Scaling & Refinement
+## 🗺️ Future Phases (Roadmap)
 
-**The core fleet monitoring system is functional.**
+To ensure stability, we are locking down the feature set.
 
-### Priority: Fleet-wide Updates & Stability
-1. **Automated Updates**: Ensure straightforward update path for agents.
-2. **Stability**: Long-term robust metrics collection.
-3. **Container Monitoring**: Lightweight viewing of containers (without management).
+### ✅ Phase 1-12: Foundation & Core Features (Complete)
+*See PROGRESS.md for details on what is built.*
 
-**Removed Features (Dec 2025):**
-- Docker Service Orchestration (Service Templates, Deployments) - Removed to reduce complexity.
-- Remote Terminal/Shell - Removed to focus on read-only monitoring.
+### 🚧 Phase 13: Fleet Maintenance (Current Focus)
+**Goal:** Make the fleet maintainable without logging into every node.
+- [ ] **Agent Updates:** A logical way to update `nexus-agent` code on remote nodes (git pull + restart service).
+- [ ] **Self-Diagnostics:** improved error reporting when things break.
+
+### 🔒 Phase 14: Security Hardening
+**Goal:** Lock the doors before we expand further.
+- [ ] **Strict TLS:** Enforce HTTPS everywhere if exposed beyond localhost.
+- [ ] **Role Based Access (Maybe):** Simple Admin vs View-Only user.
+
+### 🛑 Phase 15: Stability Freeze
+**Goal:** No new features. Only bug fixes and performance tuning.
+- [ ] Comprehensive test suite.
+- [ ] Long-term memory leak testing.
 
 ---
 

@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("", response_model=NodeList)
-async def list_nodes(
+def list_nodes(
     status_filter: Optional[NodeStatus] = Query(None, alias="status"),
     tag: Optional[str] = Query(None),
     skip: int = Query(0, ge=0),
@@ -92,7 +92,7 @@ async def list_nodes(
 
 
 @router.get("/{node_id}", response_model=NodeWithMetrics)
-async def get_node_details(
+def get_node_details(
     node_id: UUID,
     db: Session = Depends(get_db),
 ):
@@ -158,7 +158,7 @@ async def get_node_details(
 
 
 @router.put("/{node_id}", response_model=Node)
-async def update_node_metadata(
+def update_node_metadata(
     node_id: UUID,
     update: NodeUpdate,
     db: Session = Depends(get_db),
@@ -199,7 +199,7 @@ async def update_node_metadata(
 
 
 @router.get("/{node_id}/health", response_model=NodeHealthStatus)
-async def get_node_health(
+def get_node_health(
     node_id: UUID,
     db: Session = Depends(get_db),
     cpu_warning: float = Query(80.0, ge=0, le=100),
@@ -273,7 +273,7 @@ async def get_node_health(
 
 
 @router.post("/inventory", status_code=status.HTTP_200_OK)
-async def update_inventory(
+def update_inventory(
     update: "InventoryUpdate",  # Quote to handle forward ref if needed, though imported
     db: Session = Depends(get_db),
 ):
@@ -324,7 +324,7 @@ async def update_inventory(
 
 
 @router.get("/{node_id}/disks", response_model=list[DiskInfo])
-async def get_node_disks(
+def get_node_disks(
     node_id: UUID,
     db: Session = Depends(get_db),
 ):
@@ -347,7 +347,7 @@ async def get_node_disks(
 
 
 @router.get("/{node_id}/containers")
-async def get_node_containers(
+def get_node_containers(
     node_id: UUID,
     show_all: bool = Query(True),
     db: Session = Depends(get_db),
@@ -377,7 +377,7 @@ async def get_node_containers(
 
 
 @router.delete("/{node_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def deregister_node(
+def deregister_node(
     node_id: UUID,
     db: Session = Depends(get_db),
 ):

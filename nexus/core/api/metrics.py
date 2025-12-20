@@ -25,7 +25,7 @@ router = APIRouter()
 
 
 @router.post("", response_model=BaseResponse, status_code=status.HTTP_201_CREATED)
-async def submit_metrics(
+def submit_metrics(
     metric: MetricCreate,
     db: Session = Depends(get_db),
 ):
@@ -65,14 +65,23 @@ async def submit_metrics(
     # Broadcast metric update via WebSocket
     from nexus.core.services.websocket_manager import manager
     import asyncio
-    asyncio.create_task(manager.broadcast_event("metric_update", {
-        "node_id": str(metric.node_id),
-        "timestamp": metric.timestamp.isoformat(),
-        "cpu_percent": metric.cpu_percent,
-        "memory_percent": metric.memory_percent,
-        "disk_percent": metric.disk_percent,
-        "temperature": metric.temperature,
-    }))
+    
+    # We can still fire-and-forget an async task from a sync route context
+    # But strictly speaking, asyncio.create_task requires a running loop.
+    # Uvicorn (FastAPI) provides that loop.
+    try:
+        loop = asyncio.get_running_loop()
+        loop.create_task(manager.broadcast_event("metric_update", {
+            "node_id": str(metric.node_id),
+            "timestamp": metric.timestamp.isoformat(),
+            "cpu_percent": metric.cpu_percent,
+            "memory_percent": metric.memory_percent,
+            "disk_percent": metric.disk_percent,
+            "temperature": metric.temperature,
+        }))
+    except RuntimeError:
+        # Should not happen in Uvicorn, but safe fallback or log
+        pass
 
     # Note: Health threshold checking is available via GET /api/nodes/{node_id}/health
 
@@ -80,7 +89,7 @@ async def submit_metrics(
 
 
 @router.get("/{node_id}", response_model=MetricList)
-async def get_node_metrics(
+def get_node_metrics(
     node_id: UUID,
     start_time: Optional[datetime] = Query(None, alias="since"),
     skip: int = Query(0, ge=0),
@@ -128,7 +137,7 @@ async def get_node_metrics(
 
 
 @router.get("/{node_id}/stats", response_model=MetricStats)
-async def get_node_metrics_stats(
+def get_node_metrics_stats(
     node_id: UUID,
     since: Optional[datetime] = Query(None, description="Start time for aggregation"),
     until: Optional[datetime] = Query(None, description="End time for aggregation"),

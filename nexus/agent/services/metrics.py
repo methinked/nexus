@@ -126,9 +126,8 @@ class MetricsCollector:
             disk_percent = disk.percent
 
         # Try to get temperature (Raspberry Pi specific)
-        temperature = self._get_temperature()
+        temperature = await self._get_temperature()
 
-        # TODO Phase 6.5.2: Add disks to MetricCreate once database schema updated
         return MetricCreate(
             node_id=self.node_id,
             timestamp=datetime.utcnow(),
@@ -138,7 +137,7 @@ class MetricsCollector:
             temperature=temperature,
         )
 
-    def _get_temperature(self) -> float | None:
+    async def _get_temperature(self) -> float | None:
         """
         Get CPU temperature.
 
@@ -151,7 +150,9 @@ class MetricsCollector:
         # Try vcgencmd for Raspberry Pi
         if shutil.which('vcgencmd'):
             try:
-                result = subprocess.run(
+                # Run blocking subprocess in thread pool
+                result = await asyncio.to_thread(
+                    subprocess.run,
                     ['vcgencmd', 'measure_temp'],
                     capture_output=True,
                     text=True,

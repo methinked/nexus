@@ -93,7 +93,7 @@ async def submit_job(
 
 
 @router.get("", response_model=JobList)
-async def list_jobs(
+def list_jobs(
     node_id: Optional[UUID] = Query(None),
     status_filter: Optional[JobStatus] = Query(None, alias="status"),
     job_type: Optional[JobType] = Query(None, alias="type"),
@@ -137,7 +137,7 @@ async def list_jobs(
 
 
 @router.get("/{job_id}", response_model=Job)
-async def get_job_details(
+def get_job_details(
     job_id: UUID,
     db: Session = Depends(get_db),
 ):
@@ -165,7 +165,7 @@ async def get_job_details(
 
 
 @router.patch("/{job_id}", response_model=BaseResponse)
-async def update_job(
+def update_job(
     job_id: UUID,
     update: JobUpdateRequest,
     db: Session = Depends(get_db),
