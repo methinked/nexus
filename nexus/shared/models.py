@@ -198,7 +198,7 @@ class UpdateJobPayload(JobPayload):
     """Payload for update jobs."""
 
     version: str
-    download_url: str
+    download_url: Optional[str] = None
     restart_service: bool = True
 
 

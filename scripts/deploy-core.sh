@@ -60,13 +60,29 @@ ssh_exec "cd ~/nexus-core && python3 -m venv venv"
 echo "Installing dependencies..."
 ssh_exec "cd ~/nexus-core && source venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt > /dev/null && pip install jinja2 uvicorn"
 
+# Helper function to extract value from .env
+get_env_value() {
+    local key=$1
+    if [ -f .env ]; then
+        grep "^$key" .env | cut -d '=' -f2
+    fi
+}
+
+# Try to find secrets in .env
+SHARED_SECRET=$(get_env_value "NEXUS_SHARED_SECRET")
+JWT_SECRET=$(get_env_value "NEXUS_JWT_SECRET_KEY")
+
+# Fallback defaults
+SHARED_SECRET="${SHARED_SECRET:-nexus-secret-change-me}"
+JWT_SECRET="${JWT_SECRET:-nexus-jwt-secret-change-me-min-32-chars}"
+
 echo "[6/7] Configuring Core..."
 # Generate .env
 cat > "$TEMP_DIR/.env" << EOF
 # Nexus Core Configuration
 NEXUS_CORE_URL=http://$SERVER_HOST:8000
-NEXUS_SHARED_SECRET=nexus-secret-change-me
-NEXUS_JWT_SECRET_KEY=nexus-jwt-secret-change-me-min-32-chars
+NEXUS_SHARED_SECRET=$SHARED_SECRET
+NEXUS_JWT_SECRET_KEY=$JWT_SECRET
 NEXUS_ENV=production
 NEXUS_HOST=0.0.0.0
 NEXUS_PORT=8000

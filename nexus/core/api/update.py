@@ -99,7 +99,7 @@ async def trigger_update(
     
     payload = UpdateJobPayload(
         version="latest", # TODO: Implement versioning
-        download_url="/api/update/bundle",
+        download_url=None,
         restart_service=True
     )
     
