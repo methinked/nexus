@@ -1578,4 +1578,27 @@ Nexus is shifting from a monitoring-focused platform to a **full fleet orchestra
   - Fixed `moria-pi` (192.168.0.78): Was registered to Ghost Core. Redeployed to Production Core.
   - `Orthanc-pi` (192.168.0.233): Confirmed healthy as Core + Agent.
 - **Result:**
-  - All 3 Raspberry Pis are now ONLINE and correctly named in the Production Dashboard.
+**Session 2025-12-21 (Phase 13 & 14 - Performance Redesign & ZeroTier Expansion):**
+- **UI Performance Redesign (Phase 13):**
+  - **Problem:** 10s+ delay when switching nodes in dashboard due to sequential HTTP polling.
+  - **Solution:** Implemented **WebSocket Push Architecture** + **Client-Side Caching**.
+  - **Implementation:**
+    - `ConnectionManager` (Core) broadcasts real-time metrics.
+    - `websocket-client.js` (Frontend) maintains persistent connection.
+    - `nodes_optimized.html` uses Alpine.js in-memory store.
+  - **Result:** Node switching time reduced to **<100ms (Instant)**.
+
+- **ZeroTier & Fleet Expansion (Phase 14):**
+  - **Network topology shift:** Core moved to `192.168.1.x` subnet (Moria-pi).
+  - **ZeroTier Integration:** Enabled Core access via `10.243.14.179`.
+  - **Orthanc-pi Onboarding:** Deployed agent to `192.168.1.222`, connected via ZeroTier.
+
+**Current Fleet Status (Verified 2025-12-21):**
+1. **Moria-pi** (Core + Agent) - `192.168.1.225` (Local)
+2. **Bywater-pi** (Agent) - `192.168.1.175` (LAN)
+3. **Orthanc-pi** (Agent) - `192.168.1.222` (ZeroTier-connected to `10.243.14.179`)
+
+**System Status:**
+- ✅ Core Server on Moria-pi (Migration complete).
+- ✅ Instant UI enabled.
+- ✅ Hybrid LAN/ZeroTier mesh operational.

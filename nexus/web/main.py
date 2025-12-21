@@ -54,18 +54,18 @@ async def dashboard_home(request: Request):
 @router.get("/nodes", response_class=HTMLResponse)
 async def nodes_page(request: Request):
     """
-    Nodes list page.
+    Nodes list page (Optimized with WebSocket real-time updates).
 
-    Shows sortable table of all nodes with live status.
+    Shows minimal node info with instant switching via in-memory cache.
+    Heavy components (charts, detailed logs) lazy-loaded in modal.
     """
     return templates.TemplateResponse(
-        "nodes.html",
+        "nodes_optimized.html",
         {
             "request": request,
-            "page_title": "Nodes",
-            "active_page": "nodes"
-        }
-    )
+    Render the nodes management page.
+    """
+    return templates.TemplateResponse("nodes.html", {"request": request})
 
 
 @router.get("/jobs", response_class=HTMLResponse)

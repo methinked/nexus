@@ -15,8 +15,11 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from nexus.core.db import (
     delete_node,
+    get_jobs,
     get_jobs_count,
     get_latest_metric,
+    get_logs,
+    get_metrics,
     get_node,
     get_nodes,
     get_nodes_count,
@@ -28,12 +31,15 @@ from nexus.shared import (
     BaseResponse,
     DiskInfo,
     HealthThresholds,
+    Job,
     JobStatus,
+    LogEntry,
     Metric,
     MetricData,
     Node,
     NodeHealthStatus,
     NodeList,
+    NodeOverview,
     NodeStatus,
     NodeUpdate,
     NodeWithMetrics,
@@ -374,6 +380,65 @@ def get_node_containers(
     # For now, return all.
     
     return {"containers": containers}
+
+
+@router.get("/{node_id}/overview", response_model=NodeOverview)
+def get_node_overview(
+    node_id: UUID,
+    db: Session = Depends(get_db),
+):
+    """
+    Get consolidated node overview (Health, Metrics, Jobs, Logs, Inventory).
+
+    Optimized for single-request dashboard loading.
+    """
+    # 1. Validate node
+    db_node = get_node(db, str(node_id))
+    if not db_node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Node {node_id} not found",
+        )
+
+    # 2. Get latest metric for Health Calculation
+    db_metric = get_latest_metric(db, str(node_id))
+    latest_metric = Metric.model_validate(db_metric) if db_metric else None
+
+    # 3. Calculate Health (Default Thresholds)
+    thresholds = HealthThresholds()
+    health_status = calculate_node_health(
+        node_id=node_id,
+        latest_metric=latest_metric,
+        thresholds=thresholds,
+    )
+
+    # 4. Fetch Recent Metrics (Limit 50)
+    db_metrics = get_metrics(db, str(node_id), limit=50)
+    metrics = [Metric.model_validate(m) for m in db_metrics]
+
+    # 5. Fetch Recent Jobs (Limit 5)
+    db_jobs = get_jobs(db, node_id=str(node_id), limit=5)
+    jobs = [Job.model_validate(j) for j in db_jobs]
+
+    # 6. Fetch Recent Logs (Limit 20)
+    db_logs = get_logs(db, node_id=str(node_id), limit=20)
+    logs = [LogEntry.model_validate(l) for l in db_logs]
+
+    # 7. Inventory Data (Disks, Containers)
+    inventory = db_node.node_metadata.get("inventory", {})
+    disks_data = inventory.get("disks", [])
+    disks = [DiskInfo.model_validate(d) for d in disks_data]
+    containers = inventory.get("containers", [])
+
+    return NodeOverview(
+        node_id=node_id,
+        health=health_status,
+        metrics=metrics,
+        jobs=jobs,
+        logs=logs,
+        disks=disks,
+        containers=containers
+    )
 
 
 @router.delete("/{node_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -8,6 +8,7 @@ Handles Docker operations on the agent node including:
 """
 
 import logging
+import os
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
@@ -32,14 +33,38 @@ class DockerService:
 
     def _connect(self):
         """Connect to the local Docker daemon."""
+        # Try standard methods first (env vars, default socket)
         try:
             self.client = docker.from_env()
-            # Test connection
             self.client.ping()
-            logger.info("Successfully connected to Docker daemon")
-        except DockerException as e:
-            logger.error(f"Failed to connect to Docker daemon: {e}")
-            self.client = None
+            logger.info("Successfully connected to Docker daemon via from_env()")
+            return
+        except DockerException:
+            pass
+
+        # Start looking for alternative sockets
+        common_paths = [
+            "unix:///var/run/docker.sock",
+            f"unix:///run/user/{os.getuid()}/docker.sock"
+        ]
+
+        # Check for non-standard user sockets (e.g. if running as root but accessing user docker)
+        # This is a bit of a guess, but helpful for some setups
+        if os.path.exists("/run/user/1000/docker.sock"):
+             common_paths.append("unix:///run/user/1000/docker.sock")
+
+        for path in common_paths:
+            try:
+                logger.debug(f"Attempting connection to {path}")
+                self.client = docker.DockerClient(base_url=path)
+                self.client.ping()
+                logger.info(f"Successfully connected to Docker daemon at {path}")
+                return
+            except DockerException as e:
+                logger.debug(f"Failed to connect to {path}: {e}")
+
+        logger.error("Failed to connect to Docker daemon using any method")
+        self.client = None
 
     def is_available(self) -> bool:
         """Check if Docker is available."""
@@ -269,6 +294,34 @@ class DockerService:
             logger.error(f"Failed to get container status: {e}")
             return None
 
+    def get_container_description(self, container: Container) -> str:
+        """
+        Get a friendly description for the container.
+        
+        Checks labels for common metadata.
+        """
+        labels = container.labels or {}
+        
+        # 1. Check OCI standard description
+        if "org.opencontainers.image.description" in labels:
+            return labels["org.opencontainers.image.description"]
+            
+        # 2. Check generic description
+        if "description" in labels:
+            return labels["description"]
+            
+        # 3. Check Docker Compose service name
+        if "com.docker.compose.service" in labels:
+            return f"Service: {labels['com.docker.compose.service']}"
+            
+        # 4. Fallback to image name (cleaned up)
+        image_tag = container.image.tags[0] if container.image.tags else ""
+        if image_tag:
+            return image_tag
+            
+        # 5. Last resort: Image ID partial
+        return f"Image: {container.image.id[:12]}"
+
     def list_containers(self, all_containers: bool = False) -> List[Dict[str, Any]]:
         """
         List containers.
@@ -292,18 +345,39 @@ class DockerService:
                 filters=filters
             )
 
-            return [
-                {
+            results = []
+            for c in containers:
+                # Calculate Uptime / Started At
+                started_at = c.attrs.get("State", {}).get("StartedAt")
+                
+                # Parse ports
+                ports = []
+                port_bindings = c.attrs.get("NetworkSettings", {}).get("Ports") or {}
+                for internal, bindings in port_bindings.items():
+                    if bindings:
+                        for b in bindings:
+                            host_port = b.get('HostPort', '')
+                            if host_port:
+                                ports.append(f"{host_port}:{internal}")
+                    else:
+                        ports.append(internal)
+
+                results.append({
                     'id': c.id,
+                    'short_id': c.short_id,
                     'name': c.name,
                     'status': c.status,
+                    'state': c.attrs.get("State", {}).get("Status", "unknown"),
                     'image': c.image.tags[0] if c.image.tags else (c.image.id if c.image else "unknown"),
                     'deployment_id': c.labels.get('nexus.deployment_id'),
                     'managed': c.labels.get('nexus.managed') == 'true',
-                    'created_at': c.attrs['Created']
-                }
-                for c in containers
-            ]
+                    'created_at': c.attrs['Created'],
+                    'started_at': started_at,
+                    'ports': ", ".join(ports),
+                    'description': self.get_container_description(c)
+                })
+            
+            return results
         except Exception as e:
             logger.error(f"Failed to list containers: {e}")
             return []

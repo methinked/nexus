@@ -163,6 +163,9 @@ class NodeList(BaseModel):
     total: int
 
 
+
+
+
 # ============================================================================
 # Job Models
 # ============================================================================
@@ -615,4 +618,16 @@ class AlertList(BaseModel):
 
     alerts: list[Alert]
     total: int
+
+
+class NodeOverview(BaseModel):
+    """Consolidated node details for UI optimization."""
+
+    node_id: UUID
+    health: NodeHealthStatus
+    metrics: list["Metric"] = Field(default_factory=list)
+    jobs: list["Job"] = Field(default_factory=list)
+    logs: list["LogEntry"] = Field(default_factory=list)
+    disks: list[DiskInfo] = Field(default_factory=list)
+    containers: list[Dict[str, Any]] = Field(default_factory=list)
 

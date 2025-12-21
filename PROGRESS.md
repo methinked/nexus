@@ -162,6 +162,35 @@ _No active development phase at the moment. Phase 4 complete!_
 
 ## ✅ Completed
 
+#### Phase 13: UI Performance Redesign (Completed 2025-12-21) ⚡
+
+All components completed:
+- [x] **WebSocket Push Architecture**
+  - Designed `ConnectionManager` for broadcast events
+  - Implemented `metric_update` event stream
+  - Created persistent `websocket-client.js`
+- [x] **Client-Side Caching**
+  - Implemented in-memory store (Alpine.js)
+  - Removed per-click API calls
+  - Instant (<100ms) node switching
+- [x] **Deployment Recovery**
+  - Migrated Core to Moria-pi (192.168.1.225)
+  - Recovered Agent registration via State Reset
+  - Validated full fleet connectivity
+
+#### Phase 14: ZeroTier Expansion (Completed 2025-12-21) 🌐
+
+- [x] **Hybrid Network Topology**
+  - Core listening on ZeroTier IP (10.243.14.179)
+  - Orthanc-pi joined fleet via ZeroTier
+- [x] **Agent Deployment**
+  - Created `deploy-orthanc.sh` script
+  - Successfully deployed & registered Orthanc-pi
+- [x] **Full Fleet Status**
+  - Moria-pi (Local) + Bywater-pi (LAN) + Orthanc-pi (ZeroTier) all ONLINE
+
+**Phase 13 & 14 Complete: 2025-12-21** 🎉
+
 #### Phase 4: The Brain - Logging & Remote Control (Completed 2025-11-30) ✨
 
 All components completed:

@@ -13,6 +13,7 @@ from uuid import UUID
 import httpx
 
 from nexus.agent.services.storage import get_all_disks
+from nexus.agent.services.docker import DockerService
 from nexus.shared import AgentConfig, DiskInfo, InventoryUpdate
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,7 @@ class InventoryCollector:
         self._task: asyncio.Task | None = None
         self._running = False
         self._interval = 300.0  # Push every 5 minutes (reduced from 60s)
+        self.docker_service = DockerService()
 
     async def start(self):
         """Start the inventory collection background task."""
@@ -111,56 +113,19 @@ class InventoryCollector:
         )
 
     def _collect_containers(self) -> List[Dict[str, Any]]:
-        """Collect running containers using Docker SDK."""
+        """Collect running containers using DockerService."""
         try:
-            import docker
-            client = docker.from_env()
-            containers = client.containers.list(all=True)
+            containers = self.docker_service.list_containers(all_containers=True)
             
-            container_list = []
+            # Map fields for frontend compatibility
             for c in containers:
-                try:
-                    # Parse ports: {'80/tcp': [{'HostIp': '0.0.0.0', 'HostPort': '8000'}]}
-                    ports = []
-                    if c.attrs.get("NetworkSettings", {}).get("Ports"):
-                        for internal, bindings in c.attrs["NetworkSettings"]["Ports"].items():
-                            if bindings:
-                                for b in bindings:
-                                    ports.append(f"{b['HostPort']}:{internal}")
-                            else:
-                                ports.append(internal)
-
-                    # Calculate Uptime
-                    started_at = c.attrs.get("State", {}).get("StartedAt")
-                    uptime_str = "Unknown"
-                    if started_at:
-                        # Format: 2023-10-27T10:00:00.123456789Z
-                        # Simple truncation or parsing if needed, but raw string is often fine for now
-                        uptime_str = started_at
-
-                    info = {
-                        "id": c.id,
-                        "short_id": c.short_id,
-                        "name": c.name,
-                        "status": c.status, # 'running', 'exited'
-                        "state": c.attrs.get("State", {}).get("Status", "unknown"), # 'running'
-                        "image": c.image.tags[0] if c.image.tags else c.image.id,
-                        "created": c.attrs.get("Created"),
-                        "ports": ", ".join(ports),
-                        "uptime": uptime_str,
-                        "description": f"{c.name} ({c.short_id[:8]}) - {c.attrs.get('Config', {}).get('Image', 'unknown')}",
-                        # Managed flag if labeled
-                        "managed": c.labels.get("com.nexus.managed") == "true"
-                    }
-                    container_list.append(info)
-                except Exception as c_err:
-                    logger.warning(f"Error parsing container {c.short_id}: {c_err}")
+                # Map started_at -> uptime (frontend expects 'uptime')
+                c['uptime'] = c.get('started_at', 'Unknown')
+                # Ensure description is set (list_containers now sets it)
+                if not c.get('description'):
+                    c['description'] = c['image']
                     
-            return container_list
-            
-        except ImportError:
-            logger.warning("Docker SDK not installed")
-            return []
+            return containers
         except Exception as e:
             logger.warning(f"Failed to list containers: {e}")
             return []
