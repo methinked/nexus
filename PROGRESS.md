@@ -1425,3 +1425,36 @@ raise HTTPException(
 - Build one-click update interface
 
 ---
+
+#### Phase 16: Stability - Automated Testing (In Progress) 🧪
+
+- [x] **Test Infrastructure Setup**
+  - Configured `pytest` with `asyncio` and `coverage`
+  - Created test directory structure (`tests/core`, `tests/shared`, etc.)
+  - Established `conftest.py` with scoped fixtures
+  - Configured in-memory SQLite (`StaticPool`) for isolation
+- [x] **Unit Testing Initialization**
+  - Shared Models: 100% coverage for `nexus.shared.models`
+  - Health Logic: 100% coverage for `nexus.core.services.health`
+  - Verification of critical business logic (thresholds, validation)
+- [x] **API Integration Testing**
+  - Node API: CRUD operations verified
+  - Auth API: Registration flow verified
+  - Verified endpoints: List, Details, Updates, 404 handling
+  - Found and fixed bugs in CRUD layer (Pydantic serialization issues)
+
+**Current Status (2025-12-26):**
+- Test Framework: **ACTIVE**
+- Initial Coverage: ~24%
+- Critical Paths Verified: Data Models, Health Calc, Node Management
+
+---
+
+## 📅 Roadmap Highlights
+
+See [ROADMAP.md](ROADMAP.md) for full details.
+
+### Immediate Focus
+1.  **Phase 15: Security** (RBAC, TLS, Secure Token Handling)
+2.  **Phase 4 (Refined):** Advanced Logs & Alerts
+3.  **Phase 6 (Refined):** Dashboard "Day 2" Features

@@ -93,7 +93,7 @@ def update_node(db: Session, node_id: str, node_update: NodeUpdate) -> Optional[
 
     # Handle metadata separately - map to node_metadata field
     if "metadata" in update_data:
-        update_data["node_metadata"] = update_data.pop("metadata").model_dump()
+        update_data["node_metadata"] = update_data.pop("metadata")
 
     for field, value in update_data.items():
         setattr(db_node, field, value)
