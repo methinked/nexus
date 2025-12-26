@@ -237,36 +237,6 @@ nexus fleet update
 
 ## 🗺️ Roadmap
 
-- [x] **Phase 1: The Bedrock** - Core Library & CLI foundation. ✅
-- [x] **Phase 2: The Mesh** - Agent discovery & secure connectivity. ✅
-- [x] **Phase 3: The Pulse** - Metrics collection & health monitoring. ✅
-- [x] **Phase 4: The Brain** - Centralized logging & remote control. ✅
-- [x] **Phase 5: The Hands** - Workload orchestration (Job execution system). ✅
-- [x] **Phase 6.1: The Dashboard** - Live metrics visualization (Charts with Chart.js). ✅
-- [x] **Pi Deployment** - First real Raspberry Pi deployment successful (moria-pi). ✅
-- [x] **Phase 6.2: Node Detail View** - Comprehensive node management with real-time charts. ✅
-- [x] **WebSocket Real-time Updates** - Instant updates replacing 30s polling. ✅
-- [x] **Phase 6.3: Jobs Management UI** - Full job submission, monitoring, and review interface. ✅
-- [x] **Modules Preview** - Stub page for future module deployment system (Phase 7). ✅
-- [x] **Phase 6.4: Log Viewer UI** - Web-based log viewer with filtering and search. ✅
-- [x] **Phase 6.5.1: Multi-Disk Detection** - Comprehensive disk detection and smart storage recommendations. ✅
-
-- [x] **Phase 6.6: UI Polish & UX Improvements**
-  - [x] Global Toast Notification System (replaces alerts)
-  - [x] Loading states for buttons (refresh, submit)
-  - [x] Consistent status badges and colors
-  - [x] Improved empty states for lists
-- [x] **Phase 13: Fleet Management & Auto-Update**
-  - [x] Remote agent code updates from web dashboard (one-click agent updates)
-  - [x] Agent self-update script with git pull & restart
-  - [x] Core API support for update jobs
-  - [x] Resilience improvements (re-registration support, crash loop fixes)
-
-- [ ] **Phase 14: Security Hardening**
-  - [ ] Strict TLS enforcement
-  - [ ] Role Based Access Control (RBAC)
-
-- [ ] **Phase 15: Stability Freeze**
   - [ ] Comprehensive test suite
   - [ ] Long-term memory leak testing
 

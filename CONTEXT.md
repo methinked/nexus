@@ -144,28 +144,10 @@ We sit in the "Goldilocks Zone" between:
 
 - `commands/job.py`: Job management
   - `submit` - Submit OCR, shell, or sync jobs
-  - `list` - List jobs with filtering
-  - `get` - Get detailed job information
-  - `cancel` - Stub for job cancellation
-  - `logs` - Stub for job logs (Phase 4)
-
 ## 🗺️ Future Phases (Roadmap)
 
-To ensure stability, we are locking down the feature set.
+> **See the master roadmap:** [ROADMAP.md](ROADMAP.md)
 
-### ✅ Phase 1-12: Foundation & Core Features (Complete)
-*See PROGRESS.md for details on what is built.*
-
-### ✅ Phase 13: Current Fleet Status (Verified 2025-12-26):
-1. **Moria-pi** (Core + Agent) - `192.168.1.225` - **Core Controller**
-   - Storage: External HDD (Good)
-   - Running: Core, Scriba, Bootpc
-2. **Bywater-pi** (Agent) - `192.168.1.175`
-   - Storage: **SD Card (Risk)** - Needs migration to USB
-   - Running: Scriba, Bootpc
-3. **Orthanc-pi** (Agent) - `192.168.1.222`
-   - Storage: NVMe SSD (Excellent)
-   - Running: Unifi Controller
 
 ### ✅ Phase 14: Fleet Maintenance (Complete)
 **Goal:** Make the fleet maintainable without logging into every node.
