@@ -262,6 +262,14 @@ nexus fleet update
   - [x] Core API support for update jobs
   - [x] Resilience improvements (re-registration support, crash loop fixes)
 
+- [ ] **Phase 14: Security Hardening**
+  - [ ] Strict TLS enforcement
+  - [ ] Role Based Access Control (RBAC)
+
+- [ ] **Phase 15: Stability Freeze**
+  - [ ] Comprehensive test suite
+  - [ ] Long-term memory leak testing
+
 ## 🔒 Security
 
 *   **Shared Secret:** Pre-shared key authentication for new nodes.
@@ -301,7 +309,7 @@ NEXUS_LOG_CLEANUP_INTERVAL_HOURS=24  # Default: 24 hours
 All documentation is up-to-date and reflects the current implementation:
 - **README.md** - Core features, CLI usage, and getting started guide
 - **docs/api.md** - Complete REST API reference with all endpoints
-- **docs/api.md** - Complete REST API reference with all endpoints
+
 - **ARCHITECTURE.md** - System architecture including multi-disk detection and Docker orchestration
 - **CONTRIBUTING.md** - Development guidelines and **error handling best practices**
 - **PROGRESS.md** - Development progress and phase completion tracking

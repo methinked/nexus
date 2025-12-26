@@ -60,12 +60,13 @@ async def nodes_page(request: Request):
     Heavy components (charts, detailed logs) lazy-loaded in modal.
     """
     return templates.TemplateResponse(
-        "nodes_optimized.html",
+        "nodes.html",
         {
             "request": request,
-    Render the nodes management page.
-    """
-    return templates.TemplateResponse("nodes.html", {"request": request})
+            "page_title": "Nodes",
+            "active_page": "nodes"
+        }
+    )
 
 
 @router.get("/jobs", response_class=HTMLResponse)

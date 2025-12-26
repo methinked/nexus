@@ -155,3 +155,14 @@ TempSSHForTesting.txt
 *-Temp-Info.txt
 *.credentials
 *.secrets
+
+# Test Environment Protection
+tests/output/
+test_results/
+*.test
+*.pem
+*.key
+*.pub
+id_rsa*
+nexus_test.db
+
