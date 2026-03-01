@@ -31,7 +31,7 @@ echo "[1/7] Connection Check..."
 ssh_exec "echo 'Connection successful to \$(hostname)'"
 
 echo "[2/7] Pre-flight Checks..."
-if ssh_exec "lsof -i :8000 > /dev/null"; then
+if ssh_exec "lsof -iTCP:8000 -sTCP:LISTEN > /dev/null 2>&1"; then
     echo "Warning: Port 8000 is in use. Stopping existing service..."
     sudo_exec "systemctl stop nexus-core 2>/dev/null || true"
     ssh_exec "pkill -f nexus.core.main || true"

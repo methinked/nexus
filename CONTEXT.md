@@ -32,11 +32,13 @@ We sit in the "Goldilocks Zone" between:
 - **Careful Planning:** Document plans before execution.
 - **Record Test Results:** Save major test outputs to `docs/tests/`.
 
-**Target Hardware:**
+**Target Hardware & Test Fleet:**
 - Development: Linux laptop (x86_64)
 - Production: Raspberry Pi (ARMv7/v8), Ubuntu servers (x86_64/ARM), Debian machines
-- Tested: Raspberry Pi 3 Model B (ARMv7/v8, 1GB RAM) - "moria-pi"
-- Compatible: Any Debian-based Linux distribution
+- **Test Fleet:** 
+  - **Orthanc-pi**: Primary Core Server & Agent. Connected via ZeroTier & LAN.
+  - **Bywater-pi** (10.243.151.228): Remote Agent. Previously impacted by HDD failure.
+  - **Moria-pi** (192.168.1.225): Offline. Raspberry Pi 3 Model B (ARMv7/v8, 1GB RAM) - SD Card Failure.
 
 ---
 

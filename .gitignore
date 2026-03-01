@@ -166,3 +166,6 @@ test_results/
 id_rsa*
 nexus_test.db
 
+
+# Test Environment artifacts
+testEnvironment/

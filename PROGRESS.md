@@ -568,7 +568,7 @@ The core CLI-based fleet management is complete. The next logical step is a web-
 
 #### Phase 7.1: Core Service Management API - Docker Orchestration (2025-12-01 Evening)
 
-**Status:** ✅ COMPLETE
+**Status:** ❌ REMOVED (2025-12-28 - Project pivot to lightweight monitoring)
 
 **Goal:** Build the foundational database layer and API for Docker service orchestration.
 
@@ -665,7 +665,7 @@ The core CLI-based fleet management is complete. The next logical step is a web-
 
 #### Phase 7.2.5: Docker CLI Commands (2025-12-03 Evening)
 
-**Status:** ✅ COMPLETE (Already Implemented)
+**Status:** ❌ REMOVED (2025-12-28 - Project pivot to lightweight monitoring)
 
 **Goal:** Provide CLI-first interface for Docker service and deployment management.
 
@@ -735,7 +735,7 @@ nexus deployment delete f6b858e2 --yes
 
 #### Phase 7.3: Pre-built Docker Service Templates (2025-12-04 Evening)
 
-**Status:** 🚧 IN PROGRESS
+**Status:** ❌ REMOVED (2025-12-28 - Project pivot to lightweight monitoring)
 
 **Goal:** Provide ready-to-deploy service templates for popular homelab applications.
 

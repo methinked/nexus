@@ -102,6 +102,7 @@ try:
     from nexus.cli.commands import logs as logs_commands
     from nexus.cli.commands import metrics as metrics_commands
     from nexus.cli.commands import node as node_commands
+    from nexus.cli.commands import job as job_commands
 
     app.add_typer(config_commands.app, name="config", help="Configuration management")
     app.add_typer(node_commands.app, name="node", help="Node management")

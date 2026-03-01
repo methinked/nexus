@@ -26,23 +26,7 @@ This document outlines the manual testing procedures for the Nexus platform. Use
 - [ ] **Disk Types**: Check if SD Cards are correctly identified (vs SSD/HDD).
 - [ ] **Usage**: Ensure disk usage bars match `df -h` on the agent.
 
-## 3. Orchestration (Docker)
 
-### 3.1 Service Templates
-- [ ] **Listing**: Run `nexus service list` or view "Services" page in UI. Ensure seeded templates (Pi-hole, Home Assistant) are present.
-- [ ] **Creation**: Create a dummy service template via UI/CLI.
-- [ ] **Deletion**: Delete the dummy service template.
-
-### 3.2 Deployment Lifecycle
-- [ ] **Deploy**: Deploy a simple container (e.g., `nginx` or `hello-world`) to an agent.
-    - Check "Deployments" page for status "Running".
-    - Verify container is running on the agent (`docker ps`).
-- [ ] **Stop**: Stop the deployment via UI/CLI.
-    - Verify status "Stopped".
-    - Check `docker ps -a` on agent.
-- [ ] **Start**: Start the deployment again.
-- [ ] **Logs**: View logs in the UI.
-- [ ] **Remove**: Delete the deployment. Verify container is removed from agent.
 
 ## 4. Troubleshooting
 - **Logs**: Check `core.log` and `agent.log` for Python tracebacks.

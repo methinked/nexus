@@ -137,6 +137,9 @@ class LogCollector:
         # Add to root logger
         logging.getLogger().addHandler(self.handler)
 
+        # Silence httpx to prevent infinite logging loops when sending logs
+        logging.getLogger("httpx").setLevel(logging.WARNING)
+
         self.logger.info("Log collection service started")
 
         # Start background task to send logs
