@@ -783,6 +783,18 @@
                                 <span class="text-gray-500 font-bold">STATE:</span>
                                 <span>${c.state}</span>
                             </div>` : ''}
+                            
+                            ${c.cpu_percent !== undefined ? `
+                            <div class="px-2 py-1 bg-black/40 rounded border border-white/5 text-gray-300 flex items-center gap-1">
+                                <span class="text-gray-500 font-bold">CPU:</span>
+                                <span>${c.cpu_percent.toFixed(1)}%</span>
+                            </div>` : ''}
+                            
+                            ${c.memory_percent !== undefined ? `
+                            <div class="px-2 py-1 bg-black/40 rounded border border-white/5 text-gray-300 flex items-center gap-1">
+                                <span class="text-gray-500 font-bold">MEM:</span>
+                                <span>${c.memory_percent.toFixed(1)}%</span>
+                            </div>` : ''}
                         </div>
                     </div>
                 `;

@@ -115,7 +115,7 @@ class InventoryCollector:
     def _collect_containers(self) -> List[Dict[str, Any]]:
         """Collect running containers using DockerService."""
         try:
-            containers = self.docker_service.list_containers(all_containers=True)
+            containers = self.docker_service.list_containers(all_containers=True, include_stats=True)
             
             # Map fields for frontend compatibility
             for c in containers:

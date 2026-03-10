@@ -9,6 +9,7 @@ Handles Docker operations on the agent node including:
 
 import logging
 import os
+import concurrent.futures
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
@@ -322,12 +323,13 @@ class DockerService:
         # 5. Last resort: Image ID partial
         return f"Image: {container.image.id[:12]}"
 
-    def list_containers(self, all_containers: bool = False) -> List[Dict[str, Any]]:
+    def list_containers(self, all_containers: bool = False, include_stats: bool = False) -> List[Dict[str, Any]]:
         """
         List containers.
 
         Args:
             all_containers: If True, list all containers. If False, list only Nexus-managed.
+            include_stats: If True, fetch CPU and memory stats.
 
         Returns:
             List of container status dicts
@@ -377,6 +379,20 @@ class DockerService:
                     'description': self.get_container_description(c)
                 })
             
+            if include_stats:
+                # Fetch stats in parallel to avoid blocking for ~1s per container sequentially
+                def fetch_stats(container_dict: dict) -> dict:
+                    if container_dict['state'] == 'running':
+                        stats = self.get_container_stats(container_dict['id'])
+                        if stats:
+                            container_dict['cpu_percent'] = stats.get('cpu_percent', 0.0)
+                            container_dict['memory_percent'] = stats.get('memory_percent', 0.0)
+                            container_dict['memory_usage_bytes'] = stats.get('memory_usage_bytes', 0)
+                    return container_dict
+
+                with concurrent.futures.ThreadPoolExecutor(max_workers=min(10, len(results) if results else 1)) as executor:
+                    results = list(executor.map(fetch_stats, results))
+
             return results
         except Exception as e:
             logger.error(f"Failed to list containers: {e}")
