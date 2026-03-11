@@ -54,7 +54,7 @@ if ssh_exec "lsof -i :8001 > /dev/null"; then
     echo "Warning: Port 8001 is in use on target. Attempting to stop existing agent..."
     # Attempt to stop service if it exists (ignore failure)
     sudo_exec "systemctl stop nexus-agent 2>/dev/null || true"
-    ssh_exec "pkill -f nexus.agent.main || true"
+    ssh_exec "pkill -f '[n]exus.agent.main' || true"
 fi
 
 echo "[3/8] Cleaning deployment directory..."

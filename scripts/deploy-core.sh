@@ -34,7 +34,7 @@ echo "[2/7] Pre-flight Checks..."
 if ssh_exec "lsof -iTCP:8000 -sTCP:LISTEN > /dev/null 2>&1"; then
     echo "Warning: Port 8000 is in use. Stopping existing service..."
     sudo_exec "systemctl stop nexus-core 2>/dev/null || true"
-    ssh_exec "pkill -f nexus.core.main || true"
+    ssh_exec "pkill -f '[n]exus.core.main' || true"
 fi
 
 echo "[3/7] Cleaning deployment directory..."
