@@ -209,9 +209,144 @@
 
             <!-- Modal Content -->
             <div class="p-6 space-y-6">
-                <p class="text-gray-400">Detailed charts, containers, storage, jobs, and logs will be loaded here...</p>
-                <p class="text-sm text-gray-500">This modal will be implemented in the next phase to show full details
-                    without slowing down the main view.</p>
+                <template x-if="nodeCache[selectedNodeId]">
+                    <div class="space-y-8">
+                        
+                        <!-- Details Grid -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            
+                            <!-- Containers Section -->
+                            <div class="card bg-gray-800/50">
+                                <div class="card-header border-b border-white/5 pb-3 mb-3 flex items-center justify-between">
+                                    <h3 class="text-lg font-semibold flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                        </svg>
+                                        Running Containers
+                                    </h3>
+                                    <span class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs" x-text="nodeCache[selectedNodeId].containers.length"></span>
+                                </div>
+                                <div class="card-body overflow-y-auto max-h-[400px] custom-scrollbar space-y-2 pr-2">
+                                    <template x-if="nodeCache[selectedNodeId].containers.length === 0">
+                                        <div class="text-center py-6 text-gray-500 text-sm">No containers running</div>
+                                    </template>
+                                    <template x-for="c in nodeCache[selectedNodeId].containers" :key="c.id">
+                                        <div class="p-3 bg-black/20 border border-white/5 rounded flex justify-between items-start gap-4 hover:border-blue-500/30 transition-colors">
+                                            <div class="min-w-0 flex-1">
+                                                <div class="font-medium text-gray-200 truncate" x-text="(c.name || '').replace(/^\//, '')"></div>
+                                                <div class="text-xs text-gray-500 truncate" x-text="c.image"></div>
+                                                
+                                                <div class="flex flex-wrap gap-2 text-[10px] font-mono mt-2">
+                                                    <template x-if="c.ports">
+                                                        <div class="px-2 py-1 bg-black/40 rounded border border-white/5 text-gray-300">
+                                                            <span class="text-gray-500 font-bold">PORTS:</span> <span x-text="c.ports"></span>
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="c.cpu_percent !== undefined">
+                                                        <div class="px-2 py-1 bg-black/40 rounded border border-white/5 text-gray-300">
+                                                            <span class="text-gray-500 font-bold">CPU:</span> <span x-text="c.cpu_percent.toFixed(1) + '%'"></span>
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="c.memory_percent !== undefined">
+                                                        <div class="px-2 py-1 bg-black/40 rounded border border-white/5 text-gray-300">
+                                                            <span class="text-gray-500 font-bold">MEM:</span> <span x-text="c.memory_percent.toFixed(1) + '%'"></span>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                            <div class="flex-shrink-0 text-right">
+                                                <div :class="{
+                                                    'text-green-400': c.status === 'running',
+                                                    'text-red-400': c.status === 'exited' || c.status === 'dead',
+                                                    'text-amber-400': c.status !== 'running' && c.status !== 'exited' && c.status !== 'dead'
+                                                }" class="text-xs font-semibold capitalize" x-text="c.status"></div>
+                                                <template x-if="c.managed">
+                                                    <div class="text-[10px] text-purple-400 mt-1 uppercase tracking-wider">Managed</div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            
+                            <!-- Right Column (Storage & Jobs) -->
+                            <div class="space-y-6 flex flex-col">
+                                <!-- Storage Section -->
+                                <div class="card bg-gray-800/50 flex-1">
+                                    <div class="card-header border-b border-white/5 pb-3 mb-3 flex items-center justify-between">
+                                        <h3 class="text-lg font-semibold flex items-center gap-2">
+                                            <svg class="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                                            </svg>
+                                            Storage Devices
+                                        </h3>
+                                        <span class="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs" x-text="nodeCache[selectedNodeId].disks.length"></span>
+                                    </div>
+                                    <div class="card-body overflow-y-auto max-h-[250px] custom-scrollbar space-y-2 pr-2">
+                                        <template x-if="nodeCache[selectedNodeId].disks.length === 0">
+                                            <div class="text-center py-6 text-gray-500 text-sm">No storage devices found</div>
+                                        </template>
+                                        <template x-for="d in nodeCache[selectedNodeId].disks" :key="d.mountpoint">
+                                            <div class="p-3 bg-black/20 border border-white/5 rounded space-y-2 hover:border-green-500/30 transition-colors">
+                                                <div class="flex justify-between items-center text-sm">
+                                                    <div class="font-medium text-gray-200" x-text="d.mountpoint"></div>
+                                                    <div class="text-gray-400 font-mono text-xs" x-text="d.fstype"></div>
+                                                </div>
+                                                
+                                                <!-- Progress Bar -->
+                                                <div class="w-full bg-gray-700 rounded-full h-1.5 mt-2">
+                                                    <div :class="{
+                                                        'bg-red-500': d.percent > 90,
+                                                        'bg-amber-500': d.percent > 75 && d.percent <= 90,
+                                                        'bg-green-500': d.percent <= 75
+                                                    }" class="h-1.5 rounded-full transition-all" :style="`width: ${d.percent}%`">
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                                    <span x-text="`${(d.used / (1024*1024*1024)).toFixed(1)} GB used`"></span>
+                                                    <span x-text="`${(d.total / (1024*1024*1024)).toFixed(1)} GB total (${d.percent}%)`"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                                
+                                <!-- Recent Jobs Section -->
+                                <div class="card bg-gray-800/50 flex-1">
+                                    <div class="card-header border-b border-white/5 pb-3 mb-3 flex items-center justify-between">
+                                        <h3 class="text-lg font-semibold flex items-center gap-2">
+                                            <svg class="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                            </svg>
+                                            Recent System Logs
+                                        </h3>
+                                    </div>
+                                    <div class="card-body overflow-y-auto max-h-[150px] custom-scrollbar text-sm font-mono p-2 bg-black/40 rounded border border-white/5">
+                                        <template x-if="(!nodeCache[selectedNodeId].recentLogs || nodeCache[selectedNodeId].recentLogs.length === 0)">
+                                            <div class="text-center py-4 text-gray-600">No recent logs available</div>
+                                        </template>
+                                        <div class="space-y-1">
+                                            <template x-for="log in nodeCache[selectedNodeId].recentLogs" :key="log.id">
+                                                <div class="flex gap-2">
+                                                    <span class="text-gray-500 whitespace-nowrap" x-text="new Date(log.timestamp).toLocaleTimeString()"></span>
+                                                    <span :class="{
+                                                        'text-red-400': log.level === 'ERROR' || log.level === 'CRITICAL',
+                                                        'text-amber-400': log.level === 'WARNING',
+                                                        'text-blue-400': log.level === 'INFO',
+                                                        'text-gray-400': log.level === 'DEBUG'
+                                                    }" class="w-16 font-bold" x-text="log.level"></span>
+                                                    <span class="text-gray-300 break-all" x-text="log.message"></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
