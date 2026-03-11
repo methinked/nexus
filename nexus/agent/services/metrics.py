@@ -196,7 +196,7 @@ class MetricsCollector:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(verify=False) as client:
                 # 1. Try to send current metric
                 response = await client.post(
                     url,

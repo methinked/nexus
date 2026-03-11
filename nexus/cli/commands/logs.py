@@ -114,7 +114,7 @@ def list_logs(
                 params["since"] = last_timestamp
 
             # Fetch logs from Core
-            with httpx.Client(timeout=10.0) as client:
+            with httpx.Client(timeout=10.0, verify=False) as client:
                 response = client.get(
                     url,
                     headers=get_headers(config),

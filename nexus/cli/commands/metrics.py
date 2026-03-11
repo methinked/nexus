@@ -77,7 +77,7 @@ def get_metrics(
             params["since"] = since
 
         # Fetch metrics from Core
-        with httpx.Client(timeout=10.0) as client:
+        with httpx.Client(timeout=10.0, verify=False) as client:
             response = client.get(
                 f"{config.core_url}/api/metrics/{node_id}",
                 headers=get_headers(config),
@@ -161,7 +161,7 @@ def get_stats(
             params["until"] = until
 
         # Fetch stats from Core
-        with httpx.Client(timeout=10.0) as client:
+        with httpx.Client(timeout=10.0, verify=False) as client:
             response = client.get(
                 f"{config.core_url}/api/metrics/{node_id}/stats",
                 headers=get_headers(config),
@@ -248,7 +248,7 @@ def get_health(
 
     try:
         # Fetch health status from Core
-        with httpx.Client(timeout=10.0) as client:
+        with httpx.Client(timeout=10.0, verify=False) as client:
             response = client.get(
                 f"{config.core_url}/api/nodes/{node_id}/health",
                 headers=get_headers(config),

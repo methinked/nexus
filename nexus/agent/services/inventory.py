@@ -140,7 +140,7 @@ class InventoryCollector:
             "Content-Type": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=False) as client:
             response = await client.post(
                 url,
                 json=inventory.model_dump(mode='json'),

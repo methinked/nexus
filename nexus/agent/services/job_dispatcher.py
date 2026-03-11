@@ -153,7 +153,7 @@ class JobDispatcher:
                 "result": result.model_dump() if hasattr(result, "model_dump") else result,
             }
 
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(verify=False) as client:
                 response = await client.patch(
                     f"{self.config.core_url.rstrip('/')}/api/jobs/{job_id}",
                     json=payload,

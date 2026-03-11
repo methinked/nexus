@@ -171,12 +171,22 @@ def main():
     """Run the Core server with uvicorn."""
     import uvicorn
 
+    # Prepare uvicorn arguments
+    uvicorn_kwargs = {
+        "host": config.host,
+        "port": config.port,
+        "reload": config.env == "development",
+        "log_level": config.log_level.lower(),
+    }
+
+    # Add SSL parameters if provided
+    if config.ssl_keyfile and config.ssl_certfile:
+        uvicorn_kwargs["ssl_keyfile"] = str(config.ssl_keyfile)
+        uvicorn_kwargs["ssl_certfile"] = str(config.ssl_certfile)
+
     uvicorn.run(
         "nexus.core.main:app",
-        host=config.host,
-        port=config.port,
-        reload=config.env == "development",
-        log_level=config.log_level.lower(),
+        **uvicorn_kwargs
     )
 
 

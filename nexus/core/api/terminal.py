@@ -39,7 +39,7 @@ class TerminalProxy:
         """Start the proxy relay."""
         try:
             # Connect to Agent's WebSocket terminal
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(verify=False) as client:
                 async with client.ws_connect(self.agent_url) as agent_ws:
                     self.agent_ws = agent_ws
                     self.running = True

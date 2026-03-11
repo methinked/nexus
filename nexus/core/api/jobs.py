@@ -67,7 +67,7 @@ async def submit_job(
         }
 
         # Send to agent
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=False) as client:
             response = await client.post(
                 agent_url,
                 json=payload,

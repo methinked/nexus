@@ -118,7 +118,7 @@ async def register_with_core(docker_storage_info: dict = None) -> tuple[UUID, st
 
     # Send registration request
     url = f"{config.core_url}/api/auth/register"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=False) as client:
         response = await client.post(
             url,
             json=registration.model_dump(mode='json'),
@@ -151,7 +151,7 @@ async def update_node_info(node_id: UUID, api_token: str):
         "name": config.node_name
     }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=False) as client:
         try:
             response = await client.put(
                 url,

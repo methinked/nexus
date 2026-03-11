@@ -194,7 +194,7 @@ class LogCollector:
             "Content-Type": "application/json",
         }
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=False) as client:
             for log in logs:
                 try:
                     response = await client.post(

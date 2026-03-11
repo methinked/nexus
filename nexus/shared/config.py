@@ -57,6 +57,16 @@ class CoreConfig(BaseConfig):
         description="Database connection URL",
     )
 
+    # SSL Config
+    ssl_keyfile: Optional[Path] = Field(
+        default=None,
+        description="Path to the SSL keyfile (for HTTPS)",
+    )
+    ssl_certfile: Optional[Path] = Field(
+        default=None,
+        description="Path to the SSL certificate (for HTTPS)",
+    )
+
     # Log Retention
     log_retention_days: int = Field(
         default=7,
