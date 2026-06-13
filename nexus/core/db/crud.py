@@ -29,6 +29,33 @@ from nexus.shared.models import (
 
 
 # ============================================================================
+# User CRUD Operations
+# ============================================================================
+
+
+def get_user_by_username(db: Session, username: str) -> Optional["UserModel"]:
+    """Get a user by username."""
+    from nexus.core.db.models import UserModel
+    return db.query(UserModel).filter(UserModel.username == username).first()
+
+
+def create_user(db: Session, user: "UserCreate", hashed_password: str) -> "UserModel":
+    """Create a new user."""
+    from nexus.core.db.models import UserModel
+    
+    db_user = UserModel(
+        username=user.username,
+        role=user.role,
+        hashed_password=hashed_password,
+        is_active=1
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+# ============================================================================
 # Node CRUD Operations
 # ============================================================================
 

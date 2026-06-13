@@ -26,6 +26,13 @@ class NodeStatus(str, Enum):
     ERROR = "error"
 
 
+class UserRole(str, Enum):
+    """Role-based access permissions."""
+
+    ADMIN = "admin"
+    VIEWER = "viewer"
+
+
 class JobType(str, Enum):
     """Type of job to execute."""
 
@@ -96,6 +103,36 @@ class BaseResponse(BaseModel):
     """Base response model."""
 
     message: Optional[str] = None
+
+
+# ============================================================================
+# User Models
+# ============================================================================
+
+
+class UserBase(BaseModel):
+    """Base user model."""
+
+    username: str = Field(..., min_length=3, max_length=50)
+    role: UserRole = UserRole.VIEWER
+
+
+class UserCreate(UserBase):
+    """Model for creating a new user."""
+
+    password: str = Field(..., min_length=8)
+
+
+class User(UserBase, TimestampedModel):
+    """Complete user model."""
+
+    id: UUID = Field(default_factory=uuid4)
+    is_active: bool = True
+    last_login: Optional[datetime] = None
+
+    class Config:
+        """Pydantic configuration."""
+        from_attributes = True
 
 
 # ============================================================================
@@ -440,6 +477,12 @@ class RegistrationRequest(NodeCreate):
     """Request model for node registration."""
 
     pass
+
+class UserLoginRequest(BaseModel):
+    """Request model for User authentication."""
+
+    username: str
+    password: str
 
 
 class RegistrationResponse(BaseModel):

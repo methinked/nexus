@@ -103,10 +103,12 @@ try:
     from nexus.cli.commands import metrics as metrics_commands
     from nexus.cli.commands import node as node_commands
     from nexus.cli.commands import job as job_commands
+    from nexus.cli.commands import users as users_commands
 
     app.add_typer(config_commands.app, name="config", help="Configuration management")
     app.add_typer(node_commands.app, name="node", help="Node management")
     app.add_typer(job_commands.app, name="job", help="Job management")
+    app.add_typer(users_commands.app, name="users", help="User and RBAC management")
     app.add_typer(metrics_commands.app, name="metrics", help="View and analyze metrics")
     app.add_typer(logs_commands.app, name="logs", help="View logs from nodes")
 except ImportError as e:

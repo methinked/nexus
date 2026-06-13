@@ -34,6 +34,9 @@ from nexus.core.db.crud import (
     get_active_alerts_count,
     resolve_alert,
     resolve_alerts_by_type,
+    # User CRUD
+    create_user,
+    get_user_by_username,
 )
 from nexus.core.db.database import Base, SessionLocal, engine, get_db, init_db
 from nexus.core.db.models import JobModel, MetricModel, NodeModel, AlertModel
@@ -83,4 +86,7 @@ __all__ = [
     "get_active_alerts_count",
     "resolve_alert",
     "resolve_alerts_by_type",
+    # CRUD - Users
+    "create_user",
+    "get_user_by_username",
 ]

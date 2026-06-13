@@ -32,139 +32,14 @@ We sit in the "Goldilocks Zone" between:
 - **Careful Planning:** Document plans before execution.
 - **Record Test Results:** Save major test outputs to `docs/tests/`.
 
-**Target Hardware & Test Fleet:**
+## Project Status & Location
+- **Central Repository**: Hosted on **orthanc-pi** (SMB) under `~/Projects/nexus`.
+- **Local Access**: Automounted via systemd at `/home/methinked/Projects/nexus`.
+
+## Target Hardware & Test Fleet
 - Development: Linux laptop (x86_64)
 - Production: Raspberry Pi (ARMv7/v8), Ubuntu servers (x86_64/ARM), Debian machines
-- **Test Fleet:** 
-  - **Orthanc-pi**: Primary Core Server & Agent. Connected via ZeroTier & LAN.
-  - **Bywater-pi** (10.243.151.228): Remote Agent. Previously impacted by HDD failure.
-  - **Moria-pi** (192.168.1.225): Offline. Raspberry Pi 3 Model B (ARMv7/v8, 1GB RAM) - SD Card Failure.
-
----
-
-## ✅ What's Been Completed
-
-### Phase 0: Project Initialization (Complete ✓)
-- Full project structure created
-- README.md updated with architectural decisions
-- Docker configuration (docker-compose.yml, Dockerfiles)
-- Comprehensive documentation (docs/architecture.md, docs/api.md)
-- Development tooling (scripts/dev-setup.sh, .env.example)
-- Git repository initialized with main and dev branches
-
-### Phase 1: The Bedrock (Complete ✓)
-
-#### 1. Shared Models ✓
-**Location:** `nexus/shared/`
-
-- `models.py`: Complete Pydantic models for all entities
-  - Node, Job, Metric models with validation
-  - Enums: NodeStatus, JobType, JobStatus
-  - Auth models: Token, TokenData, Registration
-  - System models: HealthResponse, SystemInfo, ErrorResponse
-
-- `config.py`: Environment-based configuration
-  - CoreConfig, AgentConfig, CLIConfig
-  - Uses pydantic-settings with NEXUS_ prefix
-  - Auto-creates data/logs directories
-
-- `auth.py`: Authentication utilities
-  - JWT token creation/verification
-  - Shared secret validation
-  - Password hashing with bcrypt
-  - Custom exceptions: TokenExpiredError, TokenInvalidError
-
-#### 2. Core FastAPI ✓
-**Location:** `nexus/core/`
-
-- `main.py`: Main FastAPI application
-  - Lifespan management
-  - CORS middleware
-  - Health endpoint at `/health`
-  - Router integration
-
-- `api/auth.py`: Authentication endpoints
-  - `POST /api/auth/register` - Node registration
-  - `POST /api/auth/token/refresh` - Token refresh (stub)
-
-- `api/nodes.py`: Node management
-  - `GET /api/nodes` - List with filtering
-  - `GET /api/nodes/{id}` - Get details
-  - `PUT /api/nodes/{id}` - Update
-  - `DELETE /api/nodes/{id}` - Deregister
-
-- `api/jobs.py`: Job management
-  - `POST /api/jobs` - Create job
-  - `GET /api/jobs` - List with filtering
-  - `GET /api/jobs/{id}` - Get details
-
-- `api/metrics.py`: Metrics endpoints
-  - `POST /api/metrics` - Submit from agent
-  - `GET /api/metrics/{node_id}` - Query historical
-
-#### 3. Agent FastAPI ✓
-**Location:** `nexus/agent/`
-
-- `main.py`: Main FastAPI application
-  - Lifespan management
-  - Registration state tracking (node_id, api_token)
-  - Health endpoint with node_id
-
-- `api/system.py`: System information
-  - `GET /api/system/info` - System details
-
-- `api/jobs.py`: Job execution
-  - `POST /api/jobs/{id}/execute` - Execute job
-  - `GET /api/jobs/{id}/status` - Check status
-
-- `services/metrics.py`: Metrics collection
-  - Background asyncio service
-  - Periodic metric collection
-  - Submission to Core
-
-#### 4. CLI Foundation ✓
-**Location:** `nexus/cli/`
-
-- `main.py`: Typer app entry point
-  - Global config management
-  - Rich console output
-  - Command group routing
-  - Version and info commands
-
-- `commands/config.py`: Configuration management
-  - `init` - Interactive configuration wizard
-  - `show` - Display current configuration
-  - `set` - Update individual settings
-  - `validate` - Test connectivity to Core
-
-- `commands/node.py`: Node management
-  - `list` - List all nodes with filtering
-  - `get` - Get detailed node information
-  - `update` - Update node metadata
-  - `delete` - Deregister nodes
-  - `shell` - Stub for future remote shell (Phase 4)
-
-- `commands/job.py`: Job management
-  - `submit` - Submit OCR, shell, or sync jobs
-## 🗺️ Future Phases (Roadmap)
-
-> **See the master roadmap:** [ROADMAP.md](ROADMAP.md)
-
-
-### ✅ Phase 14: Fleet Maintenance (Complete)
-**Goal:** Make the fleet maintainable without logging into every node.
-- [x] **Agent Updates:** A logical way to update `nexus-agent` code on remote nodes (git pull + restart service).
-- [x] **Self-Diagnostics:** improved error reporting when things break.
-
-### 🔒 Phase 15: Security Hardening
-**Goal:** Lock the doors before we expand further.
-- [ ] **Strict TLS:** Enforce HTTPS everywhere if exposed beyond localhost.
-- [ ] **Role Based Access (Maybe):** Simple Admin vs View-Only user.
-
-### 🛑 Phase 15: Stability Freeze
-**Goal:** No new features. Only bug fixes and performance tuning.
-- [ ] Comprehensive test suite.
-- [ ] Long-term memory leak testing.
+- Test Fleet: 3 Raspberry Pi nodes for comprehensive testing
 
 ---
 
@@ -221,8 +96,9 @@ We sit in the "Goldilocks Zone" between:
 
 ### Documentation
 - `README.md` - Project overview and getting started
-- `PROGRESS.md` - Detailed progress tracking (keep updated!)
-- `docs/architecture.md` - System architecture deep dive
+- `docs/project/status.md` - Current project status and fleet health
+- `PROGRESS.md` - Development progress summary
+- `docs/project/architecture.md` - System architecture deep dive
 - `docs/api.md` - Complete API specification
 - `CONTEXT.md` - This file (context for resuming)
 

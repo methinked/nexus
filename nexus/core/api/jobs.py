@@ -12,9 +12,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from nexus.core.api.dependencies import verify_admin, verify_jwt_token
 from nexus.core.db import create_job, get_job, get_jobs, get_jobs_count, get_node, update_job_status
 from nexus.core.db.database import get_db
-from nexus.shared import BaseResponse, Job, JobCreate, JobList, JobStatus, JobType
+from nexus.shared import BaseResponse, Job, JobCreate, JobList, JobStatus, JobType, TokenData
 
 router = APIRouter()
 
@@ -29,6 +30,7 @@ class JobUpdateRequest(BaseModel):
 @router.post("", response_model=Job, status_code=status.HTTP_201_CREATED)
 async def submit_job(
     job: JobCreate,
+    token_data: TokenData = Depends(verify_admin),
     db: Session = Depends(get_db),
 ):
     """
@@ -139,6 +141,7 @@ def list_jobs(
 @router.get("/{job_id}", response_model=Job)
 def get_job_details(
     job_id: UUID,
+    token_data: TokenData = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     """

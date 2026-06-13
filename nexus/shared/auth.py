@@ -11,7 +11,7 @@ from uuid import UUID
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from nexus.shared.models import TokenData
+from nexus.shared.models import TokenData, UserRole
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -39,6 +39,7 @@ def create_access_token(
     node_id: UUID,
     node_name: str,
     secret_key: str,
+    role: Optional[UserRole] = None,
     algorithm: str = "HS256",
     expires_delta: Optional[timedelta] = None,
 ) -> tuple[str, datetime]:
@@ -46,9 +47,10 @@ def create_access_token(
     Create a JWT access token for a node.
 
     Args:
-        node_id: UUID of the node
-        node_name: Name of the node
+        node_id: UUID of the node or User
+        node_name: Name of the node or User
         secret_key: Secret key for signing
+        role: Optional UserRole string. Defaults to None (Agent token).
         algorithm: JWT algorithm (default: HS256)
         expires_delta: Token expiration time (default: 24 hours)
 
@@ -66,6 +68,9 @@ def create_access_token(
         "exp": expire,
         "iat": datetime.utcnow(),
     }
+    
+    if role:
+        to_encode["role"] = role.value
 
     encoded_jwt = jwt.encode(to_encode, secret_key, algorithm=algorithm)
     return encoded_jwt, expire
@@ -109,6 +114,7 @@ def verify_token(token: str, secret_key: str, algorithm: str = "HS256") -> Token
         return TokenData(
             node_id=UUID(node_id_str),
             node_name=node_name,
+            role=UserRole(payload.get("role")) if payload.get("role") else None,
             exp=exp,
         )
 

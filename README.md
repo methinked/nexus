@@ -17,7 +17,7 @@ Nexus is a lightweight, secure, and modular platform for managing fleets of Debi
 
 ## 🏗️ Architecture
 
-> **See the full System Map:** [ARCHITECTURE.md](ARCHITECTURE.md)
+> **See the full System Map:** [docs/project/architecture.md](docs/project/architecture.md)
 
 ```mermaid
 graph TD
@@ -279,11 +279,10 @@ NEXUS_LOG_CLEANUP_INTERVAL_HOURS=24  # Default: 24 hours
 All documentation is up-to-date and reflects the current implementation:
 - **README.md** - Core features, CLI usage, and getting started guide
 - **docs/api.md** - Complete REST API reference with all endpoints
-
-- **ARCHITECTURE.md** - System architecture including multi-disk detection and Docker orchestration
+- **docs/project/architecture.md** - System architecture including multi-disk detection and Docker orchestration
+- **docs/project/status.md** - Current project status and fleet health
 - **CONTRIBUTING.md** - Development guidelines and **error handling best practices**
 - **PROGRESS.md** - Development progress and phase completion tracking
-
 - **CONTEXT.md** - Project context and implementation details
 
 ---

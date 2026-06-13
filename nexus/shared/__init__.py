@@ -53,6 +53,8 @@ from nexus.shared.models import (
     SystemInfo,
     Token,
     TokenData,
+    UserLoginRequest,
+    UserRole,
     # Alerts
     Alert,
     AlertBase,
@@ -116,6 +118,8 @@ __all__ = [
     # Models - Auth
     "Token",
     "TokenData",
+    "UserLoginRequest",
+    "UserRole",
     "RegistrationRequest",
     "RegistrationResponse",
     # Models - System

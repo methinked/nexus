@@ -8,7 +8,7 @@ from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException, status
 
-from nexus.shared import CoreConfig, TokenData, TokenExpiredError, TokenInvalidError, verify_token
+from nexus.shared import CoreConfig, TokenData, TokenExpiredError, TokenInvalidError, verify_token, UserRole
 
 
 def get_config() -> CoreConfig:
@@ -121,3 +121,18 @@ async def verify_optional_jwt_token(
         return await verify_jwt_token(authorization, config)
     except HTTPException:
         return None
+
+
+async def verify_admin(
+    token_data: TokenData = Depends(verify_jwt_token),
+) -> TokenData:
+    """
+    Verify that the authenticated user has Admin role.
+    Used as an additional dependency on top of verify_jwt_token.
+    """
+    if token_data.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Requires administrator privileges",
+        )
+    return token_data

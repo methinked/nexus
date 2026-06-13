@@ -12,7 +12,7 @@ from sqlalchemy import JSON, Column, DateTime, Enum, Float, ForeignKey, Integer,
 from sqlalchemy.orm import relationship
 
 from nexus.core.db.database import Base
-from nexus.shared.models import JobStatus, JobType, NodeStatus
+from nexus.shared.models import JobStatus, JobType, NodeStatus, UserRole
 
 
 def generate_uuid() -> str:
@@ -49,6 +49,28 @@ class NodeModel(Base):
 
     def __repr__(self) -> str:
         return f"<Node(id={self.id}, name={self.name}, status={self.status})>"
+
+class UserModel(Base):
+    """User database model for RBAC."""
+
+    __tablename__ = "users"
+
+    # Primary key
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+
+    # User fields
+    username = Column(String(50), nullable=False, unique=True, index=True)
+    hashed_password = Column(String(128), nullable=False)
+    role = Column(Enum(UserRole), default=UserRole.VIEWER, nullable=False)
+    is_active = Column(Integer, default=1, nullable=False)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_login = Column(DateTime, nullable=True)
+
+    def __repr__(self) -> str:
+        return f"<User(id={self.id}, username={self.username}, role={self.role})>"
 
 
 class JobModel(Base):
