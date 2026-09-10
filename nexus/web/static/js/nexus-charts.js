@@ -141,6 +141,24 @@ const NexusCharts = {
     },
 
     /**
+     * Parse timestamp robustly as UTC Date object.
+     * Handles string timestamps with or without trailing 'Z' or offset.
+     */
+    parseUTCDatetime(ts) {
+        if (!ts) return new Date();
+        if (ts instanceof Date) return ts;
+        if (typeof ts === 'number') return new Date(ts);
+        if (typeof ts === 'string') {
+            const trimmed = ts.trim();
+            if (!trimmed.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(trimmed)) {
+                return new Date(trimmed + 'Z');
+            }
+            return new Date(trimmed);
+        }
+        return new Date(ts);
+    },
+
+    /**
      * Update a chart with new data
      * @param {Chart} chart Chart.js instance
      * @param {Array} metrics Array of metric objects
@@ -149,21 +167,20 @@ const NexusCharts = {
     updateChartData(chart, metrics, valueKey) {
         if (!chart || !metrics) return;
 
-        const times = metrics.map(m => new Date(m.timestamp));
+        const times = metrics.map(m => this.parseUTCDatetime(m.timestamp));
         // Note: Data is usually passed reversed (newest first) from API? 
         // We need chronological for charts.
         // If metrics are [newest, ..., oldest], we need to reverse them here IF the API returns them that way.
-        // Let's assume the caller handles order or we check timestamps. 
         // Standardizing: Charts expect Chronological (Oldest -> Newest).
 
         // Check if chronological
         let sortedMetrics = [...metrics];
-        if (sortedMetrics.length > 1 && new Date(sortedMetrics[0].timestamp) > new Date(sortedMetrics[sortedMetrics.length - 1].timestamp)) {
+        if (sortedMetrics.length > 1 && this.parseUTCDatetime(sortedMetrics[0].timestamp) > this.parseUTCDatetime(sortedMetrics[sortedMetrics.length - 1].timestamp)) {
             sortedMetrics.reverse();
         }
 
         const values = sortedMetrics.map(m => m[valueKey]);
-        const labels = sortedMetrics.map(m => new Date(m.timestamp));
+        const labels = sortedMetrics.map(m => this.parseUTCDatetime(m.timestamp));
 
         // Update data
         // For simple single-dataset charts
@@ -188,16 +205,14 @@ const NexusCharts = {
 
             // Ensure chronological order
             let metrics = [...nodeData.metrics];
-            if (metrics.length > 1 && new Date(metrics[0].timestamp) > new Date(metrics[metrics.length - 1].timestamp)) {
+            if (metrics.length > 1 && this.parseUTCDatetime(metrics[0].timestamp) > this.parseUTCDatetime(metrics[metrics.length - 1].timestamp)) {
                 metrics.reverse();
             }
 
             // Map data
             const dataPoints = metrics.map(m => {
-                // Parse timestamp explicitly to ensure Chart.js adapter handles it correctly
-                // API usually returns ISO string "2025-12-14T21:33:43.010356"
-                // New Date() should handle this fine in modern browsers, but ensure it's valid
-                const date = new Date(m.timestamp);
+                // Parse timestamp explicitly using parseUTCDatetime helper to avoid local time parsing bugs
+                const date = this.parseUTCDatetime(m.timestamp);
 
                 return {
                     x: date.getTime(), // Use timestamp number to avoid parsing ambiguity in Chart.js
@@ -227,3 +242,5 @@ const NexusCharts = {
 
 // Make it globally available
 window.NexusCharts = NexusCharts;
+window.parseUTCDatetime = NexusCharts.parseUTCDatetime.bind(NexusCharts);
+

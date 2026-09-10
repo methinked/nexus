@@ -5,7 +5,6 @@ Handles node registration and token management.
 """
 
 from datetime import timedelta
-from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -20,8 +19,8 @@ from nexus.shared import (
     Token,
     UserLoginRequest,
     create_access_token,
-    verify_shared_secret,
     verify_password,
+    verify_shared_secret,
 )
 
 router = APIRouter()
@@ -66,10 +65,10 @@ async def register_node(
         existing_node.ip_address = request.ip_address
         if request.metadata:
              existing_node.node_metadata = request.metadata.model_dump()
-        
+
         db.commit()
         db.refresh(existing_node)
-        
+
         # Create new API token
         token, expires_at = create_access_token(
             node_id=existing_node.id,
@@ -141,7 +140,7 @@ async def login_user(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-        
+
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

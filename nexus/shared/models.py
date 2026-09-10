@@ -7,11 +7,10 @@ and serialization.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, field_validator
-
+from pydantic import BaseModel, Field, field_validator, field_serializer
 
 # ============================================================================
 # Enums
@@ -96,13 +95,21 @@ class TimestampedModel(BaseModel):
     """Base model with timestamp fields."""
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: Optional[datetime] = None
+    updated_at: datetime | None = None
+
+    @field_serializer("created_at", "updated_at", check_fields=False)
+    def serialize_timestamp_fields(self, dt: datetime | None) -> str | None:
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            return dt.isoformat() + "Z"
+        return dt.isoformat()
 
 
 class BaseResponse(BaseModel):
     """Base response model."""
 
-    message: Optional[str] = None
+    message: str | None = None
 
 
 # ============================================================================
@@ -128,7 +135,7 @@ class User(UserBase, TimestampedModel):
 
     id: UUID = Field(default_factory=uuid4)
     is_active: bool = True
-    last_login: Optional[datetime] = None
+    last_login: datetime | None = None
 
     class Config:
         """Pydantic configuration."""
@@ -143,13 +150,13 @@ class User(UserBase, TimestampedModel):
 class NodeMetadata(BaseModel):
     """Metadata for a node."""
 
-    location: Optional[str] = None
+    location: str | None = None
     tags: list[str] = Field(default_factory=list)
-    description: Optional[str] = None
+    description: str | None = None
     # Inventory data (disks, containers)
-    inventory: Dict[str, Any] = Field(default_factory=dict)
+    inventory: dict[str, Any] = Field(default_factory=dict)
     # Extensible for custom fields
-    custom: Dict[str, Any] = Field(default_factory=dict)
+    custom: dict[str, Any] = Field(default_factory=dict)
 
 
 class NodeBase(BaseModel):
@@ -169,8 +176,8 @@ class NodeCreate(NodeBase):
 class NodeUpdate(BaseModel):
     """Model for updating node information."""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    metadata: Optional[NodeMetadata] = None
+    name: str | None = Field(None, min_length=1, max_length=100)
+    metadata: NodeMetadata | None = None
 
 
 class Node(NodeBase, TimestampedModel):
@@ -178,7 +185,7 @@ class Node(NodeBase, TimestampedModel):
 
     id: UUID = Field(default_factory=uuid4)
     status: NodeStatus = NodeStatus.OFFLINE
-    last_seen: Optional[datetime] = None
+    last_seen: datetime | None = None
 
     class Config:
         """Pydantic configuration."""
@@ -212,10 +219,10 @@ class JobPayload(BaseModel):
     """Base payload for jobs - extensible for different job types."""
 
     # Common fields
-    timeout: Optional[int] = Field(None, description="Timeout in seconds")
+    timeout: int | None = Field(None, description="Timeout in seconds")
 
     # Extensible for job-specific fields
-    data: Dict[str, Any] = Field(default_factory=dict)
+    data: dict[str, Any] = Field(default_factory=dict)
 
 
 class OCRJobPayload(JobPayload):
@@ -230,15 +237,15 @@ class ShellJobPayload(JobPayload):
     """Payload for shell command jobs."""
 
     command: str
-    working_dir: Optional[str] = None
-    env: Dict[str, str] = Field(default_factory=dict)
+    working_dir: str | None = None
+    env: dict[str, str] = Field(default_factory=dict)
 
 
 class UpdateJobPayload(JobPayload):
     """Payload for update jobs."""
 
     version: str
-    download_url: Optional[str] = None
+    download_url: str | None = None
     restart_service: bool = True
 
 
@@ -247,16 +254,16 @@ class JobCreate(BaseModel):
 
     type: JobType
     node_id: UUID
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
 
 
 class JobResult(BaseModel):
     """Result data from job execution."""
 
     success: bool = True
-    output: Optional[str] = None
-    error: Optional[str] = None
-    data: Dict[str, Any] = Field(default_factory=dict)
+    output: str | None = None
+    error: str | None = None
+    data: dict[str, Any] = Field(default_factory=dict)
 
 
 class Job(TimestampedModel):
@@ -266,10 +273,10 @@ class Job(TimestampedModel):
     type: JobType
     node_id: UUID
     status: JobStatus = JobStatus.PENDING
-    payload: Dict[str, Any]
-    result: Optional[JobResult] = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    payload: dict[str, Any]
+    result: JobResult | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
 
     class Config:
         """Pydantic configuration."""
@@ -295,11 +302,11 @@ class MetricData(BaseModel):
     cpu_percent: float = Field(..., ge=0, le=100)
     memory_percent: float = Field(..., ge=0, le=100)
     disk_percent: float = Field(..., ge=0, le=100)
-    temperature: Optional[float] = Field(None, description="CPU temperature in Celsius")
+    temperature: float | None = Field(None, description="CPU temperature in Celsius")
 
     @field_validator("temperature")
     @classmethod
-    def validate_temperature(cls, v: Optional[float]) -> Optional[float]:
+    def validate_temperature(cls, v: float | None) -> float | None:
         """Validate temperature is within reasonable range."""
         if v is not None and (v < -50 or v > 150):
             raise ValueError("Temperature must be between -50 and 150 Celsius")
@@ -314,7 +321,7 @@ class MetricCreate(BaseModel):
     cpu_percent: float = Field(..., ge=0, le=100)
     memory_percent: float = Field(..., ge=0, le=100)
     disk_percent: float = Field(..., ge=0, le=100)
-    temperature: Optional[float] = None
+    temperature: float | None = None
 
 
 class Metric(TimestampedModel):
@@ -326,7 +333,15 @@ class Metric(TimestampedModel):
     cpu_percent: float
     memory_percent: float
     disk_percent: float
-    temperature: Optional[float] = None
+    temperature: float | None = None
+
+    @field_serializer("timestamp", check_fields=False)
+    def serialize_metric_timestamp(self, dt: datetime | None) -> str | None:
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            return dt.isoformat() + "Z"
+        return dt.isoformat()
 
     class Config:
         """Pydantic configuration."""
@@ -365,9 +380,9 @@ class MetricStats(BaseModel):
     disk_max: float
 
     # Temperature statistics (optional)
-    temperature_avg: Optional[float] = None
-    temperature_min: Optional[float] = None
-    temperature_max: Optional[float] = None
+    temperature_avg: float | None = None
+    temperature_min: float | None = None
+    temperature_max: float | None = None
 
 
 class HealthThresholds(BaseModel):
@@ -379,8 +394,8 @@ class HealthThresholds(BaseModel):
     memory_critical: float = 95.0
     disk_warning: float = 85.0
     disk_critical: float = 95.0
-    temperature_warning: Optional[float] = 75.0
-    temperature_critical: Optional[float] = 85.0
+    temperature_warning: float | None = 75.0
+    temperature_critical: float | None = 85.0
 
 
 class NodeHealthStatus(BaseModel):
@@ -394,10 +409,10 @@ class NodeHealthStatus(BaseModel):
     cpu_health: NodeHealth
     memory_health: NodeHealth
     disk_health: NodeHealth
-    temperature_health: Optional[NodeHealth] = None
+    temperature_health: NodeHealth | None = None
 
     # Latest metric values
-    latest_metrics: Optional[Metric] = None
+    latest_metrics: Metric | None = None
 
     # Thresholds used for calculation
     thresholds: HealthThresholds = Field(default_factory=HealthThresholds)
@@ -426,7 +441,7 @@ class LogEntry(TimestampedModel):
     level: LogLevel
     source: str  # Module/component name
     message: str
-    extra: Dict[str, Any] = Field(default_factory=dict)  # Additional context
+    extra: dict[str, Any] = Field(default_factory=dict)  # Additional context
 
     class Config:
         """Pydantic configuration."""
@@ -442,7 +457,7 @@ class LogCreate(BaseModel):
     source: str
     message: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    extra: Dict[str, Any] = Field(default_factory=dict)
+    extra: dict[str, Any] = Field(default_factory=dict)
 
 
 class LogList(BaseModel):
@@ -462,7 +477,8 @@ class TokenData(BaseModel):
 
     node_id: UUID
     node_name: str
-    exp: Optional[datetime] = None
+    role: UserRole | None = None
+    exp: datetime | None = None
 
 
 class Token(BaseModel):
@@ -551,8 +567,8 @@ class DiskInfo(BaseModel):
     is_nexus_data: bool = Field(default=False, description="Whether Nexus data/logs are on this disk")
 
     # Optional metadata
-    label: Optional[str] = Field(None, description="Disk label/name")
-    uuid: Optional[str] = Field(None, description="Filesystem UUID")
+    label: str | None = Field(None, description="Disk label/name")
+    uuid: str | None = Field(None, description="Filesystem UUID")
 
     class Config:
         json_schema_extra = {
@@ -581,7 +597,7 @@ class InventoryUpdate(BaseModel):
     node_id: UUID
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     disks: list[DiskInfo] = Field(default_factory=list)
-    containers: list[Dict[str, Any]] = Field(default_factory=list)  # Using Dict for flexibility, can iterate to ContainerStatus
+    containers: list[dict[str, Any]] = Field(default_factory=list)  # Using Dict for flexibility, can iterate to ContainerStatus
 
 
 # ============================================================================
@@ -594,9 +610,9 @@ class HealthResponse(BaseModel):
 
     status: str = "healthy"
     version: str = "0.1.0"
-    uptime: Optional[int] = Field(None, description="Uptime in seconds")
-    node_id: Optional[UUID] = Field(None, description="For agent health checks")
-    hostname: Optional[str] = Field(None, description="Hostname of the server")
+    uptime: int | None = Field(None, description="Uptime in seconds")
+    node_id: UUID | None = Field(None, description="For agent health checks")
+    hostname: str | None = Field(None, description="Hostname of the server")
 
 
 # ============================================================================
@@ -609,7 +625,7 @@ class ErrorDetail(BaseModel):
 
     code: str
     message: str
-    details: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] | None = None
 
 
 class ErrorResponse(BaseModel):
@@ -639,9 +655,9 @@ class AlertCreate(AlertBase):
 
 class AlertUpdate(BaseModel):
     """Model for updating an alert."""
-    
-    status: Optional[AlertStatus] = None
-    resolved_at: Optional[datetime] = None
+
+    status: AlertStatus | None = None
+    resolved_at: datetime | None = None
 
 
 class Alert(AlertBase, TimestampedModel):
@@ -649,7 +665,7 @@ class Alert(AlertBase, TimestampedModel):
 
     id: UUID = Field(default_factory=uuid4)
     status: AlertStatus = AlertStatus.ACTIVE
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None
 
     class Config:
         """Pydantic configuration."""
@@ -672,5 +688,5 @@ class NodeOverview(BaseModel):
     jobs: list["Job"] = Field(default_factory=list)
     logs: list["LogEntry"] = Field(default_factory=list)
     disks: list[DiskInfo] = Field(default_factory=list)
-    containers: list[Dict[str, Any]] = Field(default_factory=list)
+    containers: list[dict[str, Any]] = Field(default_factory=list)
 

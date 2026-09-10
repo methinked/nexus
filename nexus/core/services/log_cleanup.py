@@ -7,7 +7,6 @@ Periodically removes old log entries to prevent database bloat.
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
@@ -33,7 +32,7 @@ class LogCleanupService:
             config: Core configuration with retention settings
         """
         self.config = config
-        self.task: Optional[asyncio.Task] = None
+        self.task: asyncio.Task | None = None
         self.running = False
 
     async def start(self):

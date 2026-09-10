@@ -4,11 +4,9 @@ Nodes API routes for Nexus Core.
 Handles node management, status, and queries.
 """
 
-from typing import Optional
+import logging
 from uuid import UUID
 
-import logging
-import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
@@ -23,6 +21,8 @@ from nexus.core.db import (
     get_node,
     get_nodes,
     get_nodes_count,
+)
+from nexus.core.db import (
     update_node as db_update_node,
 )
 from nexus.core.db.database import get_db
@@ -31,6 +31,7 @@ from nexus.shared import (
     BaseResponse,
     DiskInfo,
     HealthThresholds,
+    InventoryUpdate,
     Job,
     JobStatus,
     LogEntry,
@@ -43,7 +44,6 @@ from nexus.shared import (
     NodeStatus,
     NodeUpdate,
     NodeWithMetrics,
-    InventoryUpdate,
 )
 
 router = APIRouter()
@@ -52,8 +52,8 @@ logger = logging.getLogger(__name__)
 
 @router.get("", response_model=NodeList)
 def list_nodes(
-    status_filter: Optional[NodeStatus] = Query(None, alias="status"),
-    tag: Optional[str] = Query(None),
+    status_filter: NodeStatus | None = Query(None, alias="status"),
+    tag: str | None = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db),
@@ -214,8 +214,8 @@ def get_node_health(
     memory_critical: float = Query(95.0, ge=0, le=100),
     disk_warning: float = Query(85.0, ge=0, le=100),
     disk_critical: float = Query(95.0, ge=0, le=100),
-    temperature_warning: Optional[float] = Query(75.0, ge=-50, le=150),
-    temperature_critical: Optional[float] = Query(85.0, ge=-50, le=150),
+    temperature_warning: float | None = Query(75.0, ge=-50, le=150),
+    temperature_critical: float | None = Query(85.0, ge=-50, le=150),
 ):
     """
     Get health status for a node based on latest metrics.
@@ -302,21 +302,21 @@ def update_inventory(
     # Update metadata with inventory
     # We deliberately use a deep merge philosophy: keys not in update are preserved?
     # No, inventory is a snapshot. We overwrite the 'inventory' key.
-    
+
     current_metadata = dict(db_node.node_metadata) if db_node.node_metadata else {} # Ensure dict
     # logger.info(f"Current metadata before update: {current_metadata.keys()}")
-    
+
     current_metadata["inventory"] = {
         "disks": [d.model_dump(mode='json') for d in update.disks],
         "containers": update.containers,
         "updated_at": update.timestamp.isoformat()
     }
-    
+
     # Save back to DB
     # Note: db_update_node might expect NodeUpdate model, or we can set directly
     db_node.node_metadata = current_metadata
     flag_modified(db_node, "node_metadata") # Force SQLAlchemy to detect JSON change
-    
+
     try:
         db.commit()
         db.refresh(db_node)
@@ -325,7 +325,7 @@ def update_inventory(
         logger.error(f"Failed to commit inventory update: {e}")
         db.rollback()
         raise e
-    
+
     return BaseResponse(message="Inventory updated")
 
 
@@ -348,7 +348,7 @@ def get_node_disks(
 
     inventory = db_node.node_metadata.get("inventory", {})
     disks_data = inventory.get("disks", [])
-    
+
     return [DiskInfo.model_validate(d) for d in disks_data]
 
 
@@ -372,13 +372,13 @@ def get_node_containers(
 
     inventory = db_node.node_metadata.get("inventory", {})
     containers = inventory.get("containers", [])
-    
-    # If show_all is False, filter for nexus-managed? 
+
+    # If show_all is False, filter for nexus-managed?
     # Current implementation of PUSH sends all. Filtering can happen here.
     # Logic: if 'managed' is true (though current container dict might not have it explicitly if raw docker list)
     # The agent inventory collector should ideally enrich this.
     # For now, return all.
-    
+
     return {"containers": containers}
 
 

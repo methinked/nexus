@@ -16,14 +16,23 @@ from nexus.shared.auth import (
 )
 from nexus.shared.config import AgentConfig, BaseConfig, CLIConfig, CoreConfig
 from nexus.shared.models import (
+    # Alerts
+    Alert,
+    AlertBase,
+    AlertCreate,
+    AlertList,
+    AlertSeverity,
+    AlertStatus,
+    AlertType,
+    AlertUpdate,
     BaseResponse,
     DiskInfo,
     DiskType,
     ErrorResponse,
     HealthResponse,
     HealthThresholds,
-    Job,
     InventoryUpdate,
+    Job,
     JobCreate,
     JobList,
     JobResult,
@@ -55,15 +64,6 @@ from nexus.shared.models import (
     TokenData,
     UserLoginRequest,
     UserRole,
-    # Alerts
-    Alert,
-    AlertBase,
-    AlertCreate,
-    AlertList,
-    AlertSeverity,
-    AlertStatus,
-    AlertType,
-    AlertUpdate,
 )
 
 __all__ = [

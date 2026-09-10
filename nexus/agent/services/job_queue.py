@@ -9,7 +9,6 @@ import logging
 from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Optional
 from uuid import UUID
 
 from nexus.shared import JobStatus, JobType
@@ -25,13 +24,13 @@ class QueuedJob:
 
     job_id: UUID
     job_type: JobType
-    payload: Dict
+    payload: dict
     queued_at: datetime
     status: JobStatus = JobStatus.PENDING
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    result: Optional[Dict] = None
-    error: Optional[str] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    result: dict | None = None
+    error: str | None = None
 
 
 class JobQueue:
@@ -49,12 +48,12 @@ class JobQueue:
             max_concurrent: Maximum number of jobs to run concurrently
         """
         self.queue: deque[QueuedJob] = deque()
-        self.running: Dict[UUID, QueuedJob] = {}
-        self.completed: Dict[UUID, QueuedJob] = {}
+        self.running: dict[UUID, QueuedJob] = {}
+        self.completed: dict[UUID, QueuedJob] = {}
         self.max_concurrent = max_concurrent
         self._lock = asyncio.Lock()
 
-    async def enqueue(self, job_id: UUID, job_type: JobType, payload: Dict) -> QueuedJob:
+    async def enqueue(self, job_id: UUID, job_type: JobType, payload: dict) -> QueuedJob:
         """
         Add a job to the queue.
 
@@ -77,7 +76,7 @@ class JobQueue:
             logger.info(f"Job {job_id} ({job_type.value}) added to queue")
             return job
 
-    async def dequeue(self) -> Optional[QueuedJob]:
+    async def dequeue(self) -> QueuedJob | None:
         """
         Get the next pending job if we have capacity.
 
@@ -102,7 +101,7 @@ class JobQueue:
             return job
 
     async def mark_completed(
-        self, job_id: UUID, success: bool = True, result: Optional[Dict] = None, error: Optional[str] = None
+        self, job_id: UUID, success: bool = True, result: dict | None = None, error: str | None = None
     ):
         """
         Mark a job as completed.
@@ -134,7 +133,7 @@ class JobQueue:
             status_str = "successfully" if success else "with error"
             logger.info(f"Job {job_id} completed {status_str}")
 
-    async def get_status(self, job_id: UUID) -> Optional[QueuedJob]:
+    async def get_status(self, job_id: UUID) -> QueuedJob | None:
         """
         Get the status of a job.
 

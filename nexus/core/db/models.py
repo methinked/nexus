@@ -6,7 +6,6 @@ Defines database schema for nodes, jobs, and metrics.
 
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import JSON, Column, DateTime, Enum, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship

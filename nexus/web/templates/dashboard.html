@@ -309,13 +309,15 @@
         refreshDashboard();
     }
 
-    async function refreshDashboard() {
+    async function refreshDashboard(silent = false) {
         const btn = document.getElementById('refresh-btn');
-        const icon = btn.querySelector('svg');
+        const icon = btn ? btn.querySelector('svg') : null;
 
         // Add loading state
-        btn.disabled = true;
-        icon.classList.add('animate-spin');
+        if (!silent && btn && icon) {
+            btn.disabled = true;
+            icon.classList.add('animate-spin');
+        }
 
         try {
             // Fetch nodes once and reuse
@@ -328,14 +330,20 @@
                 renderTopology(nodes),
                 loadChartData(nodes)
             ]);
-            showToast('success', 'Dashboard updated');
+            if (!silent) {
+                showToast('success', 'Dashboard updated');
+            }
         } catch (error) {
             console.error('Refresh failed:', error);
-            showToast('error', 'Failed to refresh dashboard');
+            if (!silent) {
+                showToast('error', 'Failed to refresh dashboard');
+            }
         } finally {
             // Remove loading state
-            btn.disabled = false;
-            icon.classList.remove('animate-spin');
+            if (!silent && btn && icon) {
+                btn.disabled = false;
+                icon.classList.remove('animate-spin');
+            }
         }
     }
 
@@ -579,9 +587,8 @@
             },
             onMetricUpdate: (data) => {
                 console.log('[Dashboard] Metric update received:', data.node_id);
-                // Smart update: Refresh stats and reload chart data
-                // We could optimize to only chart data but stats might change too
-                refreshDashboard();
+                // Smart update: Refresh stats and reload chart data silently
+                refreshDashboard(true);
             }
         });
     });
@@ -646,7 +653,8 @@
 
                 // Client-side filter as backup (API 'since' should handle it mostly)
                 // Also ensures we strictly chop off anything older than the window if API returns slightly more
-                const recentMetrics = (data.metrics || []).filter(m => new Date(m.timestamp).getTime() > cutoffTime);
+                const parseFn = window.parseUTCDatetime || ((ts) => new Date(ts));
+                const recentMetrics = (data.metrics || []).filter(m => parseFn(m.timestamp).getTime() > cutoffTime);
 
                 return {
                     node: node,

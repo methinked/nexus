@@ -5,14 +5,12 @@ Handles viewing and analyzing metrics data for nodes.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional
-from uuid import UUID
 
 import httpx
 import typer
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 
 from nexus.shared.config import CLIConfig
 
@@ -28,7 +26,7 @@ def get_headers(config: CLIConfig) -> dict:
     return headers
 
 
-def format_datetime(dt: Optional[datetime]) -> str:
+def format_datetime(dt: datetime | None) -> str:
     """Format datetime for display."""
     if not dt:
         return "[dim]Never[/dim]"
@@ -58,7 +56,7 @@ def get_health_color(health: str) -> str:
 def get_metrics(
     node_id: str = typer.Argument(..., help="Node ID to get metrics for"),
     limit: int = typer.Option(10, "--limit", "-n", help="Number of recent metrics to show"),
-    since: Optional[str] = typer.Option(None, "--since", help="Start time (ISO format)"),
+    since: str | None = typer.Option(None, "--since", help="Start time (ISO format)"),
 ):
     """
     Get recent metrics for a node.
@@ -132,9 +130,9 @@ def get_metrics(
 @app.command("stats")
 def get_stats(
     node_id: str = typer.Argument(..., help="Node ID to get statistics for"),
-    since: Optional[str] = typer.Option(None, "--since", help="Start time (ISO format)"),
-    until: Optional[str] = typer.Option(None, "--until", help="End time (ISO format)"),
-    hours: Optional[int] = typer.Option(None, "--hours", "-h", help="Last N hours"),
+    since: str | None = typer.Option(None, "--since", help="Start time (ISO format)"),
+    until: str | None = typer.Option(None, "--until", help="End time (ISO format)"),
+    hours: int | None = typer.Option(None, "--hours", "-h", help="Last N hours"),
 ):
     """
     Get aggregated statistics for a node's metrics.

@@ -4,7 +4,6 @@ Configuration management commands.
 Handles CLI configuration initialization and management.
 """
 
-import sys
 from pathlib import Path
 
 import typer
@@ -198,12 +197,12 @@ def validate() -> None:
             response.raise_for_status()
             health = response.json()
 
-        console.print(f"[green]✓[/green] Core server is reachable")
+        console.print("[green]✓[/green] Core server is reachable")
         console.print(f"  Status: {health.get('status', 'unknown')}")
         console.print(f"  Version: {health.get('version', 'unknown')}")
 
     except httpx.ConnectError:
-        console.print(f"[red]✗[/red] Could not connect to Core server")
+        console.print("[red]✗[/red] Could not connect to Core server")
         console.print(f"  Make sure the Core server is running at {config.core_url}")
         raise typer.Exit(1)
     except httpx.HTTPStatusError as e:
@@ -215,8 +214,8 @@ def validate() -> None:
 
     # Check API token if present
     if config.api_token:
-        console.print(f"[green]✓[/green] API token is configured")
+        console.print("[green]✓[/green] API token is configured")
     else:
-        console.print(f"[yellow]⚠[/yellow] API token is not set (some commands may fail)")
+        console.print("[yellow]⚠[/yellow] API token is not set (some commands may fail)")
 
     console.print("\n[green]Configuration is valid![/green]\n")

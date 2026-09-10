@@ -4,7 +4,7 @@ Database connection and session management.
 Provides SQLAlchemy engine, session factory, and dependency injection for FastAPI.
 """
 
-from typing import Generator
+from collections.abc import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -25,7 +25,7 @@ engine = create_engine(
 # Enable WAL mode for SQLite
 if "sqlite" in config.database_url:
     from sqlalchemy import event
-    
+
     @event.listens_for(engine, "connect")
     def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()

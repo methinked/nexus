@@ -5,7 +5,6 @@ Calculates node health status based on system metrics and configurable threshold
 """
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from nexus.shared import (
@@ -42,8 +41,8 @@ def calculate_component_health(
 
 def calculate_node_health(
     node_id: UUID,
-    latest_metric: Optional[Metric],
-    thresholds: Optional[HealthThresholds] = None,
+    latest_metric: Metric | None,
+    thresholds: HealthThresholds | None = None,
 ) -> NodeHealthStatus:
     """
     Calculate overall health status for a node based on latest metrics.

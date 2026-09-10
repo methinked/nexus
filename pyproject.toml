@@ -111,5 +111,5 @@ plugins = ["pydantic.mypy"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
-addopts = "-v --cov=nexus --cov-report=term-missing"
+addopts = "-v"
 asyncio_mode = "auto"

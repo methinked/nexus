@@ -4,7 +4,7 @@ Jobs API routes for Nexus Core.
 Handles job submission, status tracking, and results.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 from uuid import UUID
 
 import httpx
@@ -24,7 +24,7 @@ class JobUpdateRequest(BaseModel):
     """Request to update job status from agent."""
 
     status: str
-    result: Optional[Dict[str, Any]] = None
+    result: dict[str, Any] | None = None
 
 
 @router.post("", response_model=Job, status_code=status.HTTP_201_CREATED)
@@ -96,9 +96,9 @@ async def submit_job(
 
 @router.get("", response_model=JobList)
 def list_jobs(
-    node_id: Optional[UUID] = Query(None),
-    status_filter: Optional[JobStatus] = Query(None, alias="status"),
-    job_type: Optional[JobType] = Query(None, alias="type"),
+    node_id: UUID | None = Query(None),
+    status_filter: JobStatus | None = Query(None, alias="status"),
+    job_type: JobType | None = Query(None, alias="type"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db),

@@ -3,7 +3,9 @@ WebSocket API endpoints for real-time updates.
 """
 
 import logging
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
 from nexus.core.services.websocket_manager import manager
 
 logger = logging.getLogger(__name__)

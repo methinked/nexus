@@ -5,8 +5,7 @@ Provides endpoints for Docker container management.
 """
 
 import logging
-from typing import Optional, Dict, Any, List
-from uuid import UUID
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
@@ -25,17 +24,17 @@ class DeploymentRequest(BaseModel):
     """Request to deploy a container."""
     deployment_id: str = Field(..., description="Deployment ID")
     image: str = Field(..., description="Docker image")
-    name: Optional[str] = Field(None, description="Container name")
-    ports: Optional[Dict[int, int]] = Field(None, description="Port mappings")
-    volumes: Optional[Dict[str, Dict[str, str]]] = Field(None, description="Volume mappings")
-    environment: Optional[Dict[str, str]] = Field(None, description="Environment variables")
+    name: str | None = Field(None, description="Container name")
+    ports: dict[int, int] | None = Field(None, description="Port mappings")
+    volumes: dict[str, dict[str, str]] | None = Field(None, description="Volume mappings")
+    environment: dict[str, str] | None = Field(None, description="Environment variables")
 
 
 class ContainerResponse(BaseModel):
     """Container information response."""
     id: str
     status: str
-    message: Optional[str] = None
+    message: str | None = None
 
 
 class ContainerStatusResponse(BaseModel):
@@ -45,11 +44,11 @@ class ContainerStatusResponse(BaseModel):
     status: str
     image: str
     created: str
-    started_at: Optional[str]
-    finished_at: Optional[str]
-    exit_code: Optional[int]
-    error: Optional[str]
-    deployment_id: Optional[str]
+    started_at: str | None
+    finished_at: str | None
+    exit_code: int | None
+    error: str | None
+    deployment_id: str | None
 
 
 @router.get("/status")
@@ -281,7 +280,7 @@ async def get_container_logs(container_id: str, tail: int = 100):
 
 
 @router.get("/containers/list")
-async def list_containers(show_all: bool = False) -> Dict[str, Any]:
+async def list_containers(show_all: bool = False) -> dict[str, Any]:
     """
     List containers on this agent.
     

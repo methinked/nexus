@@ -7,7 +7,6 @@ Provides multi-disk detection, type identification, and usage analysis.
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 
 import psutil
 
@@ -47,14 +46,14 @@ def detect_disk_type(device: str) -> DiskType:
             # 0 = SSD, 1 = HDD
             rotational_path = f"/sys/block/{base_device}/queue/rotational"
             if os.path.exists(rotational_path):
-                with open(rotational_path, "r") as f:
+                with open(rotational_path) as f:
                     rotational = int(f.read().strip())
                     if rotational == 0:
                         # Non-rotational = SSD
                         # Check if it's removable (USB)
                         removable_path = f"/sys/block/{base_device}/removable"
                         if os.path.exists(removable_path):
-                            with open(removable_path, "r") as f:
+                            with open(removable_path) as f:
                                 removable = int(f.read().strip())
                                 if removable == 1:
                                     # Could be USB flash or external SSD
@@ -99,11 +98,11 @@ def check_docker_data_path(mount_point: str) -> bool:
         # Get device IDs
         docker_dev = os.stat(docker_root).st_dev
         mount_dev = os.stat(mount_point).st_dev
-        
+
         # If devices match, Docker is stored here
         if docker_dev == mount_dev:
             return True
-            
+
     except (OSError, ValueError):
         pass
 
@@ -145,7 +144,7 @@ def check_nexus_data_path(mount_point: str) -> bool:
     return False
 
 
-def get_filesystem_label(device: str) -> Optional[str]:
+def get_filesystem_label(device: str) -> str | None:
     """
     Get the filesystem label for a device.
 
@@ -168,7 +167,7 @@ def get_filesystem_label(device: str) -> Optional[str]:
     return None
 
 
-def get_filesystem_uuid(device: str) -> Optional[str]:
+def get_filesystem_uuid(device: str) -> str | None:
     """
     Get the filesystem UUID for a device.
 
@@ -219,7 +218,7 @@ def get_all_disks() -> list[DiskInfo]:
             continue
 
         candidate_partitions.append(partition)
-    
+
     # Sort candidates to prioritize root '/' and shorter paths
     # This ensures that when we dedupe by device, we keep the most "main" mount point
     candidate_partitions.sort(key=lambda p: (p.mountpoint != '/', len(p.mountpoint)))
@@ -230,7 +229,7 @@ def get_all_disks() -> list[DiskInfo]:
             # This handles bind mounts where the same device appears multiple times
             if partition.device in seen_devices:
                 continue
-                
+
             # Get disk usage
             usage = psutil.disk_usage(partition.mountpoint)
 
@@ -282,7 +281,7 @@ def get_all_disks() -> list[DiskInfo]:
     return disks
 
 
-def find_best_storage_disk(disks: list[DiskInfo]) -> Optional[DiskInfo]:
+def find_best_storage_disk(disks: list[DiskInfo]) -> DiskInfo | None:
     """
     Find the best disk for Docker and logs (prefer external SSD).
 
@@ -345,7 +344,7 @@ import json
 import subprocess
 
 
-def get_docker_root() -> Optional[str]:
+def get_docker_root() -> str | None:
     """
     Get current Docker root directory from daemon config.
 
@@ -356,7 +355,7 @@ def get_docker_root() -> Optional[str]:
 
     try:
         if config_path.exists():
-            with open(config_path, 'r') as f:
+            with open(config_path) as f:
                 config = json.load(f)
                 return config.get("data-root")
     except (OSError, json.JSONDecodeError) as e:
@@ -406,7 +405,7 @@ def configure_docker_storage(target_disk: DiskInfo) -> bool:
         config = {}
         if config_path.exists():
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path) as f:
                     config = json.load(f)
             except json.JSONDecodeError:
                 logger.warning("Existing daemon.json is invalid, creating new one")
@@ -464,7 +463,7 @@ def restart_docker_daemon() -> bool:
         return False
 
 
-def setup_docker_storage_if_needed() -> Optional[DiskInfo]:
+def setup_docker_storage_if_needed() -> DiskInfo | None:
     """
     Detect storage and configure Docker if needed.
 

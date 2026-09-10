@@ -1,495 +1,69 @@
-# Nexus Architecture
+# Nexus System Architecture
 
-## Overview
+## 1. Overview & Purpose
 
-Nexus is a distributed fleet orchestration platform for Debian-based machines, built with a **CLI-first** and **Docker-first** philosophy. The architecture consists of two main components: **Core** (control plane) and **Agent** (data plane), with Docker serving as the primary mechanism for deploying and managing services across the fleet.
-
-**Supported Systems:** Raspberry Pi OS, Ubuntu, Debian, and any Debian-derivative Linux distribution.
-
-## Components
-
-### Core (Control Plane)
-
-The Core is the central management server that orchestrates the fleet.
-
-**Responsibilities:**
-- Node registration and authentication
-- Job scheduling and distribution
-- Metrics aggregation and storage
-- Web dashboard (optional)
-- CLI command execution
-
-**Technology:**
-- FastAPI for REST API and WebSocket endpoints
-- SQLite for persistent storage
-- Typer for CLI
-
-**Deployment:**
-- Runs on a central server (can be a Raspberry Pi or any Linux machine)
-- Accessible via local network or VPN
+Nexus is a focused, lightweight observability and telemetry system for Raspberry Pi homelab fleets. It provides real-time hardware health metrics, storage failure warnings (including MicroSD read-only states), container visibility, and proactive alerting without the overhead or security footprint of full RMM or custom container orchestrators.
 
 ---
 
-### Agent (Data Plane)
+## 2. High-Level Architecture
 
-The Agent runs on each managed node (Raspberry Pi, Ubuntu server, Debian machine, etc.).
+Nexus utilizes a clean **Hub-and-Spoke** telemetry architecture:
 
-**Responsibilities:**
-- Register with Core on startup
-- Execute jobs assigned by Core (shell commands, Docker operations)
-- Collect and report system metrics (CPU, RAM, disk, temperature)
-- Manage Docker containers and services
-- Provide remote shell access (WebSocket-based)
-- Monitor Docker container health and resource usage
+```mermaid
+graph TD
+    User([User]) -->|Browser :8000| WebUI[Web Dashboard]
+    User -->|Terminal| CLI[Nexus CLI]
+    
+    subgraph "Nexus Core (Control Plane)"
+        WebUI --> Core[FastAPI Core Server]
+        CLI --> Core
+        Core --> DB[(SQLite Database)]
+        Core --> Alerts[Alert Engine]
+        Core --> Retain[Data Retention Worker]
+    end
 
-**Technology:**
-- FastAPI for agent API
-- psutil for system metrics (cross-platform)
-- Docker SDK for Python for container management
-- Platform-specific monitoring (vcgencmd for Pi, lm-sensors for others)
-
-**Deployment:**
-- Runs as a systemd service on each node
-- Python virtual environment for isolation
-- Dockerized deployment optional (for Core compatibility)
-
----
-
-## Communication Flow
-
-```
-┌─────────────┐
-│     User    │
-└──────┬──────┘
-       │ CLI / Web
-       v
-┌─────────────────┐
-│   Nexus Core    │
-│  (FastAPI App)  │
-└────────┬────────┘
-         │ HTTPS/WSS
-         │ (Local Network / VPN)
-         v
-   ┌─────────────┐
-   │    Agent    │
-   │  (FastAPI)  │
-   └──────┬──────┘
-          │
-     ┌────┴────┐
-     v         v
-[Modules]  [System]
+    subgraph "Managed Pi Fleet (Data Plane)"
+        Agent1[orthanc-pi:8001] -->|HTTP Push :30s| Core
+        Agent2[bywater-pi:8001] -->|HTTP Push :30s| Core
+        Agent3[moria-pi:8001] -.->|Maintenance| Core
+    end
 ```
 
 ---
 
-## Authentication & Security
+## 3. Core System Components
 
-### Registration Flow
+### 3.1 Nexus Core Server (`nexus.core`)
+* **Framework:** FastAPI (Python 3.11+) with Uvicorn.
+* **Database:** SQLite with SQLAlchemy 2.0 and Alembic migrations.
+* **Telemetry Receiver:** Ingests metric payloads (CPU, RAM, Disk, Temperature) and container inventory every 30s.
+* **Alert Engine:** Continuously evaluates node status, heartbeats, and resource thresholds (e.g. CPU > 95%, Disk > 95%, Temp > 85°C, or Read-Only SD card flag).
+* **Data Retention:** Automated background task trimming historical metrics older than 7 days.
+* **Dashboard Engine:** Server-side rendered Jinja2 templates styled with Tailwind CSS and Chart.js.
 
-1. Agent starts with pre-configured **shared secret**
-2. Agent sends registration request to Core (`POST /api/register`)
-3. Core validates shared secret
-4. Core issues unique **API token** to Agent
-5. Agent stores token and uses for all future requests
+### 3.2 Nexus Agent (`nexus.agent`)
+* **Lightweight Daemon:** Runs on each managed Pi node as a systemd service (`nexus-agent.service`).
+* **Sensors & Collectors:**
+  * `psutil`: CPU utilization, memory pressure, and mountpoint disk stats.
+  * `vcgencmd`: Native Broadcom SoC / GPU temperature readings on Raspberry Pi OS.
+  * Storage Classifier: Inspects block devices (`/sys/block`) to distinguish NVMe, SSD, and MicroSD storage.
+  * Degraded Storage Flag: Flags when a filesystem is remounted `read-only` due to flash block wear.
+  * Docker Socket: Inspects local container status, exposed ports, and image tags.
+* **Registration & Heartbeat:** Handshakes with Core using a pre-shared token and sends heartbeat pings with telemetry payloads.
 
-### Request Authentication
-
-- All API requests use Bearer token authentication
-- Tokens are JWT-based with expiration
-- Core validates tokens on each request
-
-### Transport Security
-
-- **Local Network:** TLS/HTTPS with self-signed or Let's Encrypt certs
-- **Remote Access:** VPN layer (ZeroTier/Tailscale) provides encrypted tunnel
-
----
-
-## Data Model
-
-### Node
-
-Represents a managed Raspberry Pi.
-
-```python
-{
-    "id": "uuid",
-    "name": "kitchen-pi",
-    "ip_address": "192.168.1.100",
-    "status": "online|offline|error",
-    "last_seen": "timestamp",
-    "metadata": {
-        "location": "kitchen",
-        "tags": ["camera", "ocr"]
-    }
-}
-```
-
-### Job
-
-Represents a task to be executed on a node.
-
-```python
-{
-    "id": "uuid",
-    "type": "ocr|shell|sync",
-    "node_id": "uuid",
-    "status": "pending|running|completed|failed",
-    "payload": {...},
-    "created_at": "timestamp",
-    "completed_at": "timestamp"
-}
-```
-
-### Metric
-
-System health metrics from a node.
-
-```python
-{
-    "node_id": "uuid",
-    "timestamp": "timestamp",
-    "cpu_percent": 45.2,
-    "memory_percent": 62.1,
-    "disk_percent": 38.5,
-    "temperature": 52.3
-}
-```
+### 3.3 Nexus CLI (`nexus.cli`)
+* Built with `Typer` and `Rich` for fast terminal inspection:
+  * `nexus node list`: Fleet overview with status and IPs.
+  * `nexus node status <id>`: Deep hardware and storage breakdown.
+  * `nexus metrics get <id>`: Current sensor readings.
+  * `nexus metrics stats <id>`: 24-hour min/max/average statistics.
+  * `nexus logs list`: Centralized log viewer.
 
 ---
 
-## Modules
-
-### Speculum (Metrics Collection)
-
-**Core Functionality:**
-- Runs on Agent
-- Collects CPU, RAM, disk, temperature every 30s
-- Pushes metrics to Core via `POST /api/metrics`
-- Core stores in SQLite for historical analysis
-
-**Multi-Disk Detection (Phase 6.5.1):**
-
-Nexus automatically detects and categorizes all storage devices on each node:
-
-**Detection Process:**
-1. **Physical Disk Enumeration**
-   - Scans all block devices using `psutil.disk_partitions()`
-   - Identifies physical disks vs. partitions
-   - Categorizes by type: HDD, SSD, NVMe, SD Card, USB, Network (NFS/CIFS)
-
-2. **Primary Storage Identification**
-   - Detects boot partitions (e.g., `/boot`, `/boot/efi`)
-   - Identifies root filesystem (`/`)
-   - Finds largest available disk
-   - Provides smart recommendations for primary storage
-
-3. **Disk Metadata Collection**
-   ```python
-   {
-       "path": "/dev/sda1",
-       "mountpoint": "/",
-       "type": "SSD",
-       "is_physical": True,
-       "fstype": "ext4",
-       "total_bytes": 500000000000,
-       "used_bytes": 250000000000,
-       "free_bytes": 250000000000,
-       "usage_percent": 50.0
-   }
-   ```
-
-**Storage Type Classification:**
-- **HDD:** Rotational drives (detected via `/sys/block/*/queue/rotational`)
-- **SSD:** Solid-state drives
-- **NVMe:** PCIe NVMe devices (identified by `nvme` in device name)
-- **SD Card:** SD/MMC devices (identified by `mmcblk` in device name)
-- **USB:** USB-attached storage
-- **Network:** NFS, CIFS, SMB mounts
-
-**Benefits:**
-- Accurate disk usage tracking across multiple storage devices
-- Smart primary storage recommendations for data-intensive applications
-- Support for complex storage configurations (multi-disk Pis, NAS-backed nodes)
-- Foundation for future storage-aware workload placement
-
-### Imperium (Remote Terminal)
-
-- WebSocket-based remote shell
-- User initiates from CLI: `nexus node shell <node_id>`
-- Core proxies WebSocket to Agent
-- Agent spawns PTY and streams I/O
-
-### Scriptor (OCR Engine)
-
-- Processes images submitted as jobs
-- Uses Tesseract for text extraction
-- Outputs Markdown files
-- Syncs results back to Core via file sync
-
-### Arbiter (Sync Conflict Resolver)
-
-- Monitors Syncthing conflict files
-- Reports conflicts to Core
-- User resolves via CLI or Web UI
-
----
-
-## Docker Service Orchestration
-
-Nexus uses Docker as the foundational technology for deploying and managing services across the fleet.
-
-### Architecture
-
-```
-┌──────────────────────────────────────────┐
-│           Nexus Core                     │
-│  ┌────────────────┐  ┌────────────────┐ │
-│  │ Services API   │  │ Deployments    │ │
-│  │ (Templates)    │  │ API            │ │
-│  └────────┬───────┘  └────────┬───────┘ │
-└───────────┼──────────────────┼─────────┘
-            │                  │
-            │ REST API         │ REST API
-            │                  │
-            v                  v
-┌─────────────────────────────────────────┐
-│         Agent Node (Phase 7.2+)         │
-│  ┌───────────────┐                      │
-│  │ Docker SDK    │                      │
-│  │ Integration   │                      │
-│  └───────┬───────┘                      │
-│          │                              │
-│  ┌───────v────────┐                     │
-│  │ Docker Daemon  │                     │
-│  └───────┬────────┘                     │
-│          │                              │
-│  ┌───────v──────┐  ┌──────────┐        │
-│  │ Container 1  │  │Container2│        │
-│  │  (Pi-hole)   │  │(Grafana) │        │
-│  └──────────────┘  └──────────┘        │
-└─────────────────────────────────────────┘
-```
-
-### Phase 7.1: Core API (✅ COMPLETE)
-
-**Service Templates Management:**
-
-Core provides a full REST API for managing service templates:
-
-- `POST /api/services` - Create service template
-- `GET /api/services` - List all templates
-- `GET /api/services/{id}` - Get template details
-- `PUT /api/services/{id}` - Update template
-- `DELETE /api/services/{id}` - Delete template
-
-**Service Template Model:**
-```python
-{
-    "id": "uuid",
-    "name": "pihole",
-    "image": "pihole/pihole:latest",
-    "description": "Network-wide ad blocking",
-    "ports": [
-        {"host": 80, "container": 80},
-        {"host": 53, "container": 53, "protocol": "udp"}
-    ],
-    "volumes": [
-        {"host": "/data/pihole/config", "container": "/etc/pihole"},
-        {"host": "/data/pihole/dnsmasq", "container": "/etc/dnsmasq.d"}
-    ],
-    "environment": {
-        "TZ": "America/New_York",
-        "WEBPASSWORD": "admin"
-    }
-}
-```
-
-**Deployment Management:**
-
-Full REST API for deployment lifecycle:
-
-- `POST /api/deployments` - Create deployment
-- `GET /api/deployments` - List deployments (with node/status filtering)
-- `GET /api/deployments/{id}` - Get deployment details
-- `PUT /api/deployments/{id}` - Update deployment config
-- `POST /api/deployments/{id}/start` - Start deployment
-- `POST /api/deployments/{id}/stop` - Stop deployment
-- `POST /api/deployments/{id}/restart` - Restart deployment
-- `DELETE /api/deployments/{id}` - Delete deployment
-
-**Deployment Model:**
-```python
-{
-    "id": "uuid",
-    "service_id": "uuid",
-    "node_id": "uuid",
-    "status": "pending|running|stopped|failed",
-    "config": {
-        # Override service template values
-        "environment": {"WEBPASSWORD": "custom-password"}
-    },
-    "created_at": "timestamp",
-    "started_at": "timestamp"
-}
-```
-
-**Database Schema:**
-- `services` table - Stores service templates
-- `deployments` table - Tracks deployment instances
-- SQLAlchemy models with full CRUD operations
-
-**API Features:**
-- Service template versioning
-- Multi-node deployment support
-- Deployment status tracking
-- Configuration overrides per deployment
-- Filtering and querying capabilities
-
-### Phase 7.2+: Agent Integration (Planned)
-
-**Docker SDK Integration on Agents:**
-- Agent receives deployment commands from Core
-- Uses Docker SDK for Python to interact with local Docker daemon
-- Manages container lifecycle (pull, create, start, stop, remove)
-- Reports container status back to Core
-
-**Supported Operations:**
-- **deploy**: Pull image and start container
-- **start/stop/restart**: Control running containers
-- **update**: Pull new image version and restart
-- **remove**: Stop and remove container
-- **logs**: Stream container logs to Core
-- **inspect**: Get container status and configuration
-
-**Health Monitoring:**
-- Container status (running, stopped, exited)
-- Resource usage (CPU, memory per container)
-- Docker daemon health checks
-- Automatic restart policies
-- Integration with Speculum metrics
-
-### Multi-Node Deployments
-
-Services can be deployed to:
-- Single node (e.g., Pi-hole on gateway Pi)
-- Multiple nodes (e.g., distributed Prometheus exporters)
-- All nodes (e.g., monitoring agents)
-
-### Docker API Integration
-
-**Agent-side:**
-- Uses Docker SDK for Python (`docker-py`)
-- Communicates with local Docker daemon via socket
-- Translates Nexus commands to Docker API calls
-
-**Core-side:**
-- Stores service definitions and deployment state
-- Tracks which services are running on which nodes
-- Provides unified view of fleet-wide services
-
----
-
-## Network Topology
-
-### Local Network (Default)
-
-```
-┌──────────────────────────────────┐
-│      Local Network (LAN)         │
-│                                  │
-│  ┌──────┐    ┌──────┐  ┌──────┐ │
-│  │ Core │────│Agent1│──│Agent2│ │
-│  └──────┘    └──────┘  └──────┘ │
-│                                  │
-└──────────────────────────────────┘
-```
-
-- Core listens on `0.0.0.0:8000`
-- Agents discover Core via:
-  - Manual configuration (IP in config file)
-  - mDNS/Avahi broadcast (future)
-
-### Remote Access (Optional)
-
-```
-┌────────────────────────────────────┐
-│    Internet                        │
-│                                    │
-│  ┌──────┐    VPN Mesh    ┌──────┐ │
-│  │ Core │◄──(ZeroTier)──►│Agent │ │
-│  └──────┘                └──────┘ │
-│                                    │
-└────────────────────────────────────┘
-```
-
-- Install ZeroTier/Tailscale on Core and Agents
-- Configure agents to use VPN IP for Core
-- All traffic encrypted by VPN layer
-
----
-
-## Deployment
-
-### Development
-
-```bash
-# Run Core locally
-uvicorn nexus.core.main:app --reload
-
-# Run Agent locally
-uvicorn nexus.agent.main:app --port 8001 --reload
-```
-
-### Production
-
-**Core:**
-```bash
-docker-compose up -d nexus-core
-```
-
-**Agent (on each Pi):**
-```bash
-docker-compose up -d nexus-agent
-```
-
-Or use systemd service:
-```bash
-systemctl enable nexus-agent
-systemctl start nexus-agent
-```
-
----
-
-## Scaling Considerations
-
-### Core Scalability
-
-- **SQLite Limits:** Good for ~100-500 nodes with moderate traffic
-- **Migration Path:** If fleet grows, migrate to PostgreSQL
-- **Horizontal Scaling:** Add Redis for job queue, use multiple Core replicas
-
-### Agent Efficiency
-
-- Lightweight metrics collection (minimal CPU/RAM)
-- Job execution isolated in containers or processes
-- Graceful degradation when Core unreachable
-
----
-
-## Future Enhancements
-
-### Near-term (Phase 7.2-7.3)
-- **Agent Docker Module:** Docker SDK integration on agents for actual container execution
-- **Pre-built Service Templates:** Ready-to-deploy configurations for Pi-hole, Home Assistant, Prometheus, Grafana
-- **Container Monitoring:** Real-time resource usage and health tracking per container
-- **Docker Compose Support:** Multi-container application deployments
-- **Web UI for Docker:** Service deployment and management through dashboard
-
-### Long-term
-- **Service Discovery:** Implement mDNS for zero-config setup on local networks
-- **HA Core:** Multiple Core replicas with leader election for reliability
-- **Edge Intelligence:** Agents can execute jobs locally when Core is offline
-- **Plugin System:** Dynamic module loading for custom workflows and integrations
-- **Kubernetes Support:** Optional K8s orchestration for larger deployments
-- **Container Registry:** Private Docker registry for custom images
+## 4. Anti-Creep Boundary (What is Excluded)
+
+* **No Remote Terminal / Shell Backdoor:** Nodes are managed via standard SSH and keys. Nexus does not implement interactive PTY bridges.
+* **No Bespoke OTA Patch Management:** OS updates are handled via standard package management (`apt`), not binary agent pushers.
+* **No Custom Container Orchestration:** Docker Compose files on each node are the source of truth. Nexus inspects container health but does not attempt to replicate Kubernetes or Portainer.

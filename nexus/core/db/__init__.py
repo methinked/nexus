@@ -5,14 +5,20 @@ Provides SQLAlchemy models, CRUD operations, and database session management.
 """
 
 from nexus.core.db.crud import (
+    # Alert CRUD
+    create_alert,
     create_job,
     create_log,
     create_metric,
     create_node,
+    # User CRUD
+    create_user,
     delete_job,
     delete_node,
     delete_old_logs,
     delete_old_metrics,
+    get_active_alerts,
+    get_active_alerts_count,
     get_job,
     get_jobs,
     get_jobs_count,
@@ -25,21 +31,15 @@ from nexus.core.db.crud import (
     get_node_by_name,
     get_nodes,
     get_nodes_count,
+    get_user_by_username,
+    resolve_alert,
+    resolve_alerts_by_type,
     update_job_status,
     update_node,
     update_node_status,
-    # Alert CRUD
-    create_alert,
-    get_active_alerts,
-    get_active_alerts_count,
-    resolve_alert,
-    resolve_alerts_by_type,
-    # User CRUD
-    create_user,
-    get_user_by_username,
 )
 from nexus.core.db.database import Base, SessionLocal, engine, get_db, init_db
-from nexus.core.db.models import JobModel, MetricModel, NodeModel, AlertModel
+from nexus.core.db.models import AlertModel, JobModel, MetricModel, NodeModel
 
 __all__ = [
     # Database

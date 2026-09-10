@@ -5,7 +5,6 @@ Allows creating and managing Nexus users via CLI.
 """
 
 import json
-from typing import Optional
 
 import httpx
 import typer
@@ -38,7 +37,7 @@ def create(
     Requires an API token with Admin privileges.
     """
     config: CLIConfig = ctx.obj or CLIConfig()
-    
+
     payload = {
         "username": username,
         "password": password,
@@ -75,7 +74,7 @@ def create(
 @app.command()
 def list(
     ctx: typer.Context,
-    format_output: Optional[str] = typer.Option(
+    format_output: str | None = typer.Option(
         None,
         "--format",
         "-f",

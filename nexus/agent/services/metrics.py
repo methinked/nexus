@@ -4,14 +4,12 @@ Metrics collection service for Nexus Agent.
 Collects system metrics and sends them to Core.
 """
 
-from collections import deque
 import asyncio
 import logging
-import platform
 import shutil
 import subprocess
+from collections import deque
 from datetime import datetime
-from pathlib import Path
 from uuid import UUID
 
 import httpx

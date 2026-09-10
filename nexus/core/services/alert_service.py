@@ -6,16 +6,15 @@ Periodically checks node status and metrics to generate alerts.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
-from typing import Optional
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
 from nexus.core.db import (
     create_alert,
-    get_nodes,
     get_latest_metric,
+    get_nodes,
     resolve_alerts_by_type,
 )
 from nexus.core.db.database import SessionLocal
@@ -37,7 +36,7 @@ class AlertService:
 
     def __init__(self, config: CoreConfig):
         self.config = config
-        self.task: Optional[asyncio.Task] = None
+        self.task: asyncio.Task | None = None
         self.running = False
         self.check_interval_seconds = 60  # Check every minute
 
@@ -84,7 +83,7 @@ class AlertService:
                 logger.error(f"Error in alert monitor loop: {e}", exc_info=True)
                 # Prevent tight loop on error
                 await asyncio.sleep(5)
-            
+
             await asyncio.sleep(self.check_interval_seconds)
 
     async def _check_all_nodes(self):
@@ -99,7 +98,7 @@ class AlertService:
 
     async def _check_node(self, db: Session, node):
         """Check a single node for alert conditions."""
-        
+
         # 1. Check Offline Status
         await self._check_node_offline(db, node)
 
@@ -115,13 +114,13 @@ class AlertService:
             return
 
         time_since_seen = (datetime.utcnow() - node.last_seen).total_seconds()
-        
+
         if time_since_seen > self.thresholds["patience_offline_seconds"]:
             # Node is offline - Trigger Alert
             self._trigger_alert(
-                db, 
-                node.id, 
-                AlertType.NODE_OFFLINE, 
+                db,
+                node.id,
+                AlertType.NODE_OFFLINE,
                 AlertSeverity.CRITICAL,
                 f"Node {node.name} is offline (last seen {int(time_since_seen)}s ago)"
             )
@@ -134,7 +133,7 @@ class AlertService:
 
     async def _check_resources(self, db: Session, node, metric):
         """Check resource metrics."""
-        
+
         # CPU
         if metric.cpu_percent > self.thresholds["cpu_critical"]:
             self._trigger_alert(db, node.id, AlertType.HIGH_CPU, AlertSeverity.CRITICAL, f"High CPU usage: {metric.cpu_percent:.1f}%")
@@ -169,7 +168,7 @@ class AlertService:
     def _trigger_alert(self, db: Session, node_id: str, type: AlertType, severity: AlertSeverity, message: str):
         """Create an alert if one doesn't already exist."""
         from nexus.core.db.models import AlertModel
-        
+
         # Check if active alert of this type already exists
         existing = db.query(AlertModel).filter(
             AlertModel.node_id == str(node_id),

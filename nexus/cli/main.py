@@ -4,8 +4,6 @@ Nexus CLI - Main entry point.
 CLI-first interface for managing distributed Raspberry Pi fleets.
 """
 
-import sys
-from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -99,10 +97,10 @@ def info() -> None:
 # Note: These imports must come after app is defined
 try:
     from nexus.cli.commands import config as config_commands
+    from nexus.cli.commands import job as job_commands
     from nexus.cli.commands import logs as logs_commands
     from nexus.cli.commands import metrics as metrics_commands
     from nexus.cli.commands import node as node_commands
-    from nexus.cli.commands import job as job_commands
     from nexus.cli.commands import users as users_commands
 
     app.add_typer(config_commands.app, name="config", help="Configuration management")

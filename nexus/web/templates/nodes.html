@@ -286,26 +286,26 @@
                                         <template x-if="nodeCache[selectedNodeId].disks.length === 0">
                                             <div class="text-center py-6 text-gray-500 text-sm">No storage devices found</div>
                                         </template>
-                                        <template x-for="d in nodeCache[selectedNodeId].disks" :key="d.mountpoint">
+                                        <template x-for="d in nodeCache[selectedNodeId].disks" :key="d.mount_point || d.mountpoint">
                                             <div class="p-3 bg-black/20 border border-white/5 rounded space-y-2 hover:border-green-500/30 transition-colors">
                                                 <div class="flex justify-between items-center text-sm">
-                                                    <div class="font-medium text-gray-200" x-text="d.mountpoint"></div>
-                                                    <div class="text-gray-400 font-mono text-xs" x-text="d.fstype"></div>
+                                                    <div class="font-medium text-gray-200" x-text="d.mount_point || d.mountpoint"></div>
+                                                    <div class="text-gray-400 font-mono text-xs" x-text="d.filesystem || d.fstype"></div>
                                                 </div>
                                                 
                                                 <!-- Progress Bar -->
                                                 <div class="w-full bg-gray-700 rounded-full h-1.5 mt-2">
                                                     <div :class="{
-                                                        'bg-red-500': d.percent > 90,
-                                                        'bg-amber-500': d.percent > 75 && d.percent <= 90,
-                                                        'bg-green-500': d.percent <= 75
-                                                    }" class="h-1.5 rounded-full transition-all" :style="`width: ${d.percent}%`">
+                                                        'bg-red-500': (d.usage_percent ?? d.percent) > 90,
+                                                        'bg-amber-500': (d.usage_percent ?? d.percent) > 75 && (d.usage_percent ?? d.percent) <= 90,
+                                                        'bg-green-500': (d.usage_percent ?? d.percent) <= 75
+                                                    }" class="h-1.5 rounded-full transition-all" :style="`width: ${d.usage_percent ?? d.percent}%`">
                                                     </div>
                                                 </div>
                                                 
                                                 <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                                    <span x-text="`${(d.used / (1024*1024*1024)).toFixed(1)} GB used`"></span>
-                                                    <span x-text="`${(d.total / (1024*1024*1024)).toFixed(1)} GB total (${d.percent}%)`"></span>
+                                                    <span x-text="`${(((d.used_bytes ?? d.used) || 0) / (1024*1024*1024)).toFixed(1)} GB used`"></span>
+                                                    <span x-text="`${(((d.total_bytes ?? d.total) || 0) / (1024*1024*1024)).toFixed(1)} GB total (${d.usage_percent ?? d.percent}%)`"></span>
                                                 </div>
                                             </div>
                                         </template>

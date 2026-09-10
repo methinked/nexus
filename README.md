@@ -1,289 +1,126 @@
 # Nexus 🌐
 
-**Distributed Debian Fleet Orchestration Platform**
+**Lightweight Raspberry Pi Fleet Observability & Telemetry**
 
-> *Control your fleet from the command line. Deploy services with Docker.*
+> *Real-time metrics, hardware health, and container visibility across your Pi fleet — without the bloat of full RMM or complex orchestration.*
 
-Nexus is a lightweight, secure, and modular platform for managing fleets of Debian-based machines (Raspberry Pi, Ubuntu, Debian servers). Built with a **CLI-First** and **Docker-First** philosophy, it provides robust headless management, monitoring, and service orchestration with an optional "Single Pane of Glass" web dashboard.
+Nexus is a focused, lightweight observability platform built specifically for home lab Raspberry Pi fleets. It provides immediate visibility into host hardware health (CPU, RAM, multi-disk storage, temperatures, and failing SD card detection) and running Docker containers, accessible via both a fast terminal CLI and a real-time web dashboard.
 
-## 🚀 Core Philosophy
+---
 
-*   **CLI-First:** Every feature is built as a command-line tool first. Automation and scripting are first-class citizens.
-*   **Docker-First:** Services are deployed and managed as Docker containers across your fleet. Consistent, reproducible deployments.
-*   **Debian-Based:** Works on Raspberry Pi OS, Ubuntu, Debian, and any Debian-derivative Linux distribution.
-*   **Decentralized:** Agents run locally on each node, handling monitoring and tasks independently.
-*   **Network Agnostic:** Works on any local network out of the box. Optionally use ZeroTier/Tailscale for secure remote access.
-*   **Modular:** Deploy services like Pi-hole, Home Assistant, Prometheus, or custom containers across your fleet.
+## 🎯 Core Philosophy & Scope Lock
+
+* **Observability-First:** Real-time metrics (CPU, RAM, storage, temperatures) collected every 30s.
+* **Hardware-Aware:** Automatically classifies storage (NVMe vs SSD vs MicroSD) and actively flags read-only filesystem faults caused by failing SD cards.
+* **Container Visibility:** Read-only inspection of running Docker containers across nodes (uptime, image versions, port mappings, and status).
+* **CLI & Web Dashboard:** Instant terminal queries (`nexus node list`, `nexus metrics get`) paired with a modern "Single Pane of Glass" glassmorphism dashboard.
+* **Strict Anti-Creep:** No full RMM, no bespoke OTA package patchers, and no heavyweight container orchestration engines. Just clear, reliable telemetry.
+
+---
 
 ## 🏗️ Architecture
 
-> **See the full System Map:** [docs/project/architecture.md](docs/project/architecture.md)
+Nexus follows a lightweight **Hub-and-Spoke** telemetry model:
 
 ```mermaid
 graph TD
-    User[User] -->|CLI / Web| Core[Nexus Core]
-    Core -->|Local Network / VPN| Agent1[Agent: Kitchen]
-    Core -->|Local Network / VPN| Agent2[Agent: Study]
-    Core -->|Local Network / VPN| Agent3[Agent: Garage]
-
-    subgraph "Nexus Core"
-        DB[(SQLite)]
-        API[FastAPI Server]
-        CLI[CLI Tool]
+    User([User]) -->|Browser :8000| WebUI[Web Dashboard]
+    User -->|Terminal| CLI[Nexus CLI]
+    
+    subgraph "Core Server (e.g. orthanc-pi)"
+        WebUI --> Core[FastAPI Core Server]
+        CLI --> Core
+        Core --> DB[(SQLite nexus.db)]
+        Core --> Alerts[Alert Engine]
     end
 
-    subgraph "Agent Node"
-        AgentAPI[FastAPI Agent]
-        Monitor[Speculum (Metrics)]
-        Terminal[Imperium (Shell)]
-        Worker[Scriptor (Jobs)]
+    subgraph "Pi Fleet (Agents)"
+        Agent1[orthanc-pi:8001] -->|Telemetry Push| Core
+        Agent2[bywater-pi:8001] -->|Telemetry Push| Core
+        Agent3[moria-pi:8001] -->|Telemetry Push| Core
     end
 ```
 
-## 🎯 Core Features
+* **Core Server (`nexus-core`):** Central FastAPI service holding time-series metrics, node registrations, container inventories, and active alert thresholds in SQLite.
+* **Agent Node (`nexus-agent`):** Lightweight background daemon running on each Pi, gathering hardware sensors (`psutil`, `vcgencmd`, disk mounts) and Docker daemon state.
 
-### ✅ Implemented
+---
 
-**Fleet Monitoring (Speculum)** - Real-time system health metrics
-*   Collects CPU, RAM, Disk, Temperature every 30 seconds
-*   **Multi-disk detection** - Automatically detects all physical disks, partitions, and mount points
-    *   Smart primary storage identification (boot partitions, root filesystems, largest disk)
-    *   Categorizes disks by type (HDD, SSD, NVMe, SD Card, USB, Network)
-    *   Provides storage recommendations for optimal disk selection
-*   Works on any Debian-based system (`psutil` + platform-specific sensors)
-*   Raspberry Pi: `vcgencmd` for accurate GPU temperature
-*   Debian/Ubuntu: `lm-sensors` fallback for CPU temperature
-*   Health status calculation with configurable thresholds
-*   Historical metrics with aggregated statistics (min/max/avg)
-*   WebSocket real-time updates to dashboard
+## ✨ Key Capabilities
 
-**Remote Control (Imperium)** - Centralized logging and job execution
-*   Centralized log collection from all agents
-*   Remote shell command execution via job system
-*   WebSocket-based terminal infrastructure (server-side ready)
-*   Job queue with concurrent execution limits
-*   Result reporting and tracking
+### 1. Fleet Telemetry & Observability
+* **Live System Metrics:** CPU %, RAM %, Disk %, and GPU/CPU temperatures refreshed every 30 seconds.
+* **Multi-Disk Classification:** Detects NVMe drives, external USB SSDs/HDDs, and internal MicroSD cards.
+* **SD Card Failure Detection:** Actively detects when physical flash errors cause Linux to remount the root filesystem as `read-only`.
+* **Historical Trends:** Interactive time-series charts (30m, 1h, 6h, 24h) with automated 7-day data retention.
 
-## ✨ Features
+### 2. Container Visibility
+* Real-time inventory of all running Docker containers per node.
+* Detailed container inspection: container IDs, image tags, port mappings, and uptime.
+* Quick diagnostic visibility to ensure critical homelab containers (Pi-hole, Jellyfin, Home Assistant) are alive.
 
-### 🖥️ Monitoring Dashboard
-- **Real-time Metrics:**
-    - Live tracking of CPU, Memory, Disk, and Temperature.
-    - Interactive charts with 30m, 1h, 6h, and 24h history.
-    - Automatic 7-day data retention policy.
-- **Alert System:**
-    - Proactive health monitoring (Critical/Warning thresholds).
-    - Checks for High CPU (>95%), Memory (>95%), Disk (>95%), and Temperature (>85°C).
-    - Node offline detection.
-    - Interactive Alerts Modal on dashboard.
-- **Inventory Management:**
-    - Detailed hardware info (Disk type detection: SD Card vs SSD/HDD).
-    - Container inventory with Port mappings, Uptime, and Status.
-    - Multi-disk storage visualization.
-- **Fleet View:**
-    - Status overview of all registered nodes (Online/Offline).
-    - Remote agent updates via UI.
+### 3. Proactive Alerting
+* Automated evaluation of fleet health against critical thresholds:
+  * **High CPU:** > 95%
+  * **Memory Exhaustion:** > 95%
+  * **Storage Exhaustion:** > 95%
+  * **Pi Overheating:** > 85°C (warning at > 75°C)
+  * **Node Offline:** Heartbeat timeout after missed reporting cycles.
+  * **Read-Only Storage:** Instant alert if an SD card locks into read-only mode.
 
-### 🤖 Intelligent Agent
-- **Auto-Discovery:**
-    - Automatic registration with the Core server.
-    - Hardware capability detection (ARM/x86, Storage types).
-- **Self-Healing:**
-    - Automatic service restart on failure.
-    - offline caching of metrics during network interruptions.
-- **Secure:**
-    - Token-based authentication.
-    - Least-privilege execution.
-*   📋 **See full UI/UX plan:** [`docs/plans/dashboard-ui-plan.md`](docs/plans/dashboard-ui-plan.md)
+---
 
+## ⚡ Quick Start
 
-
-### 📦 Optional (Vigil Legacy - Parked)
-
-**Scriptor (OCR Engine)** - Digitizes handwritten/printed notes
-*   Infrastructure ready via job system
-*   Would use Tesseract 4.x for OCR processing
-*   Not required for core fleet management
-
-**Arbiter (Sync Manager)** - Resolves Syncthing file conflicts
-*   Infrastructure ready via job system
-*   Would watch for `.stconflict` files
-*   Not required for core fleet management
-
-## 🛠️ Technology Stack
-
-*   **Language:** Python 3.11+
-*   **CLI:** [Typer](https://typer.tiangolo.com/) - *Fast, easy CLI building.*
-*   **Web/API:** FastAPI - *Modern async framework with built-in OpenAPI docs and WebSocket support.*
-*   **Database:** SQLite - *Single-file, easy backup.*
-*   **Orchestration:** Docker & Docker Compose - *Container deployment and service management.*
-*   **Networking:** Local network discovery with optional ZeroTier/Tailscale for remote access.
-*   **Supported OS:** Raspberry Pi OS, Ubuntu, Debian, and derivatives (any Debian-based Linux)
-
-## ⚡ Getting Started
-
-### Prerequisites
-
-**Control Node (Core Server):**
-*   Python 3.11+
-*   Docker & Docker Compose (optional, for Core deployment)
-*   Local network (or VPN like ZeroTier/Tailscale for remote access)
-
-**Managed Nodes (Agents):**
-*   Debian-based Linux (Raspberry Pi OS, Ubuntu, Debian, etc.)
-*   Python 3.11+
-*   Docker & Docker Compose (for service orchestration)
-*   SSH access (for automated deployment)
-*   sshpass (for automated deployment from Core)
-
-### Installation (Dev)
+### 1. Running the Core Server
 
 ```bash
-# Clone the repo
-git clone https://github.com/yourusername/nexus.git
-cd nexus
-
-# Install dependencies in virtual environment
-python3 -m venv venv
+cd /home/methinked/Projects/nexus/nexus
 source venv/bin/activate
-pip install -r requirements.txt
 
-# Start the Core server
+# Start Nexus Core on port 8000
 python -m nexus.core.main
-# Visit http://localhost:8000 for dashboard
 ```
+Visit `http://<core_ip>:8000` to open the Web Dashboard.
 
-### Deploying to Managed Nodes (Debian-based)
+### 2. Running the Agent on a Pi
 
 ```bash
-# Deploy agent to any Debian-based machine (Raspberry Pi, Ubuntu, Debian)
-./scripts/deploy-pi.sh <node_ip> <node_user> <node_password> <core_ip>
+cd /home/methinked/nexus-agent
+source venv/bin/activate
 
-# Example - Raspberry Pi:
-./scripts/deploy-pi.sh 10.243.14.179 pi raspberry 10.243.29.55
-
-# Example - Ubuntu Server:
-./scripts/deploy-pi.sh 192.168.1.100 ubuntu mypassword 192.168.1.10
-
-# The script will:
-# - Copy agent code to node
-# - Install dependencies (Python, Docker if needed)
-# - Configure agent to connect to Core
-# - Start the agent service
-
-# Check deployment
-ssh user@node_ip "cd ~/nexus-agent && cat agent.log"
+# Start Nexus Agent on port 8001
+python -m nexus.agent.main
 ```
 
-## 📖 Usage
+---
 
-Nexus is controlled primarily through the `nexus` command.
+## 📖 CLI Usage
 
-### Node Management
+Control and query your fleet directly from your terminal:
+
 ```bash
-# List all connected nodes
+# List all registered nodes and their connectivity status
 nexus node list
 
-# Get detailed status of a node
+# Inspect detailed telemetry and hardware metadata for a node
 nexus node status <node_id>
 
-# Open a remote shell
-nexus node shell <node_id>
-```
-
-### Metrics & Health
-```bash
-# View recent metrics for a node
+# View recent metrics and averages
 nexus metrics get <node_id>
-
-# View aggregated statistics (min/max/avg)
 nexus metrics stats <node_id>
 
-# View health status with thresholds
+# Query node health evaluation against thresholds
 nexus metrics health <node_id>
-```
 
-### Logs
-```bash
-# View logs from all nodes
+# View centralized log streams
 nexus logs list
-
-# View logs from a specific node
-nexus logs list <node_id>
-
-# Tail logs in real-time
-nexus logs tail
 ```
-
-
-
-### Job Management
-```bash
-# Submit an OCR job
-nexus job submit --file document.jpg --node <node_id>
-
-# Check job status
-nexus job list
-```
-
-### System
-```bash
-# View system configuration
-nexus config show
-
-# Update all agents
-nexus fleet update
-```
-
-## 🗺️ Roadmap
-
-  - [ ] Comprehensive test suite
-  - [ ] Long-term memory leak testing
-
-## 🔒 Security
-
-*   **Shared Secret:** Pre-shared key authentication for new nodes.
-*   **API Tokens:** Unique tokens issued to agents after registration.
-*   **TLS/HTTPS:** All API communication encrypted with TLS certificates.
-*   **VPN Optional:** For remote access, use encrypted VPN solutions like ZeroTier or Tailscale.
-
-## ⚙️ Configuration
-
-### Log Retention
-
-Nexus automatically manages log retention to prevent disk space issues. Configure log retention in your `.env` file:
-
-```bash
-# Number of days to keep logs (0 = keep forever)
-NEXUS_LOG_RETENTION_DAYS=7  # Default: 7 days
-
-# How often to run cleanup (in hours)
-NEXUS_LOG_CLEANUP_INTERVAL_HOURS=24  # Default: 24 hours
-```
-
-**How it works:**
-- The Core server runs a background cleanup task that deletes logs older than the retention period
-- Cleanup runs automatically on startup (after 1 minute) and then on the specified interval
-- Set `NEXUS_LOG_RETENTION_DAYS=0` to keep logs forever (not recommended for production)
-- Logs are deleted permanently from the database - ensure you have external backups if needed
-
-**Recommendations:**
-- **Development:** 7 days (default)
-- **Production:** 30-90 days depending on fleet size and disk space
-- **High-volume fleets:** 7-14 days with external log aggregation
 
 ---
 
-## 📝 Documentation
+## 🔒 Security & Networking
 
-All documentation is up-to-date and reflects the current implementation:
-- **README.md** - Core features, CLI usage, and getting started guide
-- **docs/api.md** - Complete REST API reference with all endpoints
-- **docs/project/architecture.md** - System architecture including multi-disk detection and Docker orchestration
-- **docs/project/status.md** - Current project status and fleet health
-- **CONTRIBUTING.md** - Development guidelines and **error handling best practices**
-- **PROGRESS.md** - Development progress and phase completion tracking
-- **CONTEXT.md** - Project context and implementation details
-
----
-*Built with ❤️ for the Raspberry Pi Community.*
+* **LAN & VPN Native:** Operates seamlessly across local subnets or encrypted overlays (Tailscale / ZeroTier).
+* **Token Authentication:** Secure JWT-based handshake between agents and the core server.
+* **Minimal Privileges:** Agent queries read-only system metrics and Docker sockets without opening arbitrary remote code execution backdoors.

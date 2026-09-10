@@ -2,7 +2,7 @@ from unittest.mock import patch, AsyncMock
 from uuid import uuid4
 from nexus.shared.models import JobType, JobStatus
 
-def test_submit_job_success(client, db_session, test_node):
+def test_submit_job_success(client, db_session, test_node, auth_headers):
     """Test submitting a job successfully."""
     payload = {
         "type": JobType.SHELL,
@@ -16,7 +16,7 @@ def test_submit_job_success(client, db_session, test_node):
     with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
         mock_post.return_value.status_code = 200
         
-        response = client.post("/api/jobs", json=payload)
+        response = client.post("/api/jobs", json=payload, headers=auth_headers)
         
         assert response.status_code == 201
         data = response.json()
@@ -27,7 +27,7 @@ def test_submit_job_success(client, db_session, test_node):
         mock_post.assert_called_once()
         assert f"http://{test_node.ip_address}:8001/api/jobs" in mock_post.call_args[0][0]
 
-def test_submit_job_agent_failure(client, db_session, test_node):
+def test_submit_job_agent_failure(client, db_session, test_node, auth_headers):
     """Test job submission when agent is unreachable."""
     payload = {
         "type": JobType.SHELL,
@@ -40,13 +40,13 @@ def test_submit_job_agent_failure(client, db_session, test_node):
     with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
         mock_post.side_effect = httpx.ConnectError("Connection refused", request=None)
         
-        response = client.post("/api/jobs", json=payload)
+        response = client.post("/api/jobs", json=payload, headers=auth_headers)
         
         assert response.status_code == 503
         data = response.json()
         assert "Agent unavailable" in data["detail"]
 
-def test_list_jobs(client, db_session, test_node):
+def test_list_jobs(client, db_session, test_node, auth_headers):
     """Test listing jobs."""
     # Create a job first (bypassing API to avoid mock complexity)
     from nexus.core.db import create_job
@@ -59,13 +59,13 @@ def test_list_jobs(client, db_session, test_node):
     )
     create_job(db_session, job_data)
     
-    response = client.get("/api/jobs")
+    response = client.get("/api/jobs", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     assert data["total"] == 1
     assert data["jobs"][0]["type"] == "shell"
 
-def test_get_job_details(client, db_session, test_node):
+def test_get_job_details(client, db_session, test_node, auth_headers):
     """Test getting specific job details."""
     from nexus.core.db import create_job
     from nexus.shared.models import JobCreate
@@ -77,12 +77,12 @@ def test_get_job_details(client, db_session, test_node):
     )
     job = create_job(db_session, job_data)
     
-    response = client.get(f"/api/jobs/{job.id}")
+    response = client.get(f"/api/jobs/{job.id}", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(job.id)
 
-def test_update_job_status(client, db_session, test_node):
+def test_update_job_status(client, db_session, test_node, auth_headers):
     """Test updating job status (callback from agent)."""
     from nexus.core.db import create_job
     from nexus.shared.models import JobCreate
@@ -99,7 +99,7 @@ def test_update_job_status(client, db_session, test_node):
         "result": {"output": "hello world", "success": True}
     }
     
-    response = client.patch(f"/api/jobs/{job.id}", json=payload)
+    response = client.patch(f"/api/jobs/{job.id}", json=payload, headers=auth_headers)
     assert response.status_code == 200
     
     # Verify DB update

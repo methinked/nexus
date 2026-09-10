@@ -6,8 +6,6 @@ Handles listing, viewing, and managing nodes in the fleet.
 
 import json
 from datetime import datetime
-from typing import Optional
-from uuid import UUID
 
 import httpx
 import typer
@@ -15,7 +13,6 @@ from rich.console import Console
 from rich.table import Table
 
 from nexus.shared.config import CLIConfig
-from nexus.shared.models import Node, NodeStatus
 
 app = typer.Typer(help="Node management")
 console = Console()
@@ -29,7 +26,7 @@ def get_headers(config: CLIConfig) -> dict:
     return headers
 
 
-def format_datetime(dt: Optional[datetime]) -> str:
+def format_datetime(dt: datetime | None) -> str:
     """Format datetime for display."""
     if not dt:
         return "[dim]Never[/dim]"
@@ -68,13 +65,13 @@ def get_status_color(status: str) -> str:
 @app.command()
 def list(
     ctx: typer.Context,
-    status: Optional[str] = typer.Option(
+    status: str | None = typer.Option(
         None,
         "--status",
         "-s",
         help="Filter by status: online, offline, error",
     ),
-    format_output: Optional[str] = typer.Option(
+    format_output: str | None = typer.Option(
         None,
         "--format",
         "-f",
@@ -162,7 +159,7 @@ def list(
 def get(
     ctx: typer.Context,
     node_id: str = typer.Argument(..., help="Node ID or name"),
-    format_output: Optional[str] = typer.Option(
+    format_output: str | None = typer.Option(
         None,
         "--format",
         "-f",
@@ -192,7 +189,7 @@ def get(
             console.print(f"[red]Error: API returned {e.response.status_code}[/red]")
         raise typer.Exit(1)
     except httpx.ConnectError:
-        console.print(f"[red]Error: Could not connect to Core server.[/red]")
+        console.print("[red]Error: Could not connect to Core server.[/red]")
         raise typer.Exit(1)
 
     # Output based on format
@@ -237,7 +234,7 @@ def get(
                 disk_table.add_column("Size", style="green")
                 disk_table.add_column("Free", style="green")
                 disk_table.add_column("Usage", style="yellow")
-                
+
                 for d in disks:
                     usage_color = "green" if d['usage_percent'] < 80 else ("yellow" if d['usage_percent'] < 95 else "red")
                     size_gb = d['total_bytes'] / (1024**3)
@@ -269,7 +266,7 @@ def get(
                 cont_table.add_column("Name", style="cyan")
                 cont_table.add_column("Status", style="white")
                 cont_table.add_column("Image", style="dim")
-                
+
                 for c in containers:
                     status_col = "green" if c['status'] == 'running' else "red"
                     cont_table.add_row(
@@ -287,10 +284,10 @@ def get(
 def update(
     ctx: typer.Context,
     node_id: str = typer.Argument(..., help="Node ID or name"),
-    name: Optional[str] = typer.Option(None, "--name", "-n", help="New node name"),
-    location: Optional[str] = typer.Option(None, "--location", "-l", help="Node location"),
-    description: Optional[str] = typer.Option(None, "--description", "-d", help="Node description"),
-    tags: Optional[str] = typer.Option(None, "--tags", "-t", help="Comma-separated tags"),
+    name: str | None = typer.Option(None, "--name", "-n", help="New node name"),
+    location: str | None = typer.Option(None, "--location", "-l", help="Node location"),
+    description: str | None = typer.Option(None, "--description", "-d", help="Node description"),
+    tags: str | None = typer.Option(None, "--tags", "-t", help="Comma-separated tags"),
 ) -> None:
     """
     Update node information.
@@ -370,7 +367,7 @@ def delete(
             )
             response.raise_for_status()
 
-        console.print(f"[green]✓[/green] Node deleted successfully")
+        console.print("[green]✓[/green] Node deleted successfully")
 
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:

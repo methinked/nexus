@@ -5,7 +5,6 @@ Handles metrics submission from agents and historical queries.
 """
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -63,17 +62,21 @@ def submit_metrics(
     )
 
     # Broadcast metric update via WebSocket
-    from nexus.core.services.websocket_manager import manager
     import asyncio
-    
+
+    from nexus.core.services.websocket_manager import manager
+
     # We can still fire-and-forget an async task from a sync route context
     # But strictly speaking, asyncio.create_task requires a running loop.
     # Uvicorn (FastAPI) provides that loop.
     try:
         loop = asyncio.get_running_loop()
+        ts_str = metric.timestamp.isoformat()
+        if dt_has_no_tz := (metric.timestamp.tzinfo is None):
+            ts_str += "Z"
         loop.create_task(manager.broadcast_event("metric_update", {
             "node_id": str(metric.node_id),
-            "timestamp": metric.timestamp.isoformat(),
+            "timestamp": ts_str,
             "cpu_percent": metric.cpu_percent,
             "memory_percent": metric.memory_percent,
             "disk_percent": metric.disk_percent,
@@ -91,7 +94,7 @@ def submit_metrics(
 @router.get("/{node_id}", response_model=MetricList)
 def get_node_metrics(
     node_id: UUID,
-    start_time: Optional[datetime] = Query(None, alias="since"),
+    start_time: datetime | None = Query(None, alias="since"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=5000),
     db: Session = Depends(get_db),
@@ -139,8 +142,8 @@ def get_node_metrics(
 @router.get("/{node_id}/stats", response_model=MetricStats)
 def get_node_metrics_stats(
     node_id: UUID,
-    since: Optional[datetime] = Query(None, description="Start time for aggregation"),
-    until: Optional[datetime] = Query(None, description="End time for aggregation"),
+    since: datetime | None = Query(None, description="Start time for aggregation"),
+    until: datetime | None = Query(None, description="End time for aggregation"),
     db: Session = Depends(get_db),
 ):
     """

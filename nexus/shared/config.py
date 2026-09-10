@@ -5,14 +5,12 @@ Uses pydantic-settings for environment-based configuration.
 """
 
 from pathlib import Path
-from typing import Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 # Application Version
-APP_VERSION = "0.2.4-visual-polish"
+APP_VERSION = "0.2.5-metrics-fix"
 
 class BaseConfig(BaseSettings):
     """Base configuration shared across components."""
@@ -58,11 +56,11 @@ class CoreConfig(BaseConfig):
     )
 
     # SSL Config
-    ssl_keyfile: Optional[Path] = Field(
+    ssl_keyfile: Path | None = Field(
         default=None,
         description="Path to the SSL keyfile (for HTTPS)",
     )
-    ssl_certfile: Optional[Path] = Field(
+    ssl_certfile: Path | None = Field(
         default=None,
         description="Path to the SSL certificate (for HTTPS)",
     )
@@ -103,10 +101,10 @@ class AgentConfig(BaseConfig):
 
     # Node identification
     node_name: str = Field(default="default-agent", description="Name of this agent node")
-    node_id: Optional[str] = Field(default=None, description="UUID of this node (if registered)")
+    node_id: str | None = Field(default=None, description="UUID of this node (if registered)")
 
     # API Token (stored after registration)
-    api_token: Optional[str] = Field(default=None, description="API token from Core")
+    api_token: str | None = Field(default=None, description="API token from Core")
 
     # Paths
     data_dir: Path = Field(default=Path("data"), description="Data directory")
@@ -134,7 +132,7 @@ class CLIConfig(BaseConfig):
     )
 
     # API Token (for authenticated requests)
-    api_token: Optional[str] = Field(default=None, description="API token for CLI")
+    api_token: str | None = Field(default=None, description="API token for CLI")
 
     # Output format
     output_format: str = Field(default="rich", description="Output format: rich, json, plain")

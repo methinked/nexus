@@ -5,7 +5,7 @@ Handles job execution requests from Core.
 """
 
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
@@ -20,7 +20,7 @@ class JobExecutionRequest(BaseModel):
     """Request to execute a job."""
 
     type: JobType
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
 
 
 class JobExecutionResponse(BaseModel):
@@ -36,7 +36,7 @@ class JobStatusResponse(BaseModel):
 
     job_id: UUID
     status: JobStatus
-    result: Dict[str, Any] | None = None
+    result: dict[str, Any] | None = None
     started_at: datetime | None = None
     completed_at: datetime | None = None
 

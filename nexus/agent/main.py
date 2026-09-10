@@ -13,7 +13,6 @@ import logging
 import socket
 from contextlib import asynccontextmanager
 from datetime import datetime
-from pathlib import Path
 from uuid import UUID
 
 import httpx
@@ -184,7 +183,7 @@ async def lifespan(app: FastAPI):
     logger.info("DOCKER STORAGE CONFIGURATION")
     logger.info("=" * 60)
 
-    from nexus.agent.services.storage import setup_docker_storage_if_needed, get_docker_root
+    from nexus.agent.services.storage import get_docker_root, setup_docker_storage_if_needed
 
     docker_disk = setup_docker_storage_if_needed()
 
@@ -250,8 +249,8 @@ async def lifespan(app: FastAPI):
     await inventory_collector.start()
 
     # Start job system
-    from nexus.agent.services.job_queue import JobQueue
     from nexus.agent.services.job_dispatcher import JobDispatcher
+    from nexus.agent.services.job_queue import JobQueue
 
     job_queue = JobQueue(max_concurrent=2)  # Limit to 2 concurrent jobs on Pi
     job_dispatcher = JobDispatcher(config, job_queue, str(node_id), api_token)
@@ -269,7 +268,7 @@ async def lifespan(app: FastAPI):
     # Stop metrics collection
     if metrics_collector:
         await metrics_collector.stop()
-    
+
     # Stop inventory collection
     if inventory_collector:
         await inventory_collector.stop()

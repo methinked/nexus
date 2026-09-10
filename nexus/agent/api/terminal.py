@@ -11,7 +11,6 @@ import pty
 import select
 import struct
 import termios
-from typing import Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
@@ -29,8 +28,8 @@ class TerminalSession:
 
     def __init__(self, websocket: WebSocket):
         self.websocket = websocket
-        self.master_fd: Optional[int] = None
-        self.pid: Optional[int] = None
+        self.master_fd: int | None = None
+        self.pid: int | None = None
         self.shell = os.environ.get("SHELL", "/bin/bash")
 
     async def start(self):
@@ -98,7 +97,7 @@ class TerminalSession:
                             # Handle control messages (resize, etc.)
                             await self._handle_control_message(message["text"])
 
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # No WebSocket message - continue
                     pass
 

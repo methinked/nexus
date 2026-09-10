@@ -77,8 +77,15 @@ def test_node(db_session):
 def auth_headers(test_node):
     """Returns valid auth headers for the test node."""
     from nexus.shared.auth import create_access_token
+    from nexus.core.api.auth import config
     
-    token = create_access_token(data={"sub": test_node.id})
+    from nexus.shared.models import UserRole
+    token, _ = create_access_token(
+        node_id=test_node.id,
+        node_name=test_node.name,
+        secret_key=config.jwt_secret_key,
+        role=UserRole.ADMIN
+    )
     return {"Authorization": f"Bearer {token}"}
 
 @pytest.fixture(autouse=True)

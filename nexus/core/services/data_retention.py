@@ -7,7 +7,6 @@ Periodically removes old metric entries to prevent database bloat.
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
@@ -33,7 +32,7 @@ class DataRetentionService:
             config: Core configuration with retention settings
         """
         self.config = config
-        self.task: Optional[asyncio.Task] = None
+        self.task: asyncio.Task | None = None
         self.running = False
         # Hardcoded retention period for metrics for now, or add to CoreConfig later
         # User requested 7 days.
@@ -102,7 +101,7 @@ class DataRetentionService:
             db: Session = SessionLocal()
             try:
                 deleted_count = delete_old_metrics(db, before=cutoff)
-                
+
                 if deleted_count > 0:
                     logger.info(f"Metrics cleanup complete: deleted {deleted_count} old metric entries")
                 else:

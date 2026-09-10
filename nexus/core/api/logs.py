@@ -5,7 +5,6 @@ Handles log submission from agents and log queries.
 """
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -54,10 +53,10 @@ async def submit_log(
 @router.get("/{node_id}", response_model=LogList)
 async def get_node_logs(
     node_id: UUID,
-    level: Optional[LogLevel] = Query(None, description="Filter by log level"),
-    source: Optional[str] = Query(None, description="Filter by source (partial match)"),
-    since: Optional[datetime] = Query(None, description="Start timestamp"),
-    until: Optional[datetime] = Query(None, description="End timestamp"),
+    level: LogLevel | None = Query(None, description="Filter by log level"),
+    source: str | None = Query(None, description="Filter by source (partial match)"),
+    since: datetime | None = Query(None, description="Start timestamp"),
+    until: datetime | None = Query(None, description="End timestamp"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db),
@@ -120,10 +119,10 @@ async def get_node_logs(
 
 @router.get("", response_model=LogList)
 async def get_all_logs(
-    level: Optional[LogLevel] = Query(None, description="Filter by log level"),
-    source: Optional[str] = Query(None, description="Filter by source (partial match)"),
-    since: Optional[datetime] = Query(None, description="Start timestamp"),
-    until: Optional[datetime] = Query(None, description="End timestamp"),
+    level: LogLevel | None = Query(None, description="Filter by log level"),
+    source: str | None = Query(None, description="Filter by source (partial match)"),
+    since: datetime | None = Query(None, description="Start timestamp"),
+    until: datetime | None = Query(None, description="End timestamp"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db),

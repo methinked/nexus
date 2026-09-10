@@ -51,8 +51,8 @@ async def lifespan(app: FastAPI):
     logger.info("Database initialized successfully")
 
     # Start background services
-    from nexus.core.services.log_cleanup import LogCleanupService
     from nexus.core.services.data_retention import DataRetentionService
+    from nexus.core.services.log_cleanup import LogCleanupService
 
     log_cleanup_service = LogCleanupService(config)
     await log_cleanup_service.start()
@@ -137,7 +137,18 @@ async def health_check():
 # API Routers
 # ============================================================================
 
-from nexus.core.api import auth, jobs, logs, metrics, nodes, terminal, websocket, update, alerts, users
+from nexus.core.api import (
+    alerts,
+    auth,
+    jobs,
+    logs,
+    metrics,
+    nodes,
+    terminal,
+    update,
+    users,
+    websocket,
+)
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])

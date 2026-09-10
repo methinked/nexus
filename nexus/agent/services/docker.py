@@ -7,15 +7,16 @@ Handles Docker operations on the agent node including:
 - Container logs retrieval
 """
 
+import concurrent.futures
 import logging
 import os
-import concurrent.futures
-from typing import Dict, List, Optional, Any
 from datetime import datetime
+from typing import Any
+
+from docker.errors import DockerException, NotFound
+from docker.models.containers import Container
 
 import docker
-from docker.errors import DockerException, NotFound, APIError
-from docker.models.containers import Container
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ class DockerService:
 
     def __init__(self):
         """Initialize Docker client."""
-        self.client: Optional[docker.DockerClient] = None
+        self.client: docker.DockerClient | None = None
         self._connect()
 
     def _connect(self):
@@ -100,12 +101,12 @@ class DockerService:
         self,
         deployment_id: str,
         image: str,
-        name: Optional[str] = None,
-        ports: Optional[Dict[int, int]] = None,
-        volumes: Optional[Dict[str, Dict[str, str]]] = None,
-        environment: Optional[Dict[str, str]] = None,
+        name: str | None = None,
+        ports: dict[int, int] | None = None,
+        volumes: dict[str, dict[str, str]] | None = None,
+        environment: dict[str, str] | None = None,
         **kwargs
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Create a Docker container.
 
@@ -260,7 +261,7 @@ class DockerService:
             logger.error(f"Failed to remove container {container_id}: {e}")
             return False
 
-    def get_container_status(self, container_id: str) -> Optional[Dict[str, Any]]:
+    def get_container_status(self, container_id: str) -> dict[str, Any] | None:
         """
         Get container status and info.
 
@@ -302,28 +303,28 @@ class DockerService:
         Checks labels for common metadata.
         """
         labels = container.labels or {}
-        
+
         # 1. Check OCI standard description
         if "org.opencontainers.image.description" in labels:
             return labels["org.opencontainers.image.description"]
-            
+
         # 2. Check generic description
         if "description" in labels:
             return labels["description"]
-            
+
         # 3. Check Docker Compose service name
         if "com.docker.compose.service" in labels:
             return f"Service: {labels['com.docker.compose.service']}"
-            
+
         # 4. Fallback to image name (cleaned up)
         image_tag = container.image.tags[0] if container.image.tags else ""
         if image_tag:
             return image_tag
-            
+
         # 5. Last resort: Image ID partial
         return f"Image: {container.image.id[:12]}"
 
-    def list_containers(self, all_containers: bool = False, include_stats: bool = False) -> List[Dict[str, Any]]:
+    def list_containers(self, all_containers: bool = False, include_stats: bool = False) -> list[dict[str, Any]]:
         """
         List containers.
 
@@ -351,7 +352,7 @@ class DockerService:
             for c in containers:
                 # Calculate Uptime / Started At
                 started_at = c.attrs.get("State", {}).get("StartedAt")
-                
+
                 # Parse ports
                 ports = []
                 port_bindings = c.attrs.get("NetworkSettings", {}).get("Ports") or {}
@@ -378,7 +379,7 @@ class DockerService:
                     'ports': ", ".join(ports),
                     'description': self.get_container_description(c)
                 })
-            
+
             if include_stats:
                 # Fetch stats in parallel to avoid blocking for ~1s per container sequentially
                 def fetch_stats(container_dict: dict) -> dict:
@@ -398,7 +399,7 @@ class DockerService:
             logger.error(f"Failed to list containers: {e}")
             return []
 
-    def get_container_logs(self, container_id: str, tail: int = 100) -> Optional[str]:
+    def get_container_logs(self, container_id: str, tail: int = 100) -> str | None:
         """
         Get container logs.
 
@@ -422,7 +423,7 @@ class DockerService:
             logger.error(f"Failed to get container logs: {e}")
             return None
 
-    def get_container_stats(self, container_id: str) -> Optional[Dict[str, Any]]:
+    def get_container_stats(self, container_id: str) -> dict[str, Any] | None:
         """
         Get container resource usage stats.
 

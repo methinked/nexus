@@ -97,6 +97,17 @@ async def test_job_execution_flow(core_client, agent_client, db_session):
         "payload": {"command": "echo 'integration test'"}
     }
     
+    from nexus.shared.auth import create_access_token
+    from nexus.core.api.auth import config
+    from nexus.shared.models import UserRole
+    token, _ = create_access_token(
+        node_id=node.id,
+        node_name=node.name,
+        secret_key=config.jwt_secret_key,
+        role=UserRole.ADMIN
+    )
+    auth_headers = {"Authorization": f"Bearer {token}"}
+    
     # We need to patch the Core's call to the Agent
     # Core uses httpx.AsyncClient().post(agent_url, ...)
     # We need this to NOT fail, but we don't necessarily need to route it to agent_client 
@@ -107,7 +118,7 @@ async def test_job_execution_flow(core_client, agent_client, db_session):
         mock_agent_call.return_value.status_code = 200
         
         # 1. Submit to Core
-        response = core_client.post("/api/jobs", json=job_payload)
+        response = core_client.post("/api/jobs", json=job_payload, headers=auth_headers)
         assert response.status_code == 201
         job_data = response.json()
         job_id = job_data["id"]
@@ -130,11 +141,11 @@ async def test_job_execution_flow(core_client, agent_client, db_session):
         "result": {"output": "integration test\n", "exit_code": 0}
     }
     
-    response = core_client.patch(f"/api/jobs/{job_id}", json=callback_payload)
+    response = core_client.patch(f"/api/jobs/{job_id}", json=callback_payload, headers=auth_headers)
     assert response.status_code == 200
     
     # 3. Verify Final State in DB
-    response = core_client.get(f"/api/jobs/{job_id}")
+    response = core_client.get(f"/api/jobs/{job_id}", headers=auth_headers)
     assert response.json()["status"] == "completed"
     assert response.json()["result"]["output"] == "integration test\n"
 

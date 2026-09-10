@@ -5,7 +5,6 @@ Provides JWT token creation, validation, and other auth helpers.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional
 from uuid import UUID
 
 from jose import JWTError, jwt
@@ -39,9 +38,9 @@ def create_access_token(
     node_id: UUID,
     node_name: str,
     secret_key: str,
-    role: Optional[UserRole] = None,
+    role: UserRole | None = None,
     algorithm: str = "HS256",
-    expires_delta: Optional[timedelta] = None,
+    expires_delta: timedelta | None = None,
 ) -> tuple[str, datetime]:
     """
     Create a JWT access token for a node.
@@ -68,7 +67,7 @@ def create_access_token(
         "exp": expire,
         "iat": datetime.utcnow(),
     }
-    
+
     if role:
         to_encode["role"] = role.value
 

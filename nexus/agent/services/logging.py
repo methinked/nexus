@@ -8,7 +8,6 @@ import asyncio
 import logging
 from datetime import datetime
 from queue import Queue
-from typing import Optional
 from uuid import UUID
 
 import httpx
@@ -112,8 +111,8 @@ class LogCollector:
         self.config = config
         self.node_id = node_id
         self.api_token = api_token
-        self.handler: Optional[CoreLogHandler] = None
-        self.task: Optional[asyncio.Task] = None
+        self.handler: CoreLogHandler | None = None
+        self.task: asyncio.Task | None = None
         self.logger = logging.getLogger(__name__)
 
     async def start(self):

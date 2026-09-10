@@ -6,7 +6,6 @@ Coordinates job execution by pulling from queue and routing to executors.
 
 import asyncio
 import logging
-from typing import Optional
 
 import httpx
 
@@ -41,7 +40,7 @@ class JobDispatcher:
         self.node_id = node_id
         self.api_token = api_token
         self.running = False
-        self.task: Optional[asyncio.Task] = None
+        self.task: asyncio.Task | None = None
 
         # Initialize executors
         self.shell_executor = ShellExecutor()

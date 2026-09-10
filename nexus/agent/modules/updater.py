@@ -4,14 +4,11 @@ Update executor for Nexus Agent.
 Handles downloading code updates and restarting the service.
 """
 
-import io
 import logging
 import os
 import subprocess
-import tarfile
-import httpx
 
-from nexus.shared.models import UpdateJobPayload, JobResult
+from nexus.shared.models import JobResult, UpdateJobPayload
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +27,12 @@ class UpdateExecutor:
         try:
             # Parse payload
             data = UpdateJobPayload(**payload)
-            
+
             script_path = "nexus/agent/scripts/update_agent.sh"
             if not os.path.exists(script_path):
                 # Fallback check
                 script_path = "./nexus/agent/scripts/update_agent.sh"
-                
+
             if not os.path.exists(script_path):
                  return JobResult(
                     success=False,
@@ -46,7 +43,7 @@ class UpdateExecutor:
             os.chmod(script_path, 0o755)
 
             logger.info("Scheduling Agent Update via update_agent.sh...")
-            
+
             # Spawn background process that sleeps then runs the script
             # This allows the agent to report 'success' to Core before being restarted
             subprocess.Popen(
@@ -56,7 +53,7 @@ class UpdateExecutor:
                 close_fds=True,
                 start_new_session=True # Detach from parent
             )
-                
+
             return JobResult(
                 success=True,
                 output="Update scheduled. Agent will restart in 3 seconds.",

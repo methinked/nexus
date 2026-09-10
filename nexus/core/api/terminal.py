@@ -6,7 +6,6 @@ Provides WebSocket proxy between CLI clients and Agent terminals.
 
 import asyncio
 import logging
-from typing import Optional
 from uuid import UUID
 
 import httpx
@@ -32,7 +31,7 @@ class TerminalProxy:
     def __init__(self, cli_ws: WebSocket, agent_url: str):
         self.cli_ws = cli_ws
         self.agent_url = agent_url
-        self.agent_ws: Optional[httpx.WebSocketUpgrade] = None
+        self.agent_ws: httpx.WebSocketUpgrade | None = None
         self.running = False
 
     async def start(self):
@@ -122,7 +121,7 @@ class TerminalProxy:
                     # Forward to CLI
                     await self.cli_ws.send_bytes(message)
 
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # Send keepalive ping
                     try:
                         await self.cli_ws.send_json({"type": "ping"})

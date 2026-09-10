@@ -5,15 +5,15 @@ Provides create, read, update, and delete operations for nodes, jobs, metrics,
 services, and deployments (Phase 7 - Docker Orchestration).
 """
 
-import uuid
 from datetime import datetime
-from typing import List, Optional
-from uuid import UUID
+from typing import Optional
 
 from sqlalchemy.orm import Session
 
 from nexus.core.db.models import JobModel, MetricModel, NodeModel
 from nexus.shared.models import (
+    # Alert imports
+    AlertCreate,
     JobCreate,
     JobStatus,
     JobType,
@@ -21,12 +21,7 @@ from nexus.shared.models import (
     NodeCreate,
     NodeStatus,
     NodeUpdate,
-    # Alert imports
-    AlertCreate,
-    AlertStatus,
-    AlertType,
 )
-
 
 # ============================================================================
 # User CRUD Operations
@@ -42,7 +37,7 @@ def get_user_by_username(db: Session, username: str) -> Optional["UserModel"]:
 def create_user(db: Session, user: "UserCreate", hashed_password: str) -> "UserModel":
     """Create a new user."""
     from nexus.core.db.models import UserModel
-    
+
     db_user = UserModel(
         username=user.username,
         role=user.role,
@@ -75,12 +70,12 @@ def create_node(db: Session, node: NodeCreate) -> NodeModel:
     return db_node
 
 
-def get_node(db: Session, node_id: str) -> Optional[NodeModel]:
+def get_node(db: Session, node_id: str) -> NodeModel | None:
     """Get a node by ID."""
     return db.query(NodeModel).filter(NodeModel.id == node_id).first()
 
 
-def get_node_by_name(db: Session, name: str) -> Optional[NodeModel]:
+def get_node_by_name(db: Session, name: str) -> NodeModel | None:
     """Get a node by name."""
     return db.query(NodeModel).filter(NodeModel.name == name).first()
 
@@ -89,8 +84,8 @@ def get_nodes(
     db: Session,
     skip: int = 0,
     limit: int = 100,
-    status: Optional[NodeStatus] = None,
-) -> List[NodeModel]:
+    status: NodeStatus | None = None,
+) -> list[NodeModel]:
     """Get all nodes with optional filtering."""
     query = db.query(NodeModel)
 
@@ -100,7 +95,7 @@ def get_nodes(
     return query.offset(skip).limit(limit).all()
 
 
-def get_nodes_count(db: Session, status: Optional[NodeStatus] = None) -> int:
+def get_nodes_count(db: Session, status: NodeStatus | None = None) -> int:
     """Get total count of nodes with optional filtering."""
     query = db.query(NodeModel)
 
@@ -110,7 +105,7 @@ def get_nodes_count(db: Session, status: Optional[NodeStatus] = None) -> int:
     return query.count()
 
 
-def update_node(db: Session, node_id: str, node_update: NodeUpdate) -> Optional[NodeModel]:
+def update_node(db: Session, node_id: str, node_update: NodeUpdate) -> NodeModel | None:
     """Update a node."""
     db_node = get_node(db, node_id)
     if not db_node:
@@ -135,8 +130,8 @@ def update_node_status(
     db: Session,
     node_id: str,
     status: NodeStatus,
-    last_seen: Optional[datetime] = None,
-) -> Optional[NodeModel]:
+    last_seen: datetime | None = None,
+) -> NodeModel | None:
     """Update node status and last_seen timestamp."""
     db_node = get_node(db, node_id)
     if not db_node:
@@ -181,7 +176,7 @@ def create_job(db: Session, job: JobCreate) -> JobModel:
     return db_job
 
 
-def get_job(db: Session, job_id: str) -> Optional[JobModel]:
+def get_job(db: Session, job_id: str) -> JobModel | None:
     """Get a job by ID."""
     return db.query(JobModel).filter(JobModel.id == job_id).first()
 
@@ -190,10 +185,10 @@ def get_jobs(
     db: Session,
     skip: int = 0,
     limit: int = 100,
-    node_id: Optional[str] = None,
-    status: Optional[JobStatus] = None,
-    job_type: Optional[JobType] = None,
-) -> List[JobModel]:
+    node_id: str | None = None,
+    status: JobStatus | None = None,
+    job_type: JobType | None = None,
+) -> list[JobModel]:
     """Get all jobs with optional filtering."""
     query = db.query(JobModel)
 
@@ -209,9 +204,9 @@ def get_jobs(
 
 def get_jobs_count(
     db: Session,
-    node_id: Optional[str] = None,
-    status: Optional[JobStatus] = None,
-    job_type: Optional[JobType] = None,
+    node_id: str | None = None,
+    status: JobStatus | None = None,
+    job_type: JobType | None = None,
 ) -> int:
     """Get total count of jobs with optional filtering."""
     query = db.query(JobModel)
@@ -230,8 +225,8 @@ def update_job_status(
     db: Session,
     job_id: str,
     status: JobStatus,
-    result: Optional[dict] = None,
-) -> Optional[JobModel]:
+    result: dict | None = None,
+) -> JobModel | None:
     """Update job status and result."""
     db_job = get_job(db, job_id)
     if not db_job:
@@ -290,8 +285,8 @@ def get_metrics(
     node_id: str,
     skip: int = 0,
     limit: int = 100,
-    since: Optional[datetime] = None,
-) -> List[MetricModel]:
+    since: datetime | None = None,
+) -> list[MetricModel]:
     """Get metrics for a node with optional time filtering."""
     query = db.query(MetricModel).filter(MetricModel.node_id == node_id)
 
@@ -301,7 +296,7 @@ def get_metrics(
     return query.order_by(MetricModel.timestamp.desc()).offset(skip).limit(limit).all()
 
 
-def get_latest_metric(db: Session, node_id: str) -> Optional[MetricModel]:
+def get_latest_metric(db: Session, node_id: str) -> MetricModel | None:
     """Get the most recent metric for a node."""
     return (
         db.query(MetricModel)
@@ -314,9 +309,9 @@ def get_latest_metric(db: Session, node_id: str) -> Optional[MetricModel]:
 def get_metrics_stats(
     db: Session,
     node_id: str,
-    since: Optional[datetime] = None,
-    until: Optional[datetime] = None,
-) -> Optional[dict]:
+    since: datetime | None = None,
+    until: datetime | None = None,
+) -> dict | None:
     """
     Get aggregated statistics for metrics over a time period.
 
@@ -408,14 +403,14 @@ def create_log(db: Session, log: "LogCreate") -> "LogModel":
 
 def get_logs(
     db: Session,
-    node_id: Optional[str] = None,
-    level: Optional[str] = None,
-    source: Optional[str] = None,
-    since: Optional[datetime] = None,
-    until: Optional[datetime] = None,
+    node_id: str | None = None,
+    level: str | None = None,
+    source: str | None = None,
+    since: datetime | None = None,
+    until: datetime | None = None,
     skip: int = 0,
     limit: int = 100,
-) -> List["LogModel"]:
+) -> list["LogModel"]:
     """Get logs with optional filtering."""
     from nexus.core.db.models import LogModel
 
@@ -437,11 +432,11 @@ def get_logs(
 
 def get_logs_count(
     db: Session,
-    node_id: Optional[str] = None,
-    level: Optional[str] = None,
-    source: Optional[str] = None,
-    since: Optional[datetime] = None,
-    until: Optional[datetime] = None,
+    node_id: str | None = None,
+    level: str | None = None,
+    source: str | None = None,
+    since: datetime | None = None,
+    until: datetime | None = None,
 ) -> int:
     """Get count of logs matching filters."""
     from nexus.core.db.models import LogModel
@@ -502,8 +497,8 @@ def create_alert(db: Session, alert: "AlertCreate") -> "AlertModel":
 
 def get_active_alerts(
     db: Session,
-    node_id: Optional[str] = None,
-) -> List["AlertModel"]:
+    node_id: str | None = None,
+) -> list["AlertModel"]:
     """Get active alerts."""
     from nexus.core.db.models import AlertModel
 
@@ -515,7 +510,7 @@ def get_active_alerts(
     return query.order_by(AlertModel.created_at.desc()).all()
 
 
-def get_active_alerts_count(db: Session, node_id: Optional[str] = None) -> int:
+def get_active_alerts_count(db: Session, node_id: str | None = None) -> int:
     """Get count of active alerts."""
     from nexus.core.db.models import AlertModel
 
@@ -538,7 +533,7 @@ def resolve_alert(db: Session, alert_id: str) -> Optional["AlertModel"]:
     db_alert.status = "resolved"
     db_alert.resolved_at = datetime.utcnow()
     db_alert.updated_at = datetime.utcnow()
-    
+
     db.commit()
     db.refresh(db_alert)
     return db_alert
@@ -561,8 +556,8 @@ def resolve_alerts_by_type(db: Session, node_id: str, alert_type: str) -> int:
         alert.resolved_at = datetime.utcnow()
         alert.updated_at = datetime.utcnow()
         count += 1
-    
+
     if count > 0:
         db.commit()
-    
+
     return count

@@ -8,7 +8,14 @@ from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException, status
 
-from nexus.shared import CoreConfig, TokenData, TokenExpiredError, TokenInvalidError, verify_token, UserRole
+from nexus.shared import (
+    CoreConfig,
+    TokenData,
+    TokenExpiredError,
+    TokenInvalidError,
+    UserRole,
+    verify_token,
+)
 
 
 def get_config() -> CoreConfig:

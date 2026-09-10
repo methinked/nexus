@@ -7,14 +7,14 @@ This replaces the old "Pull" model where Core would query Agent on demand.
 
 import asyncio
 import logging
-from typing import Any, Dict, List
+from typing import Any
 from uuid import UUID
 
 import httpx
 
-from nexus.agent.services.storage import get_all_disks
 from nexus.agent.services.docker import DockerService
-from nexus.shared import AgentConfig, DiskInfo, InventoryUpdate
+from nexus.agent.services.storage import get_all_disks
+from nexus.shared import AgentConfig, InventoryUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class InventoryCollector:
         self._running = True
         self._task = asyncio.create_task(self._collect_loop())
         logger.info(f"Inventory collector started (interval: {self._interval}s)")
-        
+
         # Trigger immediate collection
         asyncio.create_task(self._collect_and_send())
 
@@ -112,11 +112,11 @@ class InventoryCollector:
             containers=containers
         )
 
-    def _collect_containers(self) -> List[Dict[str, Any]]:
+    def _collect_containers(self) -> list[dict[str, Any]]:
         """Collect running containers using DockerService."""
         try:
             containers = self.docker_service.list_containers(all_containers=True, include_stats=True)
-            
+
             # Map fields for frontend compatibility
             for c in containers:
                 # Map started_at -> uptime (frontend expects 'uptime')
@@ -124,7 +124,7 @@ class InventoryCollector:
                 # Ensure description is set (list_containers now sets it)
                 if not c.get('description'):
                     c['description'] = c['image']
-                    
+
             return containers
         except Exception as e:
             logger.warning(f"Failed to list containers: {e}")

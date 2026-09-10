@@ -6,8 +6,6 @@ Handles job submission, listing, and status tracking.
 
 import json
 from datetime import datetime
-from pathlib import Path
-from typing import Optional
 
 import httpx
 import typer
@@ -15,7 +13,7 @@ from rich.console import Console
 from rich.table import Table
 
 from nexus.shared.config import CLIConfig
-from nexus.shared.models import JobStatus, JobType
+from nexus.shared.models import JobType
 
 app = typer.Typer(help="Job management")
 console = Console()
@@ -29,7 +27,7 @@ def get_headers(config: CLIConfig) -> dict:
     return headers
 
 
-def format_datetime(dt: Optional[datetime]) -> str:
+def format_datetime(dt: datetime | None) -> str:
     """Format datetime for display."""
     if not dt:
         return "[dim]N/A[/dim]"
@@ -71,10 +69,10 @@ def submit(
     ctx: typer.Context,
     node_id: str = typer.Argument(..., help="Node ID to run the job on"),
     job_type: str = typer.Option(..., "--type", "-t", help="Job type: ocr, shell, sync"),
-    file_path: Optional[str] = typer.Option(None, "--file", "-f", help="File path (for OCR jobs)"),
-    command: Optional[str] = typer.Option(None, "--command", "-c", help="Command (for shell jobs)"),
+    file_path: str | None = typer.Option(None, "--file", "-f", help="File path (for OCR jobs)"),
+    command: str | None = typer.Option(None, "--command", "-c", help="Command (for shell jobs)"),
     language: str = typer.Option("eng", "--language", "-l", help="OCR language (default: eng)"),
-    timeout: Optional[int] = typer.Option(None, "--timeout", help="Job timeout in seconds"),
+    timeout: int | None = typer.Option(None, "--timeout", help="Job timeout in seconds"),
 ) -> None:
     """
     Submit a new job to a node.
@@ -131,7 +129,7 @@ def submit(
             response.raise_for_status()
             job = response.json()
 
-        console.print(f"[green]✓[/green] Job submitted successfully")
+        console.print("[green]✓[/green] Job submitted successfully")
         console.print(f"  Job ID: {job['id']}")
         console.print(f"  Type:   {job['type']}")
         console.print(f"  Status: {job['status']}")
@@ -148,18 +146,18 @@ def submit(
             pass
         raise typer.Exit(1)
     except httpx.ConnectError:
-        console.print(f"[red]Error: Could not connect to Core server.[/red]")
+        console.print("[red]Error: Could not connect to Core server.[/red]")
         raise typer.Exit(1)
 
 
 @app.command()
 def list(
     ctx: typer.Context,
-    node_id: Optional[str] = typer.Option(None, "--node", "-n", help="Filter by node ID"),
-    status: Optional[str] = typer.Option(None, "--status", "-s", help="Filter by status"),
-    job_type: Optional[str] = typer.Option(None, "--type", "-t", help="Filter by job type"),
+    node_id: str | None = typer.Option(None, "--node", "-n", help="Filter by node ID"),
+    status: str | None = typer.Option(None, "--status", "-s", help="Filter by status"),
+    job_type: str | None = typer.Option(None, "--type", "-t", help="Filter by job type"),
     limit: int = typer.Option(50, "--limit", "-l", help="Maximum number of jobs to show"),
-    format_output: Optional[str] = typer.Option(
+    format_output: str | None = typer.Option(
         None,
         "--format",
         "-f",
@@ -195,7 +193,7 @@ def list(
             data = response.json()
 
     except httpx.ConnectError:
-        console.print(f"[red]Error: Could not connect to Core server.[/red]")
+        console.print("[red]Error: Could not connect to Core server.[/red]")
         raise typer.Exit(1)
     except httpx.HTTPStatusError as e:
         console.print(f"[red]Error: API returned {e.response.status_code}[/red]")
@@ -248,7 +246,7 @@ def list(
 def get(
     ctx: typer.Context,
     job_id: str = typer.Argument(..., help="Job ID"),
-    format_output: Optional[str] = typer.Option(
+    format_output: str | None = typer.Option(
         None,
         "--format",
         "-f",
@@ -280,7 +278,7 @@ def get(
             console.print(f"[red]Error: API returned {e.response.status_code}[/red]")
         raise typer.Exit(1)
     except httpx.ConnectError:
-        console.print(f"[red]Error: Could not connect to Core server.[/red]")
+        console.print("[red]Error: Could not connect to Core server.[/red]")
         raise typer.Exit(1)
 
     # Output based on format
@@ -305,7 +303,7 @@ def get(
 
     # Payload
     if job.get("payload"):
-        console.print(f"\n  [bold]Payload:[/bold]")
+        console.print("\n  [bold]Payload:[/bold]")
         payload = job["payload"]
         for key, value in payload.items():
             console.print(f"    {key}: {value}")
@@ -313,7 +311,7 @@ def get(
     # Result
     if job.get("result"):
         result = job["result"]
-        console.print(f"\n  [bold]Result:[/bold]")
+        console.print("\n  [bold]Result:[/bold]")
         console.print(f"    Success: {result.get('success', False)}")
         if result.get("output"):
             console.print(f"    Output:  {result['output']}")

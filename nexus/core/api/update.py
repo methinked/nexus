@@ -13,10 +13,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from nexus.core.db.database import get_db
-from nexus.core.db.crud import create_job
-from nexus.shared.models import JobType, UpdateJobPayload, BaseResponse, JobCreate
 from nexus.core.db import get_node
+from nexus.core.db.crud import create_job
+from nexus.core.db.database import get_db
+from nexus.shared.models import BaseResponse, JobCreate, JobType, UpdateJobPayload
 
 router = APIRouter()
 
@@ -29,33 +29,33 @@ def create_source_bundle() -> io.BytesIO:
     """
     exclude_dirs = {"venv", ".git", "__pycache__", ".idea", ".vscode", "data", "logs", "artifacts", ".gemini"}
     exclude_files = {".env", "agent.log", "nexus.db"}
-    
+
     # Assuming code is running from project root or installed location
     # We want to package the 'nexus' directory and requirements.txt
     # Root is up 3 levels from here: nexus/core/api/update.py -> nexus/core/api -> nexus/core -> nexus -> PROJECT_ROOT
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
-    
+
     buffer = io.BytesIO()
     with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
         for root, dirs, files in os.walk(base_dir):
             # Modify dirs in-place to skip excluded directories
             dirs[:] = [d for d in dirs if d not in exclude_dirs]
-            
+
             for file in files:
                 if file in exclude_files:
                     continue
-                
+
                 # Check extension exclusions
                 if file.endswith(".pyc") or file.endswith(".db"):
                     continue
 
                 full_path = os.path.join(root, file)
                 rel_path = os.path.relpath(full_path, base_dir)
-                
+
                 # Only include relevant paths (nexus/ package, scripts/, setup scripts, requirements)
                 if rel_path.startswith("nexus/") or rel_path.startswith("scripts/") or rel_path in ["requirements.txt", "setup.py"]:
                     tar.add(full_path, arcname=rel_path)
-                    
+
     buffer.seek(0)
     return buffer
 
@@ -87,7 +87,7 @@ async def trigger_update(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Node {node_id} not found"
         )
-        
+
     # Construct download URL (assuming Core is accessible via the same host requesting this)
     # In production, this should be configurable. For now, we assume standard port.
     # We can't easily guess the external URL, so we might need to rely on agent config or a new setting.
@@ -96,13 +96,13 @@ async def trigger_update(
     # But wait, `UpdateJobPayload` asks for `download_url`.
     # If the agent is polling *this* core, it knows the core URL.
     # Let's send a relative path and let the agent prepend its configured CORE_URL.
-    
+
     payload = UpdateJobPayload(
         version="latest", # TODO: Implement versioning
         download_url=None,
         restart_service=True
     )
-    
+
     job_create = JobCreate(
         node_id=node_id,
         type=JobType.UPDATE,
@@ -110,5 +110,5 @@ async def trigger_update(
     )
 
     create_job(db, job_create)
-    
+
     return BaseResponse(message="Update job created")

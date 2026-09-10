@@ -5,7 +5,6 @@ Handles viewing and filtering logs from nodes.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional
 
 import httpx
 import typer
@@ -26,7 +25,7 @@ def get_headers(config: CLIConfig) -> dict:
     return headers
 
 
-def format_datetime(dt: Optional[datetime]) -> str:
+def format_datetime(dt: datetime | None) -> str:
     """Format datetime for display."""
     if not dt:
         return "[dim]Never[/dim]"
@@ -55,12 +54,12 @@ def get_level_color(level: str) -> str:
 
 @app.command("list")
 def list_logs(
-    node_id: Optional[str] = typer.Argument(None, help="Node ID to get logs for (optional - shows all if omitted)"),
-    level: Optional[str] = typer.Option(None, "--level", "-l", help="Filter by log level (debug, info, warning, error, critical)"),
-    source: Optional[str] = typer.Option(None, "--source", "-s", help="Filter by source (partial match)"),
-    since: Optional[str] = typer.Option(None, "--since", help="Start time (ISO format)"),
-    until: Optional[str] = typer.Option(None, "--until", help="End time (ISO format)"),
-    hours: Optional[int] = typer.Option(None, "--hours", "-h", help="Last N hours"),
+    node_id: str | None = typer.Argument(None, help="Node ID to get logs for (optional - shows all if omitted)"),
+    level: str | None = typer.Option(None, "--level", "-l", help="Filter by log level (debug, info, warning, error, critical)"),
+    source: str | None = typer.Option(None, "--source", "-s", help="Filter by source (partial match)"),
+    since: str | None = typer.Option(None, "--since", help="Start time (ISO format)"),
+    until: str | None = typer.Option(None, "--until", help="End time (ISO format)"),
+    hours: int | None = typer.Option(None, "--hours", "-h", help="Last N hours"),
     limit: int = typer.Option(100, "--limit", "-n", help="Maximum number of logs to show"),
     follow: bool = typer.Option(False, "--follow", "-f", help="Follow logs in real-time (updates every 5 seconds)"),
 ):

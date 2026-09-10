@@ -7,7 +7,6 @@ Executes shell commands as jobs and captures output.
 import asyncio
 import logging
 from datetime import datetime
-from typing import Dict, Optional
 
 from nexus.shared import JobResult
 
@@ -21,7 +20,7 @@ class ShellExecutor:
     Runs commands in a subprocess and captures stdout/stderr.
     """
 
-    async def execute(self, payload: Dict) -> JobResult:
+    async def execute(self, payload: dict) -> JobResult:
         """
         Execute a shell command.
 
@@ -102,7 +101,7 @@ class ShellExecutor:
                     },
                 )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(f"Command timed out after {timeout}s")
             try:
                 process.kill()

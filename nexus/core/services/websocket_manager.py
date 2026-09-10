@@ -7,7 +7,7 @@ Manages WebSocket connections and broadcasts events to connected clients.
 import asyncio
 import json
 import logging
-from typing import Dict, List, Set
+
 from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
@@ -18,8 +18,8 @@ class ConnectionManager:
 
     def __init__(self):
         """Initialize the connection manager."""
-        self.active_connections: List[WebSocket] = []
-        self.connection_ids: Dict[WebSocket, str] = {}
+        self.active_connections: list[WebSocket] = []
+        self.connection_ids: dict[WebSocket, str] = {}
         self._lock = asyncio.Lock()
 
     async def connect(self, websocket: WebSocket, client_id: str = None):

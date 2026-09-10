@@ -106,6 +106,8 @@ async def logs_page(request: Request):
 
 
 
+
+
 @router.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request):
     """
